@@ -265,7 +265,22 @@ export function PlaybookPrintDocument({
   const { totalPages, coverPages, tocPages } = pagination;
   const showPageNumbers = settings.includePageNumbers !== false;
 
-  let playSheetIndex = 0;
+  const playSheetSeparateFlags = useMemo(() => {
+    const playHeaderOrders = new Map<number, number>();
+    let playHeaderCount = 0;
+    pagination.contentSheets.forEach((sheet, index) => {
+      if (sheet.type !== "section" && sheet.playHeader) {
+        playHeaderOrders.set(index, playHeaderCount);
+        playHeaderCount += 1;
+      }
+    });
+
+    return pagination.contentSheets.map((sheet, index) => {
+      if (sheet.type === "section" || !sheet.playHeader) return false;
+      const order = playHeaderOrders.get(index) ?? 0;
+      return settings.eachPlaySeparatePage !== false && order > 0;
+    });
+  }, [pagination.contentSheets, settings.eachPlaySeparatePage]);
 
   return (
     <div className="fc-playbook-print-scale-outer" style={scaleWrapStyle}>
@@ -406,11 +421,7 @@ export function PlaybookPrintDocument({
             : playName
           : "";
 
-        const separatePlay =
-          settings.eachPlaySeparatePage !== false &&
-          sheet.playHeader &&
-          playSheetIndex > 0;
-        if (sheet.playHeader) playSheetIndex += 1;
+        const separatePlay = playSheetSeparateFlags[i] ?? false;
 
         return (
           <div

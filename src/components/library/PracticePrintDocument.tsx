@@ -28,7 +28,11 @@ export function PracticePrintDocument({
   const totalMin = getPracticeSessionTotalMinutes(session);
   const team =
     session.team && session.team !== "No Team" ? session.team : "";
-  let running = 0;
+  const rowEndTimes = rows.reduce<number[]>((times, { item }) => {
+    const prev = times.length ? times[times.length - 1]! : 0;
+    times.push(prev + (Number(item.durationMin) || 0));
+    return times;
+  }, []);
 
   return (
     <div className="fc-practice-print-doc">
@@ -60,8 +64,8 @@ export function PracticePrintDocument({
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ item, play, index }) => {
-            running += Number(item.durationMin) || 0;
+          {rows.map(({ item, play, index }, rowIndex) => {
+            const running = rowEndTimes[rowIndex] ?? 0;
             const blockName = play?.title || item.cueLabel || "Block";
             const kind = play ? (play.type === "drill" ? "Drill" : "Play") : "Block";
             const blockNotes = (item.notes || "").trim();

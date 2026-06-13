@@ -45,10 +45,9 @@ export function PlayerMarker({
   selected = false,
 }: Props) {
   const draggedRef = useRef(false);
+  const playerDisplay = useSettingsStore((s) => s.appearance.playerDisplay);
 
   if (object.kind === "ball") return null;
-
-  const playerDisplay = useSettingsStore((s) => s.appearance.playerDisplay);
   const fontSize = compact
     ? (compactFontSize ??
       Math.max(radius >= 5 ? 9 : 7, radius * (radius >= 5 ? 1.12 : 0.95)))

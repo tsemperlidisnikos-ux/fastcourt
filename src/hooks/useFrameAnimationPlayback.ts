@@ -29,6 +29,7 @@ export function useFrameAnimationPlayback() {
   const rafRef = useRef<number | null>(null);
   const startRef = useRef(0);
   const phaseRef = useRef<"action" | "transition">("action");
+  const tickRef = useRef<(now: number) => void>(() => {});
 
   const frame = play.frames[frameIndex];
   const actionIds = frame ? getPlaybackActionIds(frame) : [];
@@ -75,14 +76,14 @@ export function useFrameAnimationPlayback() {
           if (next < actionIds.length) {
             setStepIndex(next);
             startRef.current = now;
-            rafRef.current = requestAnimationFrame(tick);
+            rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
             return;
           }
 
           if (frameIndex < play.frames.length - 1) {
             phaseRef.current = "transition";
             startRef.current = now;
-            rafRef.current = requestAnimationFrame(tick);
+            rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
             return;
           }
 
@@ -119,13 +120,13 @@ export function useFrameAnimationPlayback() {
             setStepIndex(0);
             phaseRef.current = "action";
             startRef.current = performance.now();
-            rafRef.current = requestAnimationFrame(tick);
+            rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
           }, pauseMs);
           return;
         }
       }
 
-      rafRef.current = requestAnimationFrame(tick);
+      rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
     },
     [
       actionIds,
@@ -142,6 +143,10 @@ export function useFrameAnimationPlayback() {
     ],
   );
 
+  useEffect(() => {
+    tickRef.current = tick;
+  }, [tick]);
+
   const start = useCallback(() => {
     stop();
     if (!frame || !actionIds.length) return;
@@ -149,8 +154,8 @@ export function useFrameAnimationPlayback() {
     setStepIndex(0);
     phaseRef.current = "action";
     startRef.current = performance.now();
-    rafRef.current = requestAnimationFrame(tick);
-  }, [actionIds.length, frame, stop, tick]);
+    rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
+  }, [actionIds.length, frame, stop]);
 
   const stepOnce = useCallback(() => {
     stop();

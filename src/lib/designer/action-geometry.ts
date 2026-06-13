@@ -356,7 +356,7 @@ export function patchFromControlDrag(
   ny: number,
 ): Partial<DesignerAction> {
   const controls = resolveActionControls8(action);
-  let [sx, sy, c1x, c1y, c2x, c2y, ex, ey] = controls;
+  const [sx, sy, c1x, c1y, c2x, c2y, ex, ey] = controls;
   const curveType = curveTypeForAction(action.type);
 
   if (kind === "start") {

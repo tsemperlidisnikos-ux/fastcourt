@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { PracticeSheetDocument } from "@/components/library/PracticeSheetDocument";
 import type { InkStroke } from "@/components/library/PracticeSheetInkLayer";
@@ -12,23 +12,16 @@ interface Props {
   onClose: () => void;
 }
 
-interface SheetBrandSnapshot {
-  clubName: string;
-  clubLogo: string;
-}
-
 export function PracticeSheetOverlay({ onClose }: Props) {
-  const pdfBrand = useSettingsStore((s) => s.pdfBrand);
-  const brandSnapshotRef = useRef<SheetBrandSnapshot | null>(null);
-
-  if (!brandSnapshotRef.current) {
-    brandSnapshotRef.current = {
+  const [brandSnapshot] = useState(() => {
+    const pdfBrand = useSettingsStore.getState().pdfBrand;
+    return {
       clubName: pdfBrand.clubName.trim(),
       clubLogo: pdfBrand.logoDataUrl?.trim() ?? "",
     };
-  }
+  });
 
-  const { clubName, clubLogo } = brandSnapshotRef.current;
+  const { clubName, clubLogo } = brandSnapshot;
 
   const [mode, setMode] = useState<"draw" | "preview">("draw");
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
