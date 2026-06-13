@@ -1,0 +1,221 @@
+export type CourtType = "half" | "full";
+
+
+
+export type ActionType =
+
+  | "cut"
+
+  | "pass"
+
+  | "dribble"
+
+  | "screen"
+
+  | "curl"
+
+  | "handoff"
+
+  | "shoot";
+
+
+
+export type ActionTiming = "normal" | "optional" | "sync";
+
+
+
+export type DesignerTool =
+
+  | "select"
+
+  | "offense"
+
+  | "defense"
+
+  | "ball"
+
+  | "cone"
+
+  | "text"
+
+  | "label"
+
+  | "flag"
+
+  | "shadow"
+
+  | "zone"
+
+  | "line"
+
+  | "shoot"
+
+  | "delete"
+
+  | "whiteboard";
+
+
+
+export type ObjectKind =
+
+  | "offense"
+
+  | "defense"
+
+  | "ball"
+
+  | "cone"
+
+  | "text"
+
+  | "label"
+
+  | "flag"
+
+  | "shadow"
+
+  | "zone";
+
+
+
+export interface WhiteboardStroke {
+
+  points: number[];
+
+  color: string;
+
+  width: number;
+
+}
+
+
+
+export interface CourtRect {
+
+  x: number;
+
+  y: number;
+
+  width: number;
+
+  height: number;
+
+}
+
+
+
+export interface DesignerObject {
+
+  id: string;
+
+  kind: ObjectKind;
+
+  /** Normalized 0–1 within court floor */
+
+  x: number;
+
+  y: number;
+
+  label?: string;
+
+  /** Offense player with the ball */
+
+  hasBall?: boolean;
+
+  /** Normalized size for zone / shadow */
+
+  w?: number;
+
+  h?: number;
+
+  shadowType?: "rect" | "circle" | "triangle" | "diamond";
+
+  zoneType?: "paint" | "lane" | "threepoint" | "halfcourt";
+
+  scaleX?: number;
+
+  scaleY?: number;
+
+}
+
+
+
+export interface DesignerAction {
+
+  id: string;
+
+  type: ActionType;
+
+  x1: number;
+
+  y1: number;
+
+  x2: number;
+
+  y2: number;
+
+  midX?: number;
+
+  midY?: number;
+
+  /** Symmetric curve controls at ⅓ and ⅔ of chord (norm coords) */
+
+  c1x?: number;
+
+  c1y?: number;
+
+  c2x?: number;
+
+  c2y?: number;
+
+  points?: number[];
+
+  strokeWidth?: number;
+
+  timing?: ActionTiming;
+
+  isFreehand?: boolean;
+
+}
+
+
+
+export interface DesignerFrame {
+
+  id: string;
+
+  name: string;
+
+  objects: DesignerObject[];
+
+  actions: DesignerAction[];
+
+  /** Playback order — action ids */
+
+  actionSequence?: string[];
+
+  whiteboardStrokes?: WhiteboardStroke[];
+
+  notes?: string;
+
+}
+
+
+
+export interface PlayDocument {
+
+  id: string;
+
+  title: string;
+
+  courtType: CourtType;
+
+  frames: DesignerFrame[];
+
+  animSpeed?: number;
+
+  animPauseMs?: number;
+
+}
+
+

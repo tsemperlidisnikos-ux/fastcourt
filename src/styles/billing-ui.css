@@ -1,0 +1,268 @@
+/* Coach-facing billing / trial UI */
+
+.fc-trial-banner,
+.org-trial-banner {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.org-trial-banner-warn,
+.fc-trial-banner.org-trial-banner-warn {
+  border-color: #fcd34d;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.fc-trial-banner-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.fc-trial-banner-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fc-trial-banner-message {
+  margin: 0;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.fc-trial-banner-support {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.fc-trial-banner-support a {
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fc-trial-banner-support a:hover {
+  text-decoration: underline;
+}
+
+.fc-trial-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: min(100%, 280px);
+}
+
+.fc-trial-interval-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  align-self: flex-start;
+}
+
+.fc-trial-interval-toggle button {
+  min-height: 36px;
+  min-width: 72px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-trial-interval-toggle button.is-active {
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.fc-trial-interval-toggle button:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+.fc-payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-payment-btn {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.fc-payment-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.fc-payment-btn:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+.fc-payment-btn--stripe { border-color: #635bff; color: #4f46e5; }
+.fc-payment-btn--paypal { border-color: #0070ba; color: #0070ba; }
+.fc-payment-btn--bank { border-color: #64748b; }
+
+.fc-billing-empty,
+.fc-billing-status {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.fc-billing-plan-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-billing-plan-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+}
+
+.fc-billing-plan-option.is-selected {
+  border-color: #16a34a;
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.2);
+}
+
+.fc-billing-plan-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fc-billing-plan-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fc-billing-plan-price {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.fc-subscription-section {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--od-border, #e2e8f0);
+  background: #fff;
+}
+
+.fc-subscription-heading {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.fc-subscription-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.fc-license-key-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.fc-billing-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.fc-license-key-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-license-key-input {
+  flex: 1 1 180px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.fc-license-key-input:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 0;
+  border-color: #16a34a;
+}
+
+.fc-billing-btn-secondary {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-billing-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.fc-billing-btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .fc-trial-banner-inner {
+    flex-direction: column;
+  }
+
+  .fc-trial-banner-actions {
+    width: 100%;
+  }
+
+  .fc-payment-btn {
+    flex: 1 1 calc(50% - 4px);
+  }
+}

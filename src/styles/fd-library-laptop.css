@@ -1,0 +1,1483 @@
+/* FastDraw laptop library — matches FastDraw initial screen (Draw tab, split list + preview) */
+
+html[data-device-class="laptop"] #screen-organizer,
+html[data-device-class="desktop-wide"] #screen-organizer {
+  --fc-text-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fc-app-font: var(--fc-text-font);
+  --fc-ui-font: var(--fc-text-font);
+  --fc-fd-library-font: var(--fc-text-font);
+  font-family: var(--fc-text-font);
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-ui,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-ui,
+html[data-device-class="laptop"] #screen-organizer .fd-ui *,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-ui *,
+html[data-device-class="laptop"] #screen-organizer .fd-play-table,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table {
+  font-family: var(--fc-text-font) !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-play-table thead th,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table thead th,
+html[data-device-class="laptop"] #screen-organizer .org-play-table thead th,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table thead th {
+  font-size: 12px;
+  font-weight: 700 !important;
+  letter-spacing: 0;
+  color: #333 !important;
+  background: #d9d9d9 !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-play-table tbody td,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table tbody td {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-play-table .col-play-name,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table .col-play-name {
+  font-weight: 700;
+}
+
+html[data-device-class="laptop"] #screen-organizer,
+html[data-device-class="desktop-wide"] #screen-organizer {
+  --fd-font-scale: 1;
+  --fd-filter-font-scale: 1;
+  --fd-filter-dropdown-width-scale: 1;
+  --fc-laptop-play-search-width: 430px;
+  --fd-hero-brand-slot: 72px;
+  --fd-hero-inner-pad-top: 10px;
+  --fd-hero-inner-pad-bottom: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-body,
+html[data-device-class="desktop-wide"] #screen-organizer .org-body,
+html[data-device-class="laptop"] #screen-organizer .fd-app-footer,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-app-footer {
+  --fd-lib-font-scale: 1;
+}
+
+/* Top util bar — brand left, section center, user right */
+html[data-device-class="laptop"] #screen-organizer .fd-topbar-util-left,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-topbar-util-left {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-topbar-util-center,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-topbar-util-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  pointer-events: none;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-topbar-util-inner,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-topbar-util-inner {
+  position: relative;
+  justify-content: space-between;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-hero-club-logo-wrap,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-club-logo-wrap {
+  grid-column: 3;
+  justify-self: end;
+  height: var(--fd-hero-brand-slot);
+  margin-right: 28px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-hero-club-logo,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-club-logo {
+  height: calc(var(--fd-hero-brand-slot) - 8px);
+  max-width: 120px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-topbar-util-right,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-topbar-util-right {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-app-brand-label,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-app-brand-label {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-topnav-section-label,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-topnav-section-label {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Hero — app logo left, club name center, team logo right, tabs below */
+html[data-device-class="laptop"] #screen-organizer .fd-hero-inner,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-inner {
+  gap: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-hero-top-row,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-top-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: var(--fd-hero-brand-slot);
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-hero-brand-shell,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-brand-shell {
+  grid-column: 1;
+  justify-self: start;
+  width: auto;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  height: var(--fd-hero-brand-slot);
+  margin-left: 28px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-team-title,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-team-title {
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  border: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.1;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-hero-brand-center,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-brand-center {
+  width: auto;
+  justify-content: center;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-hero-brand-logo,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-brand-logo {
+  position: static;
+  transform: none;
+  left: auto;
+  top: auto;
+  height: calc(var(--fd-hero-brand-slot) - 8px);
+  max-width: 120px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-main-tabs,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tabs {
+  justify-content: flex-start;
+  gap: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin-top: 2px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
+  padding: 12px 22px 14px;
+  font-size: 17px;
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom: 3px solid transparent;
+  margin-bottom: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active {
+  background: transparent;
+  color: #fff;
+  border-bottom-color: #fff;
+  box-shadow: none;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab:hover:not(.active),
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active:hover {
+  background: transparent;
+  color: #fff;
+}
+
+/* Hide type chips row — main tabs replace them on laptop */
+html[data-device-class="laptop"] #screen-organizer .fd-filter-type-bar,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-type-bar {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fd-library-sort-wrap,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fd-library-sort-wrap {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-library-breadcrumb,
+html[data-device-class="desktop-wide"] #screen-organizer .org-library-breadcrumb {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-filter-play-name-row,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-play-name-row {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-filter-play-name-row .fd-filter-item.fd-filter-search-wide,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-play-name-row .fd-filter-item.fd-filter-search-wide {
+  flex: 0 0 auto !important;
+  width: var(--fc-laptop-play-search-width) !important;
+  min-width: var(--fc-laptop-play-search-width) !important;
+  max-width: var(--fc-laptop-play-search-width) !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-filter-play-name-row .fd-search-wrap,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-play-name-row .fd-search-wrap {
+  width: var(--fc-laptop-play-search-width) !important;
+  max-width: var(--fc-laptop-play-search-width) !important;
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-filter-actions:has(#fd-create-actions:empty),
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-actions:has(#fd-create-actions:empty),
+html[data-device-class="laptop"] #screen-organizer .fd-filter-actions .fd-create-group:empty,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-actions .fd-create-group:empty {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-filter-actions,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-filter-actions {
+  display: none !important;
+}
+
+
+/* Split list / preview — pct from appearance settings (--fc-lib-list-split-pct) */
+html[data-device-class="laptop"] #screen-organizer .org-library-main,
+html[data-device-class="desktop-wide"] #screen-organizer .org-library-main,
+html[data-device-class="laptop"] #screen-organizer .fd-library-main,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-library-main {
+  flex: 0 0 var(--fc-lib-list-split-pct, 44%) !important;
+  max-width: var(--fc-lib-list-split-pct, 44%) !important;
+}
+
+/* Selected row — solid black, white text (FastDraw) */
+html[data-device-class="laptop"] #screen-organizer .fd-play-table tbody tr.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table tbody tr.selected,
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected {
+  background: #111 !important;
+  color: #fff !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-play-table tbody tr.selected td,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table tbody tr.selected td,
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected td,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected td {
+  color: #fff !important;
+  border-bottom-color: #333;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected .fd-tag-empty,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected .fd-tag-empty {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator {
+  color: #fff !important;
+}
+
+/* Team workspace — Created by column in narrow list pane */
+html[data-device-class="laptop"] #screen-organizer .org-play-table .col-author,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table .col-author {
+  width: 88px;
+  min-width: 72px;
+  max-width: 100px;
+  font-size: 11px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-play-table .col-author .fd-author-name,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table .col-author .fd-author-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 96px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected .col-author,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected .col-author {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator {
+  color: #fbbf24;
+}
+
+/* Preview — unified black header */
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--fd-header-dark, #000) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 8px 12px;
+  min-height: 44px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play {
+  position: static;
+  transform: none;
+  order: 20;
+  margin-left: 4px;
+  display: inline-flex !important;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  background: #111;
+  color: #fff;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-meta,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-meta {
+  flex: 1;
+  min-width: 0;
+  order: 1;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-breadcrumb,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-breadcrumb {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-actions,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 0;
+  order: 10;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary {
+  background: #111 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 6px 12px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-laptop-preview-header-controls,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-laptop-preview-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  order: 15;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-laptop-preview-zoom,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-laptop-preview-zoom {
+  display: flex;
+  align-items: center;
+  width: 88px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-laptop-preview-zoom input[type="range"],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-laptop-preview-zoom input[type="range"] {
+  width: 100%;
+  accent-color: #fff;
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-laptop-preview-fs-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-laptop-preview-fs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  background: #111;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-laptop-preview-fs-btn:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-laptop-preview-fs-btn:hover {
+  background: #222;
+}
+
+/* Secondary sub-bar — details / share icons */
+html[data-device-class="laptop"] #screen-organizer .fd-preview-subbar,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-subbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff;
+  border-bottom: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-subbar[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-subbar[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-subbar-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-subbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: #334155;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-subbar-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-subbar-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-subbar-btn:not(:disabled):hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-subbar-btn:not(:disabled):hover {
+  background: #f1f5f9;
+}
+
+/* Hide second toolbar on laptop — controls live in header */
+html[data-device-class="laptop"] #screen-organizer .fd-preview-toolbar:not([hidden]),
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-toolbar:not([hidden]) {
+  display: none !important;
+}
+
+/* Playbook topbar — match black header on laptop */
+html[data-device-class="laptop"] #screen-organizer .fc-playbook-preview-topbar,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbook-preview-topbar {
+  background: var(--fd-header-dark, #000) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbook-preview-team,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbook-preview-team {
+  color: #fff;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbook-preview-topbar .fc-preview-header-print-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbook-preview-topbar .fc-preview-header-print-btn {
+  left: auto;
+  right: 8px;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: #111;
+  color: #fff;
+}
+
+/* Override fastdraw-ui rule that hides header print on laptop */
+html[data-device-class="laptop"] #screen-organizer .fc-preview-header-print-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-preview-header-print-btn {
+  display: inline-flex !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-preview-header-print-btn[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-preview-header-print-btn[hidden] {
+  display: none !important;
+}
+
+/* 3-column frames grid on laptop */
+html[data-device-class="laptop"] #screen-organizer .org-preview-frames:not(:has(.org-preview-empty-state)),
+html[data-device-class="desktop-wide"] #screen-organizer .org-preview-frames:not(:has(.org-preview-empty-state)),
+html[data-device-class="laptop"] #screen-organizer .fc-lib-preview-frames-grid,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-lib-preview-frames-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-rows: min-content;
+  grid-auto-flow: row;
+  align-content: start !important;
+  align-items: start !important;
+  overflow-x: hidden !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-preview-frame-card,
+html[data-device-class="desktop-wide"] #screen-organizer .org-preview-frame-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-preview-content.fc-laptop-zoom-125,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-content.fc-laptop-zoom-125,
+html[data-device-class="laptop"] #screen-organizer .org-preview-frames.fc-laptop-zoom-125,
+html[data-device-class="desktop-wide"] #screen-organizer .org-preview-frames.fc-laptop-zoom-125,
+html[data-device-class="laptop"] #screen-organizer .fd-preview-content.fc-laptop-zoom-150,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-content.fc-laptop-zoom-150,
+html[data-device-class="laptop"] #screen-organizer .org-preview-frames.fc-laptop-zoom-150,
+html[data-device-class="desktop-wide"] #screen-organizer .org-preview-frames.fc-laptop-zoom-150 {
+  zoom: 1 !important;
+  transform: none !important;
+}
+
+/* Fullscreen preview — hide list pane */
+html[data-device-class="laptop"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen .org-library-main,
+html[data-device-class="desktop-wide"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen .org-library-main,
+html[data-device-class="laptop"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen .fd-split-resizer,
+html[data-device-class="desktop-wide"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen .fd-split-resizer,
+html[data-device-class="laptop"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen #org-split-resizer,
+html[data-device-class="desktop-wide"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen #org-split-resizer {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen .org-library-preview,
+html[data-device-class="desktop-wide"] #screen-organizer .org-library-split.fc-laptop-preview-fullscreen .org-library-preview {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+}
+
+/* ===== FIELDS view (Teams / Series / Tags) ===== */
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .fd-filter-bar,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .fd-filter-bar,
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .fd-filter-type-bar,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .fd-filter-type-bar,
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .org-library-split,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .org-library-split,
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .org-bulk-bar,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .org-bulk-bar,
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .fd-import-post-panel,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .fd-import-post-panel,
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .library-clean-panel,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .library-clean-panel,
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .org-library-breadcrumb,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .org-library-breadcrumb {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .fc-playbooks-shell,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .fc-playbooks-shell {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer.library-fields-mode .fc-fields-shell,
+html[data-device-class="desktop-wide"] #screen-organizer.library-fields-mode .fc-fields-shell {
+  display: flex !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-shell,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-shell[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-shell[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-toolbar,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  min-height: 52px;
+  box-sizing: border-box;
+  background: var(--fd-filter-bg, #ececec);
+  border-bottom: 1px solid var(--fd-border, #c8c8c8);
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-subtabs,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-subtabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-subtab,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-subtab {
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 0 11px;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-subtab.active,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-subtab.active {
+  color: #111;
+  border-bottom-color: #111;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-subtab:hover:not(.active),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-subtab:hover:not(.active) {
+  color: #333;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-actions,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-create-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-create-btn,
+html[data-device-class="laptop"] #screen-organizer .fc-fields-delete-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-delete-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-delete-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-delete-btn {
+  background: #fff;
+  color: #111;
+  border: 1px solid #111;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-delete-btn:not(:disabled):hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-delete-btn:not(:disabled):hover {
+  background: #f3f4f6;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-delete-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-delete-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-col-check,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-col-check {
+  width: 40px;
+  text-align: center;
+  padding-left: 12px;
+  padding-right: 4px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-row-check,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-row-check,
+html[data-device-class="laptop"] #screen-organizer .fc-fields-select-all,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-select-all {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #111;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table thead th.fc-fields-col-check,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table thead th.fc-fields-col-check {
+  padding-left: 12px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody td.fc-fields-col-check,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody td.fc-fields-col-check {
+  text-align: center;
+  padding-left: 12px;
+  padding-right: 4px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody tr.fc-fields-row,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody tr.fc-fields-row {
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody tr.fc-fields-row.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody tr.fc-fields-row.selected {
+  background: #111 !important;
+  color: #fff;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody tr.fc-fields-row.selected td,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody tr.fc-fields-row.selected td {
+  color: #fff !important;
+  border-bottom-color: #333;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-card,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  padding: 0 20px 20px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-search-row,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 4px;
+  border-bottom: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-search-row .fd-search-icon,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-search-row .fd-search-icon {
+  font-size: 16px;
+  color: #666;
+  line-height: 1;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-search-input,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: #111;
+  outline: none;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-search-input::placeholder,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-search-input::placeholder {
+  color: #9ca3af;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table-wrap,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table thead th,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table thead th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  padding: 12px 8px;
+  border-bottom: 1px solid #d1d5db;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table .fc-fields-col-count,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table .fc-fields-col-count {
+  width: 120px;
+  text-align: right;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody td,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody td {
+  font-size: 14px;
+  color: #222;
+  padding: 10px 8px;
+  border-bottom: 1px solid #ececec;
+  vertical-align: middle;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody td.fc-fields-col-count,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody td.fc-fields-col-count {
+  text-align: right;
+  color: #444;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-table tbody tr:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-fields-empty-row td,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-fields-empty-row td {
+  text-align: center;
+  color: #64748b;
+  padding: 28px 8px;
+}
+
+/* ===== PLAYBOOKS view (laptop FastDraw) ===== */
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .fd-filter-bar,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .fd-filter-bar,
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .fd-filter-type-bar,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .fd-filter-type-bar,
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .org-library-split,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .org-library-split,
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .org-bulk-bar,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .org-bulk-bar,
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .fd-import-post-panel,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .fd-import-post-panel,
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .library-clean-panel,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .library-clean-panel,
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .org-library-breadcrumb,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .org-library-breadcrumb {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer.library-playbooks-mode .fc-playbooks-shell,
+html[data-device-class="desktop-wide"] #screen-organizer.library-playbooks-mode .fc-playbooks-shell {
+  display: flex !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-shell,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  overflow: hidden;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-shell[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-shell[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar {
+  flex: 0 0 min(375px, 40%);
+  max-width: 425px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  background: #ececec;
+  border-right: 1px solid #c8c8c8;
+  min-height: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-toolbar,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 12px 10px;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-create-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-create-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-wrap,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-wrap {
+  position: relative;
+  width: 100%;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-edit-playbook-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-edit-playbook-btn,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-delete-playbook-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-delete-playbook-btn,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-playbook-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-playbook-btn {
+  width: 100%;
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 9px 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-edit-playbook-btn:hover:not(:disabled),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-edit-playbook-btn:hover:not(:disabled),
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-delete-playbook-btn:hover:not(:disabled),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-delete-playbook-btn:hover:not(:disabled),
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-playbook-btn:hover:not(:disabled),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-playbook-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-edit-playbook-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-edit-playbook-btn:disabled,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-delete-playbook-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-delete-playbook-btn:disabled,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-playbook-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-playbook-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-menu,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #c8c8c8;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-menu[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-menu[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-menu-item,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-menu-item {
+  border: none;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-menu-item:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-menu-item:hover {
+  background: #f3f3f3;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-menu-delete,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-menu-delete {
+  color: #b91c1c;
+  border-top: 1px solid #e5e5e5;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-manage-menu-delete:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-manage-menu-delete:hover {
+  background: #fef2f2;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-list,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0 8px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 14px 14px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item:hover {
+  background: #e2e2e2;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item.selected {
+  background: #d8d8d8;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item-main,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item-name,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item-updated,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item-updated {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-item-count,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-item-count {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  padding-top: 2px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-footer,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #c8c8c8;
+  background: #ececec;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-header,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-header {
+  padding: 18px 22px 0;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-title,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-toolbar,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px 10px;
+  flex-shrink: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-toolbar-left,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-toolbar-left,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-toolbar-right,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-toolbar-right,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-toolbar-right {
+  margin-left: auto;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-add-play-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-add-play-btn {
+  min-width: 120px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-preview-btn:not(.fc-print-preview-tool),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-preview-btn:not(.fc-print-preview-tool),
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-present-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-present-btn {
+  border: 1px solid #c8c8c8;
+  background: #fff;
+  color: #222;
+  width: 34px;
+  height: 30px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-present-btn,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-present-btn {
+  width: auto;
+  min-width: 34px;
+  padding: 0 8px;
+  font-size: 14px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-preview-btn:hover:not(:disabled),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-preview-btn:hover:not(:disabled),
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-present-btn:hover:not(:disabled),
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-present-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-preview-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-preview-btn:disabled,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-present-btn:disabled,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-present-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-main-body,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-main-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-empty-state,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-empty-state {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-empty-state[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-empty-state[hidden],
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-detail-split[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-detail-split[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-detail-split,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-detail-split {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  border-top: 1px solid #e0e0e0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-plays-pane,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-plays-pane {
+  flex: 0 0 min(320px, 38%);
+  max-width: 420px;
+  min-width: 220px;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid #e0e0e0;
+  background: #f7f7f7;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-plays-list,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-plays-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-playbook-preview-pane,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-playbook-preview-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #d8d8d8;
+  position: relative;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-playbook-preview-loading,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-playbook-preview-loading {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  padding: 24px;
+  color: #555;
+  font-size: 14px;
+  text-align: center;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-playbook-preview-loading[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-playbook-preview-loading[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-playbook-preview-frame,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-playbook-preview-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  border: none;
+  background: #888;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-playbook-preview-frame[hidden],
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-playbook-preview-frame[hidden] {
+  display: none !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-item.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-item.selected {
+  background: #111;
+  color: #fff;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-item.selected:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-item.selected:hover {
+  background: #222;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-item-row:has(.fc-playbooks-list-item.selected) .fc-playbooks-list-remove,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-item-row:has(.fc-playbooks-list-item.selected) .fc-playbooks-list-remove {
+  background: #ececec;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-empty,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  color: #666;
+  text-align: center;
+  gap: 8px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-empty-icon,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-empty-icon {
+  font-size: 48px;
+  opacity: 0.35;
+  line-height: 1;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-empty p,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-empty p {
+  margin: 0;
+  font-size: 15px;
+  color: #444;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-empty-sub,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-empty-sub {
+  font-size: 13px !important;
+  color: #777 !important;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-view,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-item-row,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-item-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-item,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-item {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: #ececec;
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  cursor: pointer;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-remove,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-remove,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-remove,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-remove {
+  flex-shrink: 0;
+  border: none;
+  background: #ececec;
+  color: #666;
+  width: 42px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-remove,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-remove {
+  border-left: 1px solid #ddd;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-remove:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-remove:hover,
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-remove:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-remove:hover {
+  background: #e0e0e0;
+  color: #c00;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-list-item:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-list-item:hover {
+  background: #e0e0e0;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-item-wrap,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-item-wrap {
+  position: relative;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-remove,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #ddd;
+  font-size: 18px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-view,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-view {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-item,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-item {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-item-name,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-item-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-item-thumb,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-item-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.05;
+  object-fit: contain;
+  background: #f3f3f3;
+  border: 1px solid #ddd;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-grid-item-thumb.placeholder,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-grid-item-thumb.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #aaa;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fc-playbooks-sidebar-empty,
+html[data-device-class="desktop-wide"] #screen-organizer .fc-playbooks-sidebar-empty {
+  padding: 24px 14px;
+  text-align: center;
+  color: #666;
+  font-size: 13px;
+}
+

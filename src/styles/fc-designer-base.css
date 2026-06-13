@@ -1,0 +1,437 @@
+/* Essential designer shell rules ported from legacy style.css */
+
+.fd-ui#screen-designer,
+#screen-designer.fd-ui {
+  --od-designer-bg: #e8eaed;
+  --od-designer-panel: #f3f4f6;
+  --od-border: #d1d5db;
+  --od-surface: #ffffff;
+  --od-text: #1e293b;
+  --od-text-muted: #64748b;
+  --ds-frames-column-width: 300px;
+}
+
+#screen-designer {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--od-designer-bg);
+  overflow: hidden;
+}
+
+#screen-designer.active,
+#screen-designer.designer-route {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#screen-designer .ds-body {
+  display: grid;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+#screen-designer .ds-left-panel {
+  background: var(--od-designer-panel);
+  border-right: 1px solid var(--od-border);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+#screen-designer .ds-canvas-area {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--od-designer-bg);
+}
+
+#screen-designer .ds-center-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#screen-designer .ds-court-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+#screen-designer .ds-canvas-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+
+#screen-designer #court-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+}
+
+#screen-designer .ds-canvas-wrap .konvajs-content {
+  margin: 0 auto;
+}
+
+#screen-designer .ds-tool-item.active {
+  background: #e8eaed;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+/* Frame strip thumb layout: fastdraw-editor-ui.css (#frames-container .ds-thumb-*) */
+
+#screen-designer .ds-designer-color-panel {
+  padding: 12px;
+  border-top: 1px solid var(--od-border);
+}
+
+#screen-designer .ds-options-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+#screen-designer .ds-options-value {
+  font-size: 11px;
+  color: #64748b;
+  margin-left: 8px;
+}
+
+#screen-designer .ds-sidebar-anim-pane {
+  padding: 12px;
+  overflow: auto;
+}
+
+#screen-designer .ds-anim-value {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.modal-box-wide {
+  width: min(520px, 94vw);
+  padding: 22px 22px 18px;
+}
+
+.modal-subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.modal-cancel {
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.formation-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.formation-preset-btn {
+  padding: 14px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.formation-preset-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+#screen-designer .ds-fd-play-breadcrumb {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#screen-designer .ds-fd-overflow-wrap {
+  position: relative;
+}
+
+#screen-designer .ds-fd-overflow-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  z-index: 30;
+}
+
+#screen-designer .ds-fd-overflow-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #000;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#screen-designer .ds-fd-overflow-menu button:hover {
+  background: #f1f5f9;
+  color: #000;
+}
+
+#screen-designer .ds-fd-whiteboard-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6px * var(--fd-editor-ui-scale, 1.25));
+  flex-wrap: wrap;
+}
+
+#screen-designer .ds-thumb-notes-hint {
+  font-size: 10px;
+  color: #6b7280;
+  padding: 4px 6px 6px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.org-preview-play-notes {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #334155;
+}
+
+.org-preview-play-notes-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+#screen-organizer .org-library-split.fc-laptop-preview-fullscreen .org-library-main,
+#screen-organizer .org-library-split.fc-laptop-preview-fullscreen .fd-split-resizer {
+  display: none !important;
+}
+
+#screen-organizer .org-library-split.fc-laptop-preview-fullscreen .org-library-preview {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+}
+
+.line-type-box {
+  width: min(400px, 94vw);
+  padding: 22px 22px 18px;
+}
+
+.line-type-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.line-type-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.line-type-icon svg,
+.line-type-btn-icon svg,
+.line-type-float-btn-icon svg {
+  width: 42px;
+  height: 30px;
+  display: block;
+  shape-rendering: geometricPrecision;
+}
+
+.line-type-btn-icon,
+.line-type-float-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+}
+
+.line-type-sub {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.line-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.line-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 84px;
+  padding: 12px 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #000;
+  cursor: pointer;
+}
+
+.line-type-btn-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #000;
+}
+
+.line-type-btn:hover,
+.line-type-btn.suggested {
+  border-color: #9ca3af;
+  background: #e8eaed;
+  color: #000;
+}
+
+.line-type-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-cancel {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #000;
+  cursor: pointer;
+}
+
+.action-sequence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.action-sequence-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  cursor: grab;
+}
+
+.action-sequence-item.is-sync {
+  border-left: 3px solid #7c3aed;
+}
+
+.action-sequence-item.is-optional {
+  border-left: 3px solid #94a3b8;
+  border-style: dashed;
+}
+
+.action-sequence-timing {
+  border: none;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+}
+
+@media (max-width: 1200px) {
+  #screen-designer .ds-body {
+    grid-template-columns: 220px minmax(0, 1fr) 252px 0px;
+  }
+
+  #screen-designer .ds-fd-notes-panel {
+    display: none;
+  }
+}

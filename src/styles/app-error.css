@@ -1,0 +1,157 @@
+.fc-app-error {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--fc-body-gradient, #0f172a);
+  color: var(--fc-text, #f1f5f9);
+}
+
+.fc-app-error-compact {
+  min-height: min(420px, 60vh);
+  background: transparent;
+  color: inherit;
+}
+
+.fc-app-error-card {
+  width: min(480px, 100%);
+  padding: 28px 24px;
+  border: 1px solid var(--fc-border, #334155);
+  border-radius: 14px;
+  background: var(--fc-panel, #1e293b);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.fc-app-error-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fc-muted, #94a3b8);
+}
+
+.fc-app-error-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.fc-app-error-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fc-muted, #94a3b8);
+  white-space: pre-wrap;
+}
+
+.fc-app-error-digest {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--fc-muted, #94a3b8);
+}
+
+.fc-app-error-digest code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+
+.fc-app-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.fc-app-error-retry,
+.fc-app-error-reload {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-app-error-retry {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.fc-app-error-retry:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.fc-app-error-reload {
+  border: 1px solid var(--fc-border, #334155);
+  background: transparent;
+  color: var(--fc-text, #f1f5f9);
+}
+
+.fc-app-error-reload:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Library IndexedDB load failure (inside organizer shell) */
+.fc-library-loading,
+.fc-library-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 24px;
+}
+
+.fc-library-loading p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.fc-library-load-error-card {
+  width: min(520px, 100%);
+  padding: 24px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fff5f5;
+}
+
+.fc-library-load-error-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+.fc-library-load-error-message {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #7f1d1d;
+}
+
+.fc-library-load-error-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.fc-library-load-error-retry {
+  padding: 10px 16px;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-library-load-error-retry:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}

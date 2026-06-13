@@ -1,0 +1,252 @@
+/**
+ * Library app header — single Draw reference look on every tab (Draw / Playbooks / Fields / Practice).
+ * Loaded last; overrides fc-modern-library gradient and per-tab layout differences.
+ */
+
+#screen-organizer {
+  --fd-header-black: #000;
+  --fd-topbar-util-height: 40px;
+  --fd-hero-brand-slot: 72px;
+  --fd-hero-inner-pad-top: 10px;
+  --fd-hero-inner-pad-bottom: 0;
+  --fd-main-tabs-height: 48px;
+}
+
+#screen-organizer .fd-app-header {
+  flex-shrink: 0;
+  background: var(--fd-header-dark, #000);
+}
+
+#screen-organizer .fd-app-header .fd-topbar-util,
+#screen-organizer .fd-app-header .fd-hero-header,
+#screen-organizer .fd-app-header .fd-topnav,
+#screen-organizer .fd-app-header .org-topnav {
+  background: var(--fd-header-dark, #000) !important;
+  border-bottom: 1px solid #222 !important;
+}
+
+#screen-organizer .fd-app-header .fd-topbar-util {
+  height: var(--fd-topbar-util-height);
+  min-height: var(--fd-topbar-util-height);
+  max-height: var(--fd-topbar-util-height);
+  box-sizing: border-box;
+}
+
+#screen-organizer .fd-app-header .fd-topbar-util-inner {
+  position: relative;
+  justify-content: space-between;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+#screen-organizer .fd-app-header .fd-topbar-util-left {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+#screen-organizer .fd-app-header .fd-topbar-util-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  pointer-events: none;
+}
+
+#screen-organizer .fd-app-header .fd-topbar-util-right {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+#screen-organizer .fd-app-header .fd-app-brand-label {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#screen-organizer .fd-app-header .fd-topnav-section-label {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#screen-organizer .fd-app-header .fd-hero-inner {
+  gap: 0;
+  padding-top: var(--fd-hero-inner-pad-top);
+  padding-bottom: var(--fd-hero-inner-pad-bottom);
+  padding-left: 18px;
+  padding-right: 18px;
+  box-sizing: border-box;
+}
+
+#screen-organizer .fd-app-header .fd-hero-top-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  height: var(--fd-hero-brand-slot);
+  min-height: var(--fd-hero-brand-slot);
+  max-height: var(--fd-hero-brand-slot);
+  box-sizing: border-box;
+}
+
+#screen-organizer .fd-app-header .fd-hero-brand-shell {
+  grid-column: 1;
+  justify-self: start;
+  width: auto;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  height: var(--fd-hero-brand-slot);
+  margin-left: 28px;
+}
+
+#screen-organizer .fd-app-header .fd-team-title {
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  border: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.1;
+}
+
+#screen-organizer .fd-app-header .fd-hero-brand-center {
+  width: auto;
+  justify-content: center;
+}
+
+#screen-organizer .fd-app-header .fd-hero-brand-logo {
+  position: static;
+  transform: none;
+  left: auto;
+  top: auto;
+  height: calc(var(--fd-hero-brand-slot) - 8px);
+  max-width: 120px;
+  width: auto;
+}
+
+#screen-organizer .fd-app-header .fd-hero-club-logo-wrap {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: var(--fd-hero-brand-slot);
+  min-width: 0;
+  margin-right: 28px;
+}
+
+#screen-organizer .fd-app-header .fd-hero-club-logo {
+  display: block !important;
+  height: calc(var(--fd-hero-brand-slot) - 8px);
+  max-width: 120px;
+  width: auto;
+  object-fit: contain;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--fd-main-tabs-height);
+  margin-top: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-sizing: border-box;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs {
+  justify-content: flex-start;
+  gap: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  margin-top: 0;
+  border-top: none;
+  box-sizing: border-box;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-right: 18px;
+  align-self: stretch;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-actions .fc-playbooks-settings-btn,
+#screen-organizer .fd-app-header .fd-main-tabs-actions .fc-playbooks-preview-btn {
+  flex-shrink: 0;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-actions .fc-print-preview-tool {
+  min-height: 40px;
+  height: 40px;
+  min-width: auto;
+  padding: 0 10px !important;
+}
+
+#screen-organizer .fd-app-header .fd-main-tab,
+#screen-organizer .fd-app-header .org-main-tab {
+  padding: 12px 22px 14px;
+  font-size: 17px;
+  line-height: 1.2;
+  border-radius: 0;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom: 3px solid transparent;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+#screen-organizer .fd-app-header .fd-main-tab.active,
+#screen-organizer .fd-app-header .org-main-tab.active {
+  background: transparent !important;
+  color: #fff !important;
+  border-bottom-color: var(--fc-modern-accent, #16a34a) !important;
+  box-shadow: none !important;
+}
+
+#screen-organizer .fd-app-header .fd-main-tab:hover:not(.active),
+#screen-organizer .fd-app-header .org-main-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+#screen-organizer .fd-app-header .fd-main-tab.active:hover,
+#screen-organizer .fd-app-header .org-main-tab.active:hover {
+  background: transparent !important;
+  color: #fff !important;
+}

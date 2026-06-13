@@ -1,0 +1,1777 @@
+/* Admin settings — legacy FastCourt org-settings + all-users parity */
+
+.fc-admin-settings {
+  --od-modal-bg: #ffffff;
+  --od-modal-text: #0f172a;
+  --od-modal-muted: #64748b;
+  --od-modal-border: #e2e8f0;
+  --od-border: #e2e8f0;
+  --od-surface-2: #f8fafc;
+  --od-modal-input-bg: #ffffff;
+  --od-designer-tool-hover: #f1f5f9;
+  --od-text-muted: #94a3b8;
+  --fc-settings-accent: #16a34a;
+  --fc-settings-accent-hover: #15803d;
+  --fc-settings-surface: #f1f5f9;
+  --fc-settings-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --fc-settings-radius: 14px;
+
+  min-height: 100dvh;
+  background: linear-gradient(165deg, #f8fafc 0%, #eef2f7 48%, #f8fafc 100%);
+  color: var(--od-modal-text);
+  font-family: var(--fc-app-font, system-ui, "Segoe UI", sans-serif);
+}
+
+.fc-admin-settings .org-settings-overlay {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.fc-admin-settings .org-settings-box {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-radius: 0;
+  padding:
+    max(16px, env(safe-area-inset-top, 0px))
+    max(12px, env(safe-area-inset-right, 0px))
+    max(12px, env(safe-area-inset-bottom, 0px))
+    max(12px, env(safe-area-inset-left, 0px));
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+}
+
+.fc-admin-settings .org-settings-head {
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+.fc-admin-settings .org-settings-head-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.fc-admin-settings .org-settings-head-user {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .org-settings-head-user b {
+  color: var(--od-modal-text);
+  font-weight: 700;
+}
+
+.fc-admin-settings .org-settings-body {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.fc-admin-settings .org-settings-workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  flex: 1 1 0;
+  min-height: 0;
+  border-top: 1px solid var(--od-border);
+  margin-top: 8px;
+}
+
+.fc-admin-settings .org-settings-nav-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--od-border);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.fc-admin-settings .org-settings-nav-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fc-admin-settings .org-settings-nav-group-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--od-modal-muted);
+  padding: 10px 4px 2px;
+}
+
+.fc-admin-settings .org-settings-nav-group-label:first-child {
+  padding-top: 2px;
+}
+
+.fc-admin-settings .org-settings-nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, transform 0.12s;
+}
+
+.fc-admin-settings .org-settings-nav-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.fc-admin-settings .org-settings-nav-item.is-selected {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: #fff;
+  box-shadow: var(--fc-settings-shadow);
+  color: #14532d;
+}
+
+.fc-admin-settings .org-settings-nav-footer {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--od-border);
+}
+
+.fc-admin-settings .org-settings-nav-version {
+  font-size: 11px;
+  color: var(--od-modal-muted);
+  font-weight: 600;
+}
+
+.fc-admin-settings .org-settings-content-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.fc-admin-settings .org-settings-section-stack {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 28px;
+}
+
+.fc-admin-settings .org-settings-section-stack .org-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--od-modal-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--od-surface-2);
+}
+
+.fc-admin-settings .org-settings-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--od-modal-text);
+}
+
+.fc-admin-settings .org-settings-brand-help {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .org-settings-brand-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fc-admin-settings .org-settings-brand-field input {
+  padding: 8px 10px;
+  border: 1px solid var(--od-modal-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.fc-admin-settings .org-settings-content-panel.is-showing-embed .org-settings-section-stack {
+  display: none;
+}
+
+.fc-admin-settings .org-settings-embed {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px 20px 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.fc-admin-settings #org-settings-embed-all-users .admin-all-users-head-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.fc-admin-settings #org-settings-embed-all-users .admin-all-users-split {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+}
+
+.fc-admin-settings .admin-all-users-list-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--od-border);
+  background: var(--od-surface-2);
+}
+
+.fc-admin-settings .admin-all-users-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fc-admin-settings .admin-all-users-list-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: 1px solid var(--od-border);
+  border-radius: 12px;
+  background: var(--od-modal-bg);
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, transform 0.12s;
+  overflow: hidden;
+}
+
+.fc-admin-settings .admin-all-users-list-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+  transform: translateY(-1px);
+}
+
+.fc-admin-settings .admin-all-users-list-item.is-selected {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.05);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14), 0 4px 16px rgba(37, 99, 235, 0.1);
+}
+
+.fc-admin-settings .admin-all-users-list-item.is-selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #2563eb;
+  border-radius: 12px 0 0 12px;
+}
+
+.fc-admin-settings .admin-all-users-list-item.is-admin {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.98));
+}
+
+.fc-admin-settings .admin-all-users-list-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px 13px;
+}
+
+.fc-admin-settings .admin-all-users-list-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  color: #1e3a8a;
+}
+
+.fc-admin-settings .admin-all-users-list-item.is-admin .admin-all-users-list-avatar {
+  background: linear-gradient(145deg, #334155, #0f172a);
+  color: #f8fafc;
+}
+
+.fc-admin-settings .admin-all-users-list-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.fc-admin-settings .admin-all-users-list-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.fc-admin-settings .admin-all-users-list-email {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--od-modal-muted);
+  word-break: break-word;
+}
+
+.fc-admin-settings .admin-all-users-list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.fc-admin-settings .admin-all-users-list-role {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.fc-admin-settings .admin-all-users-detail-panel {
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+}
+
+.fc-admin-settings .admin-all-users-detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--od-modal-muted);
+  font-size: 15px;
+  text-align: center;
+  padding: 24px;
+}
+
+.fc-admin-settings .admin-user-detail-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--od-border);
+}
+
+.fc-admin-settings .admin-user-detail-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.fc-admin-settings .admin-user-detail-email {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--od-modal-muted);
+  word-break: break-word;
+}
+
+.fc-admin-settings .admin-user-detail-signup {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--od-text-muted);
+}
+
+.fc-admin-settings .admin-user-detail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-admin-settings .admin-user-detail-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: start;
+}
+
+.fc-admin-settings .admin-user-detail-section {
+  padding: 12px 14px;
+  border: 1px solid var(--od-border);
+  border-radius: 10px;
+  background: var(--od-surface-2);
+  min-width: 0;
+}
+
+.fc-admin-settings .admin-user-detail-section-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .admin-user-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.fc-admin-settings .admin-user-detail-grid dt {
+  margin: 0 0 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .admin-user-detail-grid dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.fc-admin-settings .admin-user-detail-muted {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .admin-view-all-btn {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.fc-admin-settings .admin-view-all-btn:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.fc-admin-settings .admin-status {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.fc-admin-settings .admin-status-trial {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.fc-admin-settings .admin-status-subscribed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.fc-admin-settings .admin-status-unlimited {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.fc-admin-settings .admin-status-expired {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.fc-admin-settings .admin-expiry-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fc-admin-settings .admin-trial-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.fc-admin-settings .admin-trial-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--od-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fc-admin-settings .admin-trial-days {
+  width: 64px;
+  padding: 6px 8px;
+  border: 1px solid var(--od-border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.fc-admin-settings .admin-trial-unit {
+  font-size: 12px;
+  color: var(--od-text-muted);
+}
+
+.fc-admin-settings .admin-expiry-datetime {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 8px;
+}
+
+.fc-admin-settings .admin-expiry-date,
+.fc-admin-settings .admin-expiry-time {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--od-modal-border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--od-modal-input-bg);
+}
+
+.fc-admin-settings .admin-expiry-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fc-admin-settings .admin-expiry-btn {
+  border: 1px solid var(--od-modal-border);
+  background: var(--od-surface-2);
+  color: var(--od-modal-text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .admin-expiry-btn:hover {
+  background: var(--od-designer-tool-hover);
+}
+
+.fc-admin-settings .admin-expiry-btn-apply {
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.fc-admin-settings .admin-expiry-btn-apply:hover {
+  background: #1d4ed8;
+}
+
+.fc-admin-settings .admin-view-library-btn {
+  margin-top: 8px;
+  border: 1px solid var(--od-border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .admin-view-library-btn:hover {
+  background: #dbeafe;
+}
+
+.admin-library-modal {
+  width: min(960px, 98vw);
+  min-height: min(720px, 88vh);
+  max-height: 96vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-library-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.admin-library-summary-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e3a8a;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.admin-library-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  min-height: 280px;
+  overflow: auto;
+}
+
+.admin-library-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.admin-library-section-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-library-section-sub {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.admin-library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-library-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-library-item:last-child {
+  border-bottom: none;
+}
+
+.admin-library-item-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.admin-library-item-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-library-item-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.admin-library-type {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+.admin-library-type-play {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.admin-library-type-drill {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.admin-library-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.fc-admin-settings .admin-billing-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.fc-admin-settings .admin-stat-card {
+  background: var(--od-modal-bg);
+  border: 1px solid var(--od-border);
+  border-radius: 12px;
+  padding: 18px 14px;
+  text-align: center;
+}
+
+.fc-admin-settings .admin-stat-num {
+  display: block;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.fc-admin-settings .admin-stat-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--od-modal-muted);
+  font-weight: 600;
+}
+
+.fc-admin-settings .admin-users-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--od-modal-muted);
+  font-size: 14px;
+}
+
+.fc-admin-settings .admin-user-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 420px;
+}
+
+.fc-admin-settings .org-settings-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--od-modal-border);
+  flex-shrink: 0;
+  background: var(--od-modal-bg);
+}
+
+.fc-admin-settings .org-settings-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.fc-admin-settings .org-settings-dirty-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.fc-admin-settings .org-settings-apply {
+  background: #111;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .org-settings-apply:hover {
+  background: #333;
+}
+
+.fc-admin-settings .org-settings-apply.has-unsaved-changes {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.45);
+}
+
+.fc-admin-settings .org-settings-close {
+  background: var(--od-surface-2);
+  border: 1px solid var(--od-modal-border);
+  color: var(--od-modal-text);
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .org-settings-build {
+  font-size: 11px;
+  color: var(--od-modal-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 860px) {
+  .fc-admin-settings .org-settings-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(220px, 38vh) minmax(0, 1fr);
+  }
+
+  .fc-admin-settings .org-settings-nav-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--od-border);
+  }
+
+  .fc-admin-settings #org-settings-embed-all-users .admin-all-users-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(200px, 35vh) minmax(0, 1fr);
+  }
+
+  .fc-admin-settings .admin-all-users-list-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--od-border);
+  }
+
+  .fc-admin-settings .admin-user-detail-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .fc-admin-settings .admin-billing-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Team organizations */
+.fc-admin-settings .org-settings-embed-orgs {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+.fc-admin-settings .admin-org-create-form {
+  position: relative;
+  z-index: 2;
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: var(--fc-settings-radius);
+  background: #fff;
+  box-shadow: var(--fc-settings-shadow);
+}
+
+.fc-admin-settings .admin-org-create-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .fc-settings-alert {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fc-admin-settings .fc-settings-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.fc-admin-settings .fc-settings-alert-success {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.fc-admin-settings .admin-organizations-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fc-admin-settings .admin-content-overview-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.fc-admin-settings .admin-billing-help {
+  font-size: 13px;
+  color: var(--od-modal-muted);
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.fc-admin-settings .admin-billing-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.fc-admin-settings .admin-billing-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .admin-billing-field-grow {
+  grid-column: span 1;
+}
+
+.fc-admin-settings .admin-billing-field input {
+  padding: 11px 13px;
+  border: 1px solid var(--od-modal-border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--od-modal-text);
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fc-admin-settings .admin-billing-field input:focus {
+  outline: none;
+  border-color: rgba(22, 163, 74, 0.55);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+}
+
+.fc-admin-settings .admin-billing-save-btn {
+  align-self: flex-start;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--fc-settings-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.fc-admin-settings .admin-billing-save-btn:hover:not(:disabled) {
+  background: var(--fc-settings-accent-hover);
+  transform: translateY(-1px);
+}
+
+.fc-admin-settings .admin-billing-save-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.fc-admin-settings .admin-billing-save-btn-primary {
+  min-width: 200px;
+}
+
+.fc-admin-settings .admin-organizations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.fc-admin-settings .admin-license-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--od-modal-muted);
+  font-size: 14px;
+  border: 1px dashed var(--od-border);
+  border-radius: 10px;
+}
+
+.fc-admin-settings .admin-org-card {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: var(--fc-settings-radius);
+  padding: 16px 18px;
+  background: #fff;
+  box-shadow: var(--fc-settings-shadow);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.fc-admin-settings .admin-org-card:hover {
+  border-color: rgba(22, 163, 74, 0.25);
+}
+
+.fc-admin-settings .admin-org-card-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fc-admin-settings .admin-org-card-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fc-admin-settings .admin-org-card-meta,
+.fc-admin-settings .admin-org-card-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.fc-admin-settings .admin-org-seat-summary {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.fc-admin-settings .admin-org-members .admin-billing-row {
+  margin-top: 8px;
+  align-items: end;
+  grid-template-columns: 1fr auto;
+}
+
+.fc-admin-settings .admin-org-players-label {
+  margin-top: 14px;
+  font-weight: 700;
+}
+
+.fc-admin-settings .admin-org-delete-btn {
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.08);
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .admin-org-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.fc-admin-settings .admin-org-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.fc-admin-settings .admin-org-users-table th,
+.fc-admin-settings .admin-org-users-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--od-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.fc-admin-settings .admin-org-users-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .admin-status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.fc-admin-settings .admin-delete-btn {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #dc2626;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .admin-delete-btn:hover {
+  background: #fee2e2;
+}
+
+/* Appearance — 2×2 grid */
+.fc-admin-settings {
+  --od-accent: #16a34a;
+  --od-accent-hover: #15803d;
+}
+
+.fc-admin-settings .org-settings-section-stack.is-appearance-active {
+  overflow: hidden;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.fc-admin-settings .org-settings-appearance-section {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.fc-admin-settings .org-settings-appearance-section .org-settings-group-title {
+  display: none;
+}
+
+.fc-admin-settings .org-settings-appearance-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.fc-admin-settings .org-settings-appearance-pane {
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--od-border);
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-title {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .org-settings-line-colors-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 6px 10px;
+}
+
+.fc-admin-settings .org-settings-line-colors-block > .org-settings-appearance-pane-title,
+.fc-admin-settings .org-settings-line-colors-block > .org-settings-brand-help,
+.fc-admin-settings .org-settings-line-colors-block > .org-settings-line-colors-label,
+.fc-admin-settings .org-settings-line-colors-block > .org-settings-action-colors {
+  grid-column: 1 / -1;
+}
+
+.fc-admin-settings .org-settings-brand-color-field input[type="color"] {
+  width: 100%;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--od-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.fc-admin-settings .org-settings-action-colors {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fc-admin-settings .action-colors-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fc-admin-settings .action-color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 5px;
+}
+
+.fc-admin-settings .action-color-row:hover {
+  background: #f1f5f9;
+}
+
+.fc-admin-settings .action-color-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-modal-text);
+}
+
+.fc-admin-settings .action-color-input {
+  width: 40px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.fc-admin-settings .action-colors-reset,
+.fc-admin-settings .org-action-colors-reset {
+  margin-top: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-modal-text);
+  background: var(--od-surface-2);
+  border: 1px solid var(--od-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-theme {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: auto;
+  gap: 5px 10px;
+  overflow-y: auto;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-appearance-pane-title,
+.fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-brand-logo,
+.fc-admin-settings .org-settings-appearance-pane-theme > .org-theme-toggle,
+.fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-sublabel,
+.fc-admin-settings .org-settings-appearance-pane-theme > .org-player-display-toggle,
+.fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-check {
+  grid-column: 1 / -1;
+}
+
+.fc-admin-settings .playbook-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fc-admin-settings .playbook-logo-preview {
+  width: 88px;
+  height: 88px;
+  border: 1px solid var(--od-border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.fc-admin-settings .app-logo-preview-img {
+  max-width: 72px;
+  max-height: 72px;
+  object-fit: contain;
+}
+
+.fc-admin-settings .playbook-plays-tool-btn {
+  border: 1px solid var(--od-border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .playbook-plays-tool-btn:disabled,
+.fc-admin-settings .playbook-plays-tool-btn.is-busy {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fc-admin-settings label.playbook-plays-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-admin-settings .org-settings-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fc-admin-settings .org-settings-upload-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #b91c1c;
+}
+
+.fc-admin-settings .org-settings-hint {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--od-modal-muted);
+  margin: 0;
+}
+
+.fc-admin-settings .org-theme-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.fc-admin-settings .org-theme-btn,
+.fc-admin-settings .org-player-display-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--od-modal-border);
+  background: var(--od-surface-2);
+  color: var(--od-modal-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+}
+
+.fc-admin-settings .org-theme-btn.active,
+.fc-admin-settings .org-player-display-btn.active {
+  background: var(--od-accent);
+  border-color: var(--od-accent-hover);
+  color: #fff;
+}
+
+.fc-admin-settings .org-player-display-toggle {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.fc-admin-settings .org-settings-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-modal-text);
+}
+
+.fc-admin-settings .org-settings-sublabel {
+  font-size: 11px;
+  color: var(--od-modal-muted);
+  margin: 6px 0 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fc-admin-settings .org-settings-col-width-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--od-modal-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fc-admin-settings .org-settings-col-width-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fc-admin-settings .org-settings-col-width-grid-single {
+  grid-template-columns: 1fr;
+  margin-top: -1px;
+}
+
+.fc-admin-settings .org-settings-col-width-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--od-modal-text);
+  padding: 8px 10px;
+  box-shadow: inset -1px 0 0 var(--od-modal-border), inset 0 -1px 0 var(--od-modal-border);
+}
+
+.fc-admin-settings .org-settings-col-width-field input,
+.fc-admin-settings .org-settings-brand-field select {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--od-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--od-modal-text);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.fc-admin-settings .org-settings-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fc-admin-settings .org-settings-range-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.fc-admin-settings .org-settings-range-value {
+  flex: 0 0 auto;
+  min-width: 2.5rem;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-modal-text);
+  text-align: right;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-help {
+  display: none;
+}
+
+.fc-admin-settings .org-settings-appearance-reset-btn,
+.fc-admin-settings .org-settings-btn-inline {
+  align-self: flex-start;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--od-border);
+  border-radius: 6px;
+  background: var(--od-surface-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings #org-editor-colors-help {
+  display: none;
+}
+
+.fc-coach-settings .org-settings-coach-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.fc-coach-settings .org-settings-user-card,
+.fc-coach-settings .org-settings-access-card {
+  padding: 12px 14px;
+  border: 1px solid var(--od-border);
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.fc-coach-settings .org-settings-user-card strong {
+  display: block;
+  font-size: 16px;
+}
+
+.fc-coach-settings .org-settings-user-card span {
+  font-size: 13px;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .admin-billing-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.fc-admin-settings .admin-billing-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fc-admin-settings .org-settings-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fc-admin-settings .org-settings-btn {
+  padding: 10px 12px;
+  border: 1px solid var(--od-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.fc-admin-settings .org-settings-tools-status {
+  font-size: 13px;
+  color: #166534;
+  background: #dcfce7;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.fc-admin-settings .org-settings-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+}
+
+.fc-admin-settings .org-settings-system-info {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--od-border);
+}
+
+.fc-admin-settings .org-settings-tools-admin-extra {
+  margin-top: 12px;
+}
+
+.fc-admin-settings .playbook-logo-placeholder {
+  font-size: 12px;
+  color: var(--od-modal-muted);
+}
+
+html[data-theme="light"] body {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] body {
+  color-scheme: dark;
+}
+
+#court-container.court-high-contrast img,
+#court-container.court-high-contrast canvas {
+  filter: contrast(1.25) saturate(1.1);
+}
+
+.fc-admin-settings .admin-payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.fc-admin-settings .admin-payment-method-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--od-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.fc-admin-settings .admin-payment-method-card-wide {
+  grid-column: 1 / -1;
+}
+
+.fc-admin-settings .admin-payment-enable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-admin-settings .admin-billing-validation {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.fc-admin-settings .admin-billing-validation p {
+  margin: 0;
+}
+
+.fc-admin-settings .admin-billing-preview {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--od-border);
+  border-radius: 12px;
+  background: var(--od-surface-muted, #f8fafc);
+}
+
+.fc-admin-settings .admin-billing-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fc-admin-settings .admin-section-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fc-admin-settings .admin-billing-preview-interval {
+  display: flex;
+  gap: 4px;
+}
+
+.fc-admin-settings .admin-billing-preview-interval button {
+  border: 1px solid var(--od-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fc-admin-settings .admin-billing-preview-interval button.is-active {
+  background: #ecfdf5;
+  border-color: #16a34a;
+  color: #166534;
+}
+
+.fc-admin-settings .admin-billing-preview-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-admin-settings .payment-method-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: default;
+}
+
+.fc-admin-settings .payment-method-btn-stripe {
+  border-color: #635bff;
+  color: #4f46e5;
+}
+
+.fc-admin-settings .payment-method-btn-paypal {
+  border-color: #0070ba;
+  color: #0070ba;
+}
+
+.fc-admin-settings .payment-method-btn-bank {
+  border-color: #64748b;
+  color: #334155;
+}
+
+.fc-admin-settings .admin-billing-preview-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--od-modal-muted);
+}
+
+@media (max-width: 900px) {
+  .fc-admin-settings .org-settings-appearance-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .fc-admin-settings .admin-billing-row {
+    grid-template-columns: 1fr;
+  }
+
+  .fc-admin-settings .admin-payment-methods-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fc-coach-settings .org-settings-coach-split {
+    grid-template-columns: 1fr;
+  }
+}

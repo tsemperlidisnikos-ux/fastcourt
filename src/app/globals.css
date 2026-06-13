@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "../styles/overflow-menus.css";
+
+:root {
+  --fc-body: #0f172a;
+  --fc-body-gradient: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  --fc-nav: #0f172a;
+  --fc-panel: #1e293b;
+  --fc-border: #334155;
+  --fc-text: #f1f5f9;
+  --fc-muted: #94a3b8;
+  --fc-accent: #3b82f6;
+}
+
+@theme inline {
+  --color-fc-body: var(--fc-body);
+  --color-fc-nav: var(--fc-nav);
+  --color-fc-panel: var(--fc-panel);
+  --color-fc-border: var(--fc-border);
+  --color-fc-text: var(--fc-text);
+  --color-fc-muted: var(--fc-muted);
+  --color-fc-accent: var(--fc-accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--fc-body-gradient);
+  color: var(--fc-text);
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  min-height: 100vh;
+}

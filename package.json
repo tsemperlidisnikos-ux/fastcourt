@@ -1,0 +1,36 @@
+{
+  "name": "fastcourt-next",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "start:plesk": "node server.js",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.1",
+    "idb": "^8.0.3",
+    "konva": "^10.3.0",
+    "lz-string": "^1.5.0",
+    "next": "16.2.9",
+    "pdfjs-dist": "^6.0.227",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-konva": "^19.2.5",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/lz-string": "^1.3.34",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

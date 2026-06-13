@@ -1,0 +1,401 @@
+/**
+ * Players tab — roster list inside Library.
+ */
+
+#screen-organizer .fc-players-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+
+#screen-organizer .fc-players-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 0 20px;
+  min-height: 52px;
+  box-sizing: border-box;
+  background: #fff;
+  border-bottom: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+#screen-organizer .fc-players-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+#screen-organizer .fc-players-team-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+#screen-organizer .fc-players-team-field select {
+  min-width: 140px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#screen-organizer .fc-players-count-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#screen-organizer .fc-players-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#screen-organizer .fc-players-create-btn {
+  border: none !important;
+  border-radius: 0 !important;
+  background: #111 !important;
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#screen-organizer .fc-players-paste-card {
+  margin: 16px 20px 0;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+#screen-organizer .fc-players-paste-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+#screen-organizer .fc-players-paste-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+#screen-organizer .fc-players-paste-hint code {
+  font-size: 12px;
+  background: #e2e8f0;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+#screen-organizer .fc-players-paste-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 160px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+#screen-organizer .fc-players-setup-hint {
+  margin: 16px 20px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#screen-organizer .fc-players-add-card {
+  margin: 16px 20px 0;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+#screen-organizer .fc-players-add-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+#screen-organizer .fc-players-form {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+#screen-organizer .fc-players-form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+#screen-organizer .fc-players-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+#screen-organizer .fc-players-field span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+#screen-organizer .fc-players-field input,
+#screen-organizer .fc-players-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+#screen-organizer .fc-players-field-team {
+  grid-column: span 1;
+}
+
+#screen-organizer .fc-players-field-name {
+  grid-column: span 2;
+}
+
+#screen-organizer .fc-players-field-number {
+  grid-column: span 1;
+}
+
+#screen-organizer .fc-players-field-email {
+  grid-column: span 1;
+}
+
+#screen-organizer .fc-players-field-phone {
+  grid-column: span 1;
+}
+
+#screen-organizer .fc-players-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#screen-organizer .fc-players-submit {
+  border: none;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-players-cancel {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-players-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 16px 20px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+#screen-organizer .fc-players-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  background: #fff;
+  overflow: hidden;
+}
+
+#screen-organizer .fc-players-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+}
+
+#screen-organizer .fc-players-table-wrap .org-table-scroll,
+#screen-organizer .fc-players-table-wrap .fd-table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+#screen-organizer .fc-players-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#screen-organizer .fc-players-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--fd-table-head, #d9d9d9);
+  border-bottom: 1px solid #c8c8c8;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #111;
+  text-align: left;
+  white-space: nowrap;
+}
+
+#screen-organizer .fc-players-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ececec;
+  font-size: 14px;
+  color: #111827;
+  vertical-align: middle;
+}
+
+#screen-organizer .fc-players-table tbody tr {
+  cursor: default;
+}
+
+#screen-organizer .fc-players-table tbody tr:nth-child(even) {
+  background: var(--fd-table-zebra, #f4f4f4);
+}
+
+#screen-organizer .fc-players-table tbody tr:hover {
+  background: #eef2ff;
+}
+
+#screen-organizer .fc-players-table tbody tr.selected {
+  background: var(--fd-scout-row-selected, #7eb6e6) !important;
+  color: #fff;
+}
+
+#screen-organizer .fc-players-table tbody tr.selected td {
+  color: #fff;
+}
+
+#screen-organizer .fc-players-table .col-player-number {
+  width: 56px;
+  text-align: center;
+}
+
+#screen-organizer .fc-players-table .col-team {
+  width: 18%;
+  min-width: 120px;
+}
+
+#screen-organizer .fc-players-table .col-player-name {
+  width: 28%;
+  min-width: 180px;
+}
+
+#screen-organizer .fc-players-table .col-player-email,
+#screen-organizer .fc-players-table .col-player-phone {
+  min-width: 140px;
+}
+
+#screen-organizer .fc-players-table .col-player-name .org-play-name-text {
+  font-weight: 600;
+}
+
+#screen-organizer .fc-players-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+#screen-organizer .fc-players-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #111;
+  font-size: 14px;
+  outline: none;
+}
+
+#screen-organizer .fc-players-empty {
+  margin: 0;
+  padding: 32px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  #screen-organizer .fc-players-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #screen-organizer .fc-players-field-name,
+  #screen-organizer .fc-players-field-team,
+  #screen-organizer .fc-players-field-number,
+  #screen-organizer .fc-players-field-email,
+  #screen-organizer .fc-players-field-phone {
+    grid-column: span 1;
+  }
+}

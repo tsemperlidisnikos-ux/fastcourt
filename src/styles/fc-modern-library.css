@@ -1,0 +1,379 @@
+/* FastCourt — modern library refresh (loads after fd-library-laptop.css) */
+
+#screen-organizer,
+#screen-organizer .fd-ui {
+  --fc-modern-accent: #16a34a;
+  --fc-modern-accent-hover: #15803d;
+  --fc-modern-accent-soft: #ecfdf5;
+  --fc-modern-accent-border: #bbf7d0;
+  --fc-modern-surface: #ffffff;
+  --fc-modern-surface-soft: #f8fafc;
+  --fc-modern-surface-muted: #f1f5f9;
+  --fc-modern-border: #e2e8f0;
+  --fc-modern-text: #0f172a;
+  --fc-modern-text-muted: #64748b;
+  --fc-modern-header-from: #0f172a;
+  --fc-modern-header-to: #1e293b;
+  --fd-header-black: var(--fc-modern-header-from);
+  --fd-filter-bg: var(--fc-modern-surface);
+  --fd-border: var(--fc-modern-border);
+  --fd-table-head: #d9d9d9;
+  --fd-table-zebra: var(--fc-modern-surface-soft);
+}
+
+/* Shell */
+#screen-organizer .org-body {
+  background: var(--fc-modern-surface-soft);
+}
+
+/* App header uses solid Draw black via fc-library-header.css (not gradient). */
+
+#screen-organizer .fd-team-title {
+  letter-spacing: 0.01em;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-team-title,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-team-title {
+  font-weight: 800;
+}
+
+/* Main tabs — green accent underline */
+#screen-organizer .fd-main-tab,
+#screen-organizer .org-main-tab {
+  border-radius: 8px 8px 0 0;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 17px;
+  padding: 12px 22px 14px;
+}
+
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab,
+html[data-device-class="laptop"] #screen-organizer .org-main-tab,
+html[data-device-class="desktop-wide"] #screen-organizer .org-main-tab {
+  border-radius: 0;
+  padding: 12px 22px 14px;
+}
+
+#screen-organizer .fd-main-tab.active,
+#screen-organizer .org-main-tab.active,
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active {
+  border-bottom-color: var(--fc-modern-accent) !important;
+  color: #fff !important;
+  box-shadow: none;
+}
+
+#screen-organizer .fd-main-tab:hover:not(.active),
+#screen-organizer .org-main-tab:hover:not(.active),
+html[data-device-class="laptop"] #screen-organizer .fd-main-tab:hover:not(.active),
+html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Filter bar */
+#screen-organizer .fd-filter-bar {
+  background: var(--fc-modern-surface);
+  border-bottom: 1px solid var(--fc-modern-border);
+  padding: 12px 16px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+#screen-organizer .fd-filter-item label,
+#screen-organizer .fd-filter-label {
+  color: var(--fc-modern-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+#screen-organizer .fd-filter-select,
+#screen-organizer .org-filter-dropdown-btn,
+#screen-organizer .fd-filter-search input,
+#screen-organizer .fd-play-search input,
+#screen-organizer input[type="search"],
+#screen-organizer input[type="text"].fd-filter-input {
+  border: 1px solid var(--fc-modern-border) !important;
+  border-radius: 10px !important;
+  background: var(--fc-modern-surface) !important;
+  color: var(--fc-modern-text) !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#screen-organizer .fd-filter-select:focus,
+#screen-organizer .org-filter-dropdown-btn:focus-visible,
+#screen-organizer .fd-filter-search input:focus,
+#screen-organizer .fd-play-search input:focus,
+#screen-organizer input[type="search"]:focus {
+  outline: none;
+  border-color: var(--fc-modern-accent) !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18) !important;
+}
+
+#screen-organizer .org-filter-chip {
+  border-radius: 999px;
+  border: 1px solid var(--fc-modern-border);
+  background: var(--fc-modern-surface-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+#screen-organizer .org-filter-chip.is-active,
+#screen-organizer .org-filter-chip.active {
+  background: var(--fc-modern-accent-soft);
+  border-color: var(--fc-modern-accent-border);
+  color: #166534;
+}
+
+/* Primary actions */
+#screen-organizer .fd-create-play-btn,
+#screen-organizer .fd-create-btn,
+#screen-organizer .org-preview-edit-btn-primary {
+  background: var(--fc-modern-accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+#screen-organizer .fd-create-play-btn:hover,
+#screen-organizer .fd-create-btn:hover,
+#screen-organizer .org-preview-edit-btn-primary:hover,
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary:hover,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary:hover {
+  background: var(--fc-modern-accent-hover) !important;
+}
+
+#screen-organizer .fd-create-btn-ghost,
+#screen-organizer .fd-menu-btn {
+  border-radius: 10px;
+  border-color: var(--fc-modern-border);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Play table — content-based column widths */
+#screen-organizer .fd-play-table,
+#screen-organizer .org-play-table {
+  table-layout: auto !important;
+  width: 100%;
+}
+
+#screen-organizer .fd-play-table .col-select,
+#screen-organizer .org-play-table .col-select,
+#screen-organizer .fd-play-table .col-type,
+#screen-organizer .org-play-table .col-type {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+#screen-organizer .fd-play-table .col-season,
+#screen-organizer .org-play-table .col-season {
+  width: var(--fd-lib-col-season-width, auto);
+  min-width: var(--fd-lib-col-season-min, 0);
+  max-width: var(--fd-lib-col-season-max, none);
+}
+
+#screen-organizer .fd-play-table .col-team,
+#screen-organizer .org-play-table .col-team {
+  width: var(--fd-lib-col-team-width, auto);
+  min-width: var(--fd-lib-col-team-min, 0);
+  max-width: var(--fd-lib-col-team-max, none);
+}
+
+#screen-organizer .fd-play-table .col-series,
+#screen-organizer .org-play-table .col-series {
+  width: var(--fd-lib-col-series-width, auto);
+  min-width: var(--fd-lib-col-series-min, 0);
+  max-width: var(--fd-lib-col-series-max, none);
+}
+
+#screen-organizer .fd-play-table .col-tags,
+#screen-organizer .org-play-table .col-tags {
+  width: var(--fd-lib-col-tags-width, auto);
+  min-width: var(--fd-lib-col-tags-min, 0);
+  max-width: var(--fd-lib-col-tags-max, none);
+}
+
+#screen-organizer .fd-play-table .col-play-name,
+#screen-organizer .org-play-table .col-play-name {
+  width: auto;
+  min-width: 0;
+}
+
+#screen-organizer .fd-play-table tbody .col-season,
+#screen-organizer .org-play-table tbody .col-season {
+  font-size: 14px;
+  min-width: 88px;
+  max-width: 120px;
+}
+
+#screen-organizer .fd-play-table thead,
+#screen-organizer .org-play-table thead {
+  background: #d9d9d9;
+}
+
+#screen-organizer .fd-play-table thead th,
+#screen-organizer .org-play-table thead th {
+  background: #d9d9d9 !important;
+  color: #333 !important;
+  border-bottom: 1px solid #c4c4c4 !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+#screen-organizer .fd-play-table .col-select,
+#screen-organizer .org-play-table .col-select {
+  width: 36px;
+  min-width: 36px;
+  max-width: 40px;
+  text-align: center;
+  padding-left: 10px !important;
+  padding-right: 6px !important;
+}
+
+#screen-organizer .fd-play-table .col-select input.org-play-row-check,
+#screen-organizer .org-play-table .col-select input.org-play-row-check,
+#screen-organizer .fd-play-table thead .col-select input.library-select-all-check,
+#screen-organizer .org-play-table thead .col-select input.library-select-all-check {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+#screen-organizer .fd-play-table tbody tr,
+#screen-organizer .org-play-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+#screen-organizer .fd-play-table tbody tr:hover:not(.selected),
+#screen-organizer .org-play-table tbody tr:hover:not(.selected) {
+  background: var(--fc-modern-surface-soft) !important;
+}
+
+/* Selected row — green tint instead of black */
+#screen-organizer .fd-play-table tbody tr.selected,
+#screen-organizer .org-play-table tbody tr.selected,
+html[data-device-class="laptop"] #screen-organizer .fd-play-table tbody tr.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table tbody tr.selected,
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected {
+  background: var(--fc-modern-accent-soft) !important;
+  color: #14532d !important;
+  box-shadow: inset 3px 0 0 var(--fc-modern-accent);
+}
+
+#screen-organizer .fd-play-table tbody tr.selected td,
+#screen-organizer .org-play-table tbody tr.selected td,
+html[data-device-class="laptop"] #screen-organizer .fd-play-table tbody tr.selected td,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-play-table tbody tr.selected td,
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected td,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected td {
+  color: #14532d !important;
+  border-bottom-color: var(--fc-modern-accent-border) !important;
+}
+
+#screen-organizer .org-play-table tbody tr.selected .fd-tag-empty,
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected .fd-tag-empty,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected .fd-tag-empty {
+  color: #166534 !important;
+}
+
+#screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator,
+html[data-device-class="laptop"] #screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator,
+html[data-device-class="desktop-wide"] #screen-organizer .org-play-table tbody tr.selected .fd-pin-indicator {
+  color: #ca8a04 !important;
+}
+
+/* Preview panel */
+#screen-organizer .org-library-preview,
+#screen-organizer .fd-library-preview {
+  background: var(--fc-modern-surface);
+  border-left: 1px solid var(--fc-modern-border);
+}
+
+#screen-organizer .fd-preview-actions-bar,
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar {
+  background: linear-gradient(135deg, var(--fc-modern-header-from) 0%, var(--fc-modern-header-to) 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 10px 14px !important;
+}
+
+#screen-organizer .fd-preview-actions-bar .org-preview-breadcrumb,
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-breadcrumb,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-breadcrumb {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+#screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play,
+html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play,
+html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play {
+  border-radius: 8px !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#screen-organizer .fd-preview-subbar {
+  background: var(--fc-modern-surface-muted);
+  border-bottom: 1px solid var(--fc-modern-border);
+}
+
+#screen-organizer .fd-preview-subbar-btn,
+#screen-organizer .org-preview-tool-btn {
+  border-radius: 8px;
+  border-color: var(--fc-modern-border);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+#screen-organizer .fd-preview-subbar-btn:hover,
+#screen-organizer .org-preview-tool-btn:hover {
+  background: var(--fc-modern-surface);
+  border-color: #cbd5e1;
+}
+
+#screen-organizer .org-preview-frame,
+#screen-organizer .org-preview-frame-card {
+  border-radius: 4px;
+  border-color: #d0d0d0;
+  box-shadow: none;
+}
+
+#screen-organizer .org-preview-empty-icon {
+  border-radius: 14px;
+  border-color: #cbd5e1;
+}
+
+/* Fields styling — see fc-fields.css (FastDraw reference) */
+
+/* Playbooks styling — see fc-playbooks.css (FastDraw reference) */
+
+/* Footer */
+#screen-organizer .fd-app-footer,
+#screen-organizer .org-statusbar {
+  background: var(--fc-modern-surface);
+  border-top: 1px solid var(--fc-modern-border);
+}
+
+#screen-organizer .fd-app-footer-line {
+  color: var(--fc-modern-text-muted);
+}

@@ -1,0 +1,232 @@
+/**
+ * Fields tab — FastDraw reference layout (sub-tabs + actions on one row).
+ */
+
+#screen-organizer .fc-fields-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+
+#screen-organizer .fc-fields-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 0 20px;
+  min-height: 52px;
+  box-sizing: border-box;
+  background: #fff;
+  border-bottom: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+#screen-organizer .fc-fields-subtabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+#screen-organizer .fc-fields-subtab {
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px 0 12px;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#screen-organizer .fc-fields-subtab.active {
+  color: #111 !important;
+  border-bottom-color: #111 !important;
+}
+
+#screen-organizer .fc-fields-subtab:hover:not(.active) {
+  color: #333;
+}
+
+#screen-organizer .fc-fields-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+#screen-organizer .fc-fields-create-btn {
+  border: none !important;
+  border-radius: 0 !important;
+  background: #111 !important;
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+#screen-organizer .fc-fields-create-btn:hover {
+  background: #333 !important;
+}
+
+#screen-organizer .fc-fields-delete-btn {
+  border: 1px solid #111 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #111 !important;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+#screen-organizer .fc-fields-delete-btn:not(:disabled):hover {
+  background: #f3f4f6 !important;
+}
+
+#screen-organizer .fc-fields-delete-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#screen-organizer .fc-fields-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  padding: 0 20px 20px;
+}
+
+#screen-organizer .fc-fields-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 4px;
+  border-bottom: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+#screen-organizer .fc-fields-search-row .fd-search-icon {
+  font-size: 16px;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+#screen-organizer .fc-fields-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: #111;
+  outline: none;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+#screen-organizer .fc-fields-search-input::placeholder {
+  color: #9ca3af;
+}
+
+#screen-organizer .fc-fields-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+#screen-organizer .fc-fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#screen-organizer .fc-fields-table thead th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  padding: 12px 8px;
+  border-bottom: 1px solid #d1d5db;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#screen-organizer .fc-fields-col-check {
+  width: 40px;
+  text-align: center;
+  padding-left: 12px;
+  padding-right: 4px;
+}
+
+#screen-organizer .fc-fields-table .fc-fields-col-count {
+  width: 120px;
+  text-align: right;
+}
+
+#screen-organizer .fc-fields-table tbody td {
+  font-size: 14px;
+  color: #222;
+  padding: 10px 8px;
+  border-bottom: 1px solid #ececec;
+  vertical-align: middle;
+}
+
+#screen-organizer .fc-fields-table tbody td.fc-fields-col-count {
+  text-align: right;
+  color: #444;
+}
+
+#screen-organizer .fc-fields-row-check,
+#screen-organizer .fc-fields-select-all {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #111;
+}
+
+#screen-organizer .fc-fields-table tbody tr.fc-fields-row {
+  cursor: pointer;
+}
+
+#screen-organizer .fc-fields-table tbody tr.fc-fields-row:hover {
+  background: #f8fafc;
+}
+
+#screen-organizer .fc-fields-table tbody tr.fc-fields-row.selected {
+  background: #111 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+#screen-organizer .fc-fields-table tbody tr.fc-fields-row.selected td {
+  color: #fff !important;
+  border-bottom-color: #333 !important;
+}
+
+#screen-organizer .fc-fields-empty-row td {
+  text-align: center;
+  color: #64748b;
+  padding: 28px 8px;
+}

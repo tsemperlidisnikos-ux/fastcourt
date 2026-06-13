@@ -1,0 +1,54 @@
+/**
+ * Popup / overflow menus sit on white surfaces but inherit body light text.
+ * Force readable black labels across the app.
+ */
+
+.ds-fd-overflow-menu button,
+.ds-fd-overflow-menu [role="menuitem"],
+.ds-dropdown-menu button,
+.ds-dropdown-item,
+.fc-playbooks-manage-menu-item:not(.fc-playbooks-manage-menu-delete),
+.org-create-menu-item,
+.org-share-menu-item,
+.org-user-menu-item:not(.org-user-menu-item-danger),
+.org-user-menu-portal .org-user-menu-item:not(.org-user-menu-item-danger),
+.org-user-menu-action-btn:not(.org-user-menu-action-btn-primary),
+.org-filter-dropdown-menu button,
+.org-filter-dropdown-menu .org-dropdown-row,
+.org-filter-dropdown-action,
+.org-filter-dropdown-add,
+.fc-fd-tablet-menu-item:not(.fc-fd-tablet-menu-item-danger),
+.fc-fd-filter-dropdown-portal .org-dropdown-row,
+.fc-fd-filter-dropdown-portal button,
+#player-roster-modal .modal-cancel,
+#player-share-send-modal .modal-cancel,
+#player-roster-modal .player-roster-item-name,
+#player-share-send-modal .player-share-send-item-name,
+[role="menu"] button[role="menuitem"]:not(.fc-library-play-context-item) {
+  color: #000;
+}
+
+.ds-fd-overflow-menu button:hover,
+.ds-dropdown-item:hover,
+.fc-playbooks-manage-menu-item:hover:not(:disabled):not(.fc-playbooks-manage-menu-delete),
+.org-create-menu-item:hover,
+.org-share-menu-item:hover,
+.org-user-menu-item:not(.org-user-menu-item-danger):hover,
+.org-user-menu-action-btn:not(.org-user-menu-action-btn-primary):hover,
+.org-filter-dropdown-menu .org-dropdown-row:hover,
+.fc-fd-tablet-menu-item:not(.fc-fd-tablet-menu-item-danger):hover {
+  color: #000;
+}
+
+/* Keep destructive actions red */
+.fc-playbooks-manage-menu-delete,
+.org-user-menu-item-danger,
+.fc-fd-tablet-menu-item-danger {
+  color: #b91c1c;
+}
+
+.fc-playbooks-manage-menu-delete:hover:not(:disabled),
+.org-user-menu-item-danger:hover,
+.fc-fd-tablet-menu-item-danger:hover {
+  color: #b91c1c;
+}

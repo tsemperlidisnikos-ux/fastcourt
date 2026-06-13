@@ -1,0 +1,413 @@
+body.player-portal-open {
+  overflow: hidden;
+}
+
+body.player-portal-open #screen-organizer,
+body.player-portal-open #screen-designer {
+  overflow: hidden;
+}
+
+.player-portal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.player-portal-shell {
+  width: min(1180px, 100%);
+  height: min(88vh, 820px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 28px 72px rgba(15, 23, 42, 0.28),
+    0 0 0 1px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.player-portal-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #2f4563 0%, #3a5478 100%);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.player-portal-header-left {
+  min-width: 0;
+}
+
+.player-portal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.player-portal-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.88;
+  line-height: 1.4;
+}
+
+.player-portal-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-portal-team-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.player-portal-team-field select {
+  min-width: 120px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.player-portal-team-field select option {
+  color: #0f172a;
+  background: #fff;
+}
+
+.player-portal-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.player-portal-btn:active {
+  transform: scale(0.98);
+}
+
+.player-portal-btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.player-portal-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.player-portal-btn-primary {
+  border: none;
+  background: #fff;
+  color: #2f4563;
+}
+
+.player-portal-btn-primary:hover {
+  background: #f1f5f9;
+}
+
+.player-portal-btn-close {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  padding: 8px 12px;
+}
+
+.player-portal-btn-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.player-portal-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.player-portal-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid #e8edf3;
+  overflow-y: auto;
+  padding: 14px 12px;
+  background: #f8fafc;
+}
+
+.player-portal-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 24px;
+  min-width: 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.player-portal-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin: 8px 4px 8px;
+}
+
+.player-portal-plays-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.player-portal-plays-head .player-portal-section-title {
+  margin: 12px 4px 8px;
+}
+
+.player-portal-plays-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.player-portal-plays-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.player-portal-plays-tool-btn {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.player-portal-plays-tool-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.player-portal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.player-portal-play-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.player-portal-play-row.is-checked .player-portal-item {
+  border-color: #93c5fd;
+  background: #f0f7ff;
+}
+
+.player-portal-play-row.is-previewing .player-portal-item {
+  border-color: #9ca3af;
+  background: #e8eaed;
+}
+
+.player-portal-play-check {
+  width: 18px;
+  height: 18px;
+  margin-top: 12px;
+  flex-shrink: 0;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.player-portal-play-row .player-portal-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-portal-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px solid #e8edf3;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.player-portal-item:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.player-portal-item.is-selected {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px #bfdbfe;
+}
+
+.player-portal-item-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.player-portal-item-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.player-portal-empty,
+.player-portal-empty-list {
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px 8px;
+  line-height: 1.5;
+}
+
+.player-portal-preview {
+  width: 100%;
+  max-width: 480px;
+}
+
+.player-portal-preview-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.player-portal-preview-head h3 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.player-portal-preview-head p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.player-portal-preview-court {
+  border: 1px solid #e8edf3;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fafbfc;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.player-portal-preview-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.player-portal-preview-actions .player-portal-btn {
+  color: #2f4563;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.player-portal-preview-actions .player-portal-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.player-portal-preview-actions .player-portal-btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.player-portal-preview-actions .player-portal-btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.player-portal-present-btn {
+  background: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #fff !important;
+}
+
+.player-portal-present-btn:hover {
+  background: #1e293b !important;
+}
+
+.player-portal-video-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  .player-portal-overlay {
+    padding: 0;
+  }
+
+  .player-portal-shell {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    max-height: none;
+  }
+
+  .player-portal-body {
+    flex-direction: column;
+  }
+
+  .player-portal-sidebar {
+    width: 100%;
+    max-height: 42vh;
+    border-right: none;
+    border-bottom: 1px solid #e8edf3;
+  }
+}

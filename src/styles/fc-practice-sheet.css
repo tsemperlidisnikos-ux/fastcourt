@@ -1,0 +1,332 @@
+/* Practice sheet overlay — PDF template + team logo + ink (fullscreen) */
+
+.fc-practice-sheet-overlay.fc-print-overlay {
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  overflow: hidden !important;
+}
+
+.fc-practice-sheet-overlay .fc-print-overlay-backdrop {
+  display: none;
+}
+
+.fc-print-overlay-panel-practice-sheet {
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100vh !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.fc-practice-sheet-toolbar {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 16px;
+  flex-shrink: 0;
+}
+
+.fc-practice-sheet-toolbar-main {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.fc-practice-sheet-toolbar-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.fc-practice-sheet-toolbar-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.fc-practice-sheet-tool-group {
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fc-practice-sheet-tool-btn {
+  padding: 7px 12px;
+  border: none;
+  background: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fc-practice-sheet-tool-btn + .fc-practice-sheet-tool-btn {
+  border-left: 1px solid #cbd5e1;
+}
+
+.fc-practice-sheet-tool-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.fc-practice-sheet-tool-btn.is-active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.fc-practice-sheet-tool-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.fc-practice-sheet-colors {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fc-practice-sheet-color {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  cursor: pointer;
+}
+
+.fc-practice-sheet-color.is-active {
+  box-shadow: 0 0 0 2px #2563eb;
+}
+
+.fc-practice-sheet-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: block;
+  padding: 0 !important;
+  background: #fff;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fc-practice-sheet-doc {
+  width: 100%;
+  min-height: 100%;
+  display: block;
+}
+
+.fc-practice-sheet-stage {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  display: block;
+  overflow: visible;
+  background: #fff;
+}
+
+.fc-practice-sheet-page {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  background: #fff;
+  box-shadow: none;
+  margin: 0;
+}
+
+.fc-practice-sheet-loading,
+.fc-practice-sheet-error {
+  position: sticky;
+  top: 12px;
+  z-index: 3;
+  width: fit-content;
+  margin: 0 auto 8px;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.fc-practice-sheet-error {
+  color: #b91c1c;
+}
+
+.fc-practice-sheet-pdf,
+.fc-practice-sheet-ink {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.fc-practice-sheet-ink {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+.fc-practice-sheet-ink.is-active {
+  cursor: crosshair;
+}
+
+.fc-practice-sheet-team-logo {
+  position: absolute;
+  top: 2.2%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(22%, 180px);
+  max-height: 11%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fc-practice-sheet-team-name {
+  position: absolute;
+  top: 2.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 70%;
+  padding: 4px 10px;
+  font-size: clamp(14px, 2vw, 20px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0f172a;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fd-hero-app-logo-wrap .fd-hero-brand-logo-btn {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.fd-hero-app-logo-wrap .fd-hero-brand-logo-btn:hover .fd-hero-brand-logo,
+.fd-hero-app-logo-wrap .fd-hero-brand-logo-btn:focus-visible .fd-hero-brand-logo {
+  opacity: 0.88;
+}
+
+.fd-hero-app-logo-wrap .fd-hero-brand-logo-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0.15in;
+  }
+
+  html.fc-practice-sheet-printing,
+  html.fc-practice-sheet-printing body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-practice-sheet-printing body > *:not(#practice-sheet-overlay) {
+    display: none !important;
+  }
+
+  html.fc-practice-sheet-printing #practice-sheet-overlay,
+  html.fc-practice-sheet-printing #practice-sheet-overlay * {
+    visibility: visible !important;
+  }
+
+  html.fc-practice-sheet-printing #practice-sheet-overlay {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-practice-sheet-printing #fc-practice-sheet-content {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-practice-sheet-printing .fc-practice-sheet-body,
+  html.fc-practice-sheet-printing .fc-practice-sheet-doc,
+  html.fc-practice-sheet-printing .fc-practice-sheet-stage {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    background: #fff !important;
+  }
+
+  html.fc-practice-sheet-printing .fc-practice-sheet-page {
+    position: relative !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  html.fc-practice-sheet-printing .fc-practice-sheet-pdf,
+  html.fc-practice-sheet-printing .fc-practice-sheet-ink {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+  }
+
+  html.fc-practice-sheet-printing .fc-practice-sheet-ink {
+    position: absolute !important;
+    inset: 0 !important;
+  }
+
+  html.fc-practice-sheet-printing .fc-practice-sheet-team-logo {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  html.fc-practice-sheet-printing .fc-print-overlay-panel-practice-sheet {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.fc-practice-sheet-printing .no-print,
+  html.fc-practice-sheet-printing .fc-print-overlay-backdrop {
+    display: none !important;
+  }
+}
