@@ -2,10 +2,12 @@
 
 import { APP_BUILD, APP_NAME } from "@/lib/config";
 import { isCloudEnabled } from "@/lib/supabase/client";
+import { getCloudConfigIssue } from "@/lib/supabase/env";
 import type { AuthSession } from "@/types/auth";
 
 export function AccountSystemSection({ session }: { session: AuthSession }) {
   const cloud = isCloudEnabled();
+  const cloudIssue = getCloudConfigIssue();
 
   function copyBuildInfo() {
     const text = `${APP_NAME} ${APP_BUILD} · ${session.user.email} · cloud=${cloud}`;
@@ -31,7 +33,7 @@ export function AccountSystemSection({ session }: { session: AuthSession }) {
         </div>
         <div>
           <dt>Cloud</dt>
-          <dd>{cloud ? "Supabase configured" : "Local only"}</dd>
+          <dd>{cloud ? "Supabase configured" : cloudIssue ?? "Local only"}</dd>
         </div>
       </dl>
 

@@ -418,7 +418,7 @@ export function LoginForm() {
     }
   }
 
-  async function submitSignupPayment(normalized: string) {
+  async function submitSignupPayment(_normalized: string) {
     setLoading(true);
     try {
       if (!cloud) {

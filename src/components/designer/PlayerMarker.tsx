@@ -64,7 +64,14 @@ export function PlayerMarker({
       : ""
     : object.label ?? "";
   const hitListening = listening || draggable;
-  const offenseCircle = isOffense && playerDisplay === "circle";
+  const circleDisplayMode = playerDisplay === "circle";
+  const showCircleRing = compact
+    ? circleDisplayMode
+    : circleDisplayMode || selected;
+  const ringRadius = radius * 1.12;
+  const labelRadius = showCircleRing && isPlayer ? ringRadius : radius;
+  const offenseCircle = isOffense && showCircleRing;
+  const defenseCircle = isDefense && showCircleRing;
   const markerStroke = compactStrokeWidth ?? (compact ? 1.15 : 2.5);
   const jerseyFontStyle = compact ? "normal" : "bold";
 
@@ -114,17 +121,17 @@ export function PlayerMarker({
       />
       {isOffense && object.hasBall ? (
         <Circle
-          radius={radius + 5}
+          radius={(showCircleRing ? ringRadius : radius) + 5}
           fill="transparent"
           stroke="#111111"
           strokeWidth={markerStroke}
           listening={false}
         />
       ) : null}
-      {isDefense && playerDisplay === "circle" ? (
+      {isDefense && defenseCircle ? (
         <Circle
-          radius={radius}
-          fill="#ffffff"
+          radius={ringRadius}
+          fill="transparent"
           stroke={OBJECT_COLORS.defense}
           strokeWidth={markerStroke}
           listening={false}
@@ -132,8 +139,8 @@ export function PlayerMarker({
       ) : null}
       {offenseCircle ? (
         <Circle
-          radius={radius}
-          fill="#ffffff"
+          radius={ringRadius}
+          fill="transparent"
           stroke="#111111"
           strokeWidth={markerStroke}
           listening={false}
@@ -148,10 +155,10 @@ export function PlayerMarker({
           fontFamily="Segoe UI, system-ui, sans-serif"
           align="center"
           verticalAlign="middle"
-          x={-radius}
-          y={-radius}
-          width={radius * 2}
-          height={radius * 2}
+          x={-labelRadius}
+          y={-labelRadius}
+          width={labelRadius * 2}
+          height={labelRadius * 2}
           listening={false}
         />
       ) : null}
@@ -208,7 +215,7 @@ export function PlayerMarker({
           scaleY={object.scaleY ?? 1}
         />
       ) : null}
-      {selected && isPlayer ? (
+      {selected && isPlayer && !showCircleRing ? (
         <Circle
           x={0}
           y={0}

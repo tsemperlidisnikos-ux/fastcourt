@@ -399,10 +399,17 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       lineDraft: null,
       freehandDraft: null,
       pendingFreehand: null,
+      animRuntime: null,
       whiteboardInkMode: tool === "whiteboard" ? get().whiteboardInkMode : "draw",
       whiteboardErasing: false,
-      selectedActionId: tool === "select" ? get().selectedActionId : null,
-      selectedObjectId: tool === "select" ? get().selectedObjectId : null,
+      selectedActionId:
+        tool === "select" || tool === "line" || tool === "shoot"
+          ? get().selectedActionId
+          : null,
+      selectedObjectId:
+        tool === "select" || tool === "line" || tool === "shoot"
+          ? get().selectedObjectId
+          : null,
     }),
 
   setLineActionType: (type) => set({ lineActionType: type }),
