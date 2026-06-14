@@ -574,6 +574,8 @@
   font-size: 14px;
   box-sizing: border-box;
   background: #fff;
+  color: #000;
+  -webkit-text-fill-color: #000;
 }
 
 .fc-playbook-dialog-error {

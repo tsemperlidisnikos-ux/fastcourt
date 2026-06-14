@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAccessError } from "@/lib/auth/access";
+import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
 import { fetchProfile, profileToAuthSession } from "@/lib/auth/profile";
 import { finalizeAuthSession } from "@/lib/auth/session-bootstrap";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSettingsStore } from "@/stores/settings-store";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -32,6 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       const session = profileToAuthSession(profile);
       const finalized = finalizeAuthSession(session);
+      const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
+      if (deviceError) {
+        signOut();
+        await supabase!.auth.signOut();
+        router.replace(`/login?error=${encodeURIComponent(deviceError)}`);
+        return;
+      }
       const accessError = getAccessError(finalized.session.user);
       if (accessError) {
         signOut();
@@ -40,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       setSession(finalized.session);
+      await useSettingsStore.getState().hydrateForUser(finalized.session.user);
     }
 
     async function bootstrap() {

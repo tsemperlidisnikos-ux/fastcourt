@@ -44,6 +44,7 @@ import {
   type FormationKey,
 } from "@/lib/designer/formations";
 import { createBlankPlay, createFrame, createPlayFromLibraryItem } from "@/lib/designer/play-factory";
+import { useSettingsStore } from "@/stores/settings-store";
 import type {
   ActionTiming,
   ActionType,
@@ -429,6 +430,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   loadPlay: (play) => {
     const normalized = normalizeLoadedPlay(play);
+    const prefsZoom = useSettingsStore.getState().designer.defaultCourtZoom;
     set({
       play: normalized,
       currentFrameIndex: 0,
@@ -438,7 +440,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       frameActionsDirty: false,
       undoStack: [],
       redoStack: [],
-      courtZoom: defaultCourtZoom(normalized.courtType),
+      courtZoom: prefsZoom || defaultCourtZoom(normalized.courtType),
     });
   },
 

@@ -620,6 +620,7 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
     if (navId === "team-organizations") {
       saveTeamOrganizations(orgs);
       setDirty(false);
+      appNotice("Saved", "Team organizations updated.");
       return;
     }
 
@@ -627,7 +628,7 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
     saveAdminUsers(merged);
     setUsers(merged);
     saveTeamOrganizations(orgs);
-    persistAll();
+    persistAll(session.user);
     setDirty(false);
   }
 

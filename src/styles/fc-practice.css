@@ -681,13 +681,18 @@ html[data-device-class="tablet"] #screen-organizer.library-practice-mode .practi
   color: #64748b;
 }
 
-.modal-field input {
+.modal-field input,
+.modal-field textarea,
+.modal-field select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
   box-sizing: border-box;
+  color: #000;
+  -webkit-text-fill-color: #000;
+  background: #fff;
 }
 
 .modal-actions {

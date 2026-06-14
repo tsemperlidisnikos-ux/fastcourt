@@ -27,6 +27,16 @@ export function isOrganizationSubscriptionActive(org: TeamOrganization): boolean
   return Number.isFinite(end) && end > Date.now();
 }
 
+export function getOrganizationById(orgId: string): TeamOrganization | null {
+  return loadTeamOrganizations().find((org) => org.id === orgId) ?? null;
+}
+
+export function getTeamAdminOrganization(email: string): TeamOrganization | null {
+  const membership = findOrganizationMembership(email);
+  if (!membership || membership.memberRole !== "team_admin") return null;
+  return membership.org;
+}
+
 export function findOrganizationMembership(
   email: string,
 ): OrganizationMembership | null {

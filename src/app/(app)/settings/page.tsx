@@ -4,9 +4,10 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { isAdminUser } from "@/lib/auth/roles";
+import { isAdminUser, isTeamAdminUser } from "@/lib/auth/roles";
 import { AdminSettingsPanel } from "@/components/settings/AdminSettingsPanel";
 import { CoachSettingsPanel } from "@/components/settings/CoachSettingsPanel";
+import { TeamAdminSettingsPanel } from "@/components/settings/TeamAdminSettingsPanel";
 
 export default function SettingsPage() {
   const session = useAuthStore((s) => s.session);
@@ -22,6 +23,10 @@ export default function SettingsPage() {
 
   if (isAdminUser(session.user)) {
     return <AdminSettingsPanel session={session} />;
+  }
+
+  if (isTeamAdminUser(session.user)) {
+    return <TeamAdminSettingsPanel session={session} />;
   }
 
   return <CoachSettingsPanel session={session} />;

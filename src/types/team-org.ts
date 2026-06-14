@@ -1,3 +1,5 @@
+import type { OrgBrandingSettings } from "@/types/org-branding";
+
 export type OrgMemberRole = "coach" | "player";
 export type OrgMemberStatus = "active" | "invited" | "disabled";
 
@@ -19,4 +21,5 @@ export interface TeamOrganization {
   createdAt: string;
   coaches: OrgMember[];
   players: OrgMember[];
+  branding?: OrgBrandingSettings;
 }

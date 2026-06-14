@@ -6,8 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ADMIN_EMAIL, ROLES } from "@/lib/config";
 import { useAppLogoSrc } from "@/hooks/useAppLogoSrc";
 import { getAccessError } from "@/lib/auth/access";
+import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
 import { friendlyAuthError } from "@/lib/auth/errors";
 import { appNotice } from "@/stores/dialog-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { isMasterAdminEmail } from "@/lib/auth/roles";
 import {
   fetchProfile,
@@ -195,10 +197,10 @@ export function LoginForm() {
     setError(null);
   }
 
-  function completeAuthSession(
+  async function completeAuthSession(
     session: ReturnType<typeof profileToAuthSession>,
     options?: { organizationName?: string; redirectTo?: string },
-  ) {
+  ): Promise<string | null> {
     const finalized = finalizeAuthSession(session, {
       pendingInvite: teamInvite,
       organizationName:
@@ -217,12 +219,18 @@ export function LoginForm() {
       );
     }
 
+    const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
+    if (deviceError) {
+      return deviceError;
+    }
+
     const accessError = getAccessError(finalized.session.user);
     if (accessError) {
       return accessError;
     }
 
     setSession(finalized.session);
+    await useSettingsStore.getState().hydrateForUser(finalized.session.user);
     router.replace(options?.redirectTo ?? next);
     return null;
   }
@@ -259,7 +267,7 @@ export function LoginForm() {
       const session = localDemoSession(normalized, signupValues.displayName);
       const role = resolveSignupRoleChoice(normalized, signupValues.signupRole);
       session.user = { ...session.user, role };
-      const accessError = completeAuthSession(session, {
+      const accessError = await completeAuthSession(session, {
         organizationName: signupValues.teamName.trim() || teamInvite?.organizationName,
         redirectTo: buildPostSignupLibraryUrl(next),
       });
@@ -326,7 +334,7 @@ export function LoginForm() {
       ...session.user,
       role: isMasterAdminEmail(normalized) ? ROLES.admin : role,
     };
-    const accessError = completeAuthSession(session, {
+    const accessError = await completeAuthSession(session, {
       organizationName: signupValues.teamName.trim() || teamInvite?.organizationName,
       redirectTo: buildPostSignupLibraryUrl(next),
     });
@@ -545,7 +553,7 @@ export function LoginForm() {
     try {
       if (!cloud) {
         const session = localDemoSession(normalized);
-        const accessError = completeAuthSession(session);
+        const accessError = await completeAuthSession(session);
         if (accessError) setError(accessError);
         return;
       }
@@ -592,7 +600,7 @@ export function LoginForm() {
       }
 
       const session = profileToAuthSession(profile);
-      const accessError = completeAuthSession(session);
+      const accessError = await completeAuthSession(session);
       if (accessError) {
         await supabase.auth.signOut();
         setError(accessError);

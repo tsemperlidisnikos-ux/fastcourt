@@ -33,9 +33,11 @@ function isValidEmail(email: string) {
 export function TeamOrganizationsSection({
   orgs,
   onChange,
+  variant = "admin",
 }: {
   orgs: TeamOrganization[];
   onChange: (next: TeamOrganization[]) => void;
+  variant?: "admin" | "team_admin";
 }) {
   const [name, setName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -182,14 +184,19 @@ export function TeamOrganizationsSection({
     }));
   }
 
+  const isTeamAdminView = variant === "team_admin";
+
   return (
     <div className="admin-organizations-panel" id="admin-organizations-panel">
       <div className="admin-billing-head">
         <div>
-          <div className="admin-content-overview-title">Team organizations</div>
+          <div className="admin-content-overview-title">
+            {isTeamAdminView ? "Your organization" : "Team organizations"}
+          </div>
           <div className="admin-billing-help">
-            Create a team, assign a Team Admin email, and add coach users below
-            each organization. Changes save immediately.
+            {isTeamAdminView
+              ? "Add coaches, copy invite links, and remove members. Click Apply to save changes."
+              : "Create a team, assign a Team Admin email, and add coach users below each organization. Changes save immediately."}
           </div>
         </div>
       </div>
@@ -205,6 +212,7 @@ export function TeamOrganizationsSection({
         </div>
       ) : null}
 
+      {!isTeamAdminView ? (
       <form className="admin-org-create-form" onSubmit={handleCreate}>
         <div className="admin-billing-row">
           <label className="admin-billing-field">
@@ -271,11 +279,14 @@ export function TeamOrganizationsSection({
           </p>
         ) : null}
       </form>
+      ) : null}
 
       <div className="admin-organizations-list">
         {sortedOrgs.length === 0 ? (
           <div className="admin-license-empty">
-            No team organizations yet. Create one above.
+            {isTeamAdminView
+              ? "Organization not found."
+              : "No team organizations yet. Create one above."}
           </div>
         ) : (
           sortedOrgs.map((org) => (
@@ -284,6 +295,7 @@ export function TeamOrganizationsSection({
                 <div className="admin-org-card-head-row">
                   <strong>{org.name}</strong>
                   <div className="admin-org-card-head-actions">
+                    {!isTeamAdminView ? (
                     <button
                       type="button"
                       className="admin-view-all-btn admin-org-view-library"
@@ -296,6 +308,8 @@ export function TeamOrganizationsSection({
                     >
                       View team library
                     </button>
+                    ) : null}
+                    {!isTeamAdminView ? (
                     <button
                       type="button"
                       className="admin-org-delete-btn"
@@ -303,6 +317,7 @@ export function TeamOrganizationsSection({
                     >
                       Delete
                     </button>
+                    ) : null}
                   </div>
                 </div>
                 <span className="admin-org-card-meta">

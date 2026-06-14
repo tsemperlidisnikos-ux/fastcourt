@@ -1,6 +1,6 @@
 # FastCourt Next — Baseline Audit
 
-**Ημερομηνία:** 2026-06-14 (ενημερωμένο)  
+**Ημερομηνία:** 2026-06-15 (ενημερωμένο)  
 **Legacy reference:** `C:\fastcourt` (PWA `fastcourt-v591`)  
 **Next build tag:** `next-v7`
 
@@ -10,7 +10,7 @@
 |-------|------------|--------------|
 | `npm run build` | **PASS** | TypeScript + Turbopack production build |
 | `npm run lint` | **PASS** | 0 errors, 0 warnings |
-| `npm test` | **PASS** | 63 unit tests (health-check) |
+| `npm test` | **PASS** | 78+ unit tests (health-check) |
 
 ---
 
@@ -37,13 +37,15 @@
 | **Login / Welcome** | ✅ Done | OAuth, signup wizard, **post-signup onboarding** |
 | **Designer — core tools** | ✅ Done | Konva, players, lines, shots, zones, formations, whiteboard |
 | **Designer — overflow menu** | ⚠️ Mostly done | Share, print, PNG, mirror, import phase· **WebM/MP4 stub** |
-| **Settings — Coach** | ⚠️ Partial | Subscription, PDF, tools· gaps: team workspace, full backup |
+| **Settings — Coach** | ⚠️ Mostly done | Role panel: account, PDF/branding, devices, cloud sync, notifications· Appearance/designer prefs admin-only |
+| **Settings — Team Admin** | ⚠️ Mostly done | Org overview, members, team branding, cloud sync· org data localStorage only |
 | **Settings — Admin** | ⚠️ Mostly done | Users, orgs, billing, appearance + **live header preview**, **auto tab contrast** |
 | **PlayBank** | ❌ Missing | Legacy overlay + catalog |
 | **Free-draw** | ❌ Missing | Standalone quick-draw· whiteboard-on-frame μόνο |
-| **Cloud sync** | ❌ Missing | Auth OK· library IndexedDB only |
+| **Cloud sync — settings** | ⚠️ Mostly done | Per-user settings + devices in Supabase (`user_settings`)· requires migration 002 |
+| **Cloud sync — library** | ❌ Missing | Auth OK· library IndexedDB only (Phase 4) |
 | **PWA / offline** | ⚠️ Partial | Manifest μόνο· χωρίς service worker |
-| **Device limits** | ⚠️ Partial | Config + copy· χωρίς login enforcement |
+| **Device limits** | ⚠️ Mostly done | Enforced at login (cloud devices merged first)· limit from billing config |
 | **Share links** | ✅ Done | LZ hash URLs· remote `r:` links partial |
 
 ---
@@ -103,11 +105,13 @@
 
 ### Settings
 
-- [x] Coach: subscription, license, PDF branding, tools (JSON subset)
+- [x] Coach: subscription, license, PDF branding, tools, cloud sync, devices, notifications
+- [x] Team admin: org members, team branding, cloud sync
 - [x] Admin: users CRUD, orgs, billing config, appearance
 - [x] Header brand row + active tab colors + live preview + auto contrast
-- [ ] Cloud sync panel (sync now, iPad URL)
-- [ ] Device limits enforcement
+- [x] Cloud sync panel (sync now) — settings only
+- [x] Device limits enforcement (cross-device when migration 002 applied)
+- [ ] Team orgs + branding in Supabase (localStorage today)
 - [ ] Full backup (users + PlayBank + rosters)
 - [ ] Admin password change
 - [ ] FastDraw import wizard in settings
@@ -132,17 +136,19 @@
 
 ---
 
-## Προτεραιότητες (2026-06-14)
+## Προτεραιότητες (2026-06-15)
 
-1. **Designer court zoom UI** — store έτοιμο, μικρό diff
-2. **WebM/MP4 export** — τελευταίο μεγάλο designer gap
-3. **Phase 4 cloud sync** — κρίσιμο για club deployments
-4. **PlayBank** port
-5. **PWA** (Phase 5)
+1. **Apply migration 002** — `user_settings` table στο Supabase (required for cloud settings)
+2. **Phase 4 cloud library** — plays/playbooks sync + team orgs στο Supabase
+3. **Designer court zoom UI** — store έτοιμο, μικρό diff
+4. **WebM/MP4 export** — τελευταίο μεγάλο designer gap
+5. **PlayBank** port
+6. **PWA** (Phase 5)
 
 ---
 
 ## Επόμενα βήματα
 
-→ **Court zoom UI** ή **WebM export** για designer parity  
-→ **Cloud sync module** (`src/lib/cloud/`) για production clubs
+→ **Migration 002** στο Supabase + smoke test cross-browser  
+→ **Phase 4** — cloud library + team orgs  
+→ **Court zoom UI** ή **WebM export** για designer parity
