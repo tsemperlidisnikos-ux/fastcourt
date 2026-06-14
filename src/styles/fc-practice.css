@@ -278,10 +278,6 @@ html[data-device-class="tablet"] #screen-organizer.library-practice-mode .org-pr
   display: contents;
 }
 
-html[data-device-class="tablet"] #screen-organizer.library-practice-mode .practice-toolbar.fd-filter-bar {
-  display: none !important;
-}
-
 html[data-device-class="tablet"] #screen-organizer.library-practice-mode .practice-layout {
   display: contents;
 }
@@ -809,6 +805,83 @@ html[data-device-class="tablet"] #screen-organizer.library-practice-mode .practi
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.fc-practice-print-live-notes {
+  margin: 16px auto 0;
+  max-width: 640px;
+  padding: 16px 18px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.fc-practice-print-live-notes strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #92400e;
+}
+
+#screen-organizer .fd-new-practice-btn {
+  margin-left: 8px;
+  color: #16a34a;
+  border-color: #86efac;
+  font-weight: 700;
+}
+
+.practice-add-playbook-box {
+  max-width: 420px;
+}
+
+.practice-add-playbook-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.practice-add-playbook-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.practice-add-playbook-item:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+}
+
+.practice-add-playbook-name {
+  display: block;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.practice-add-playbook-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.practice-add-playbook-empty {
+  margin: 0;
+  font-size: 14px;
   color: #64748b;
 }
 

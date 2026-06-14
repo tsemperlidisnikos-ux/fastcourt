@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PracticeAddModal } from "@/components/library/PracticeAddModal";
+import { PracticeAddPlaybookModal } from "@/components/library/PracticeAddPlaybookModal";
 import { PracticeItemRow } from "@/components/library/PracticeItemRow";
 import { PracticeLiveOverlay } from "@/components/library/PracticeLiveOverlay";
 import { PracticeTemplateModal } from "@/components/library/PracticeTemplateModal";
@@ -30,16 +32,21 @@ import {
 import type { PracticeSession, PracticeTemplate } from "@/types/library-meta";
 
 export function PracticePlannerView() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const sessions = useOrganizerStore((s) => s.practiceSessions);
   const plays = useOrganizerStore((s) => s.plays);
+  const playbooks = useOrganizerStore((s) => s.playbooks);
   const teams = useOrganizerStore((s) => s.teams);
   const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
   const createPracticeSessionFromTemplate = useOrganizerStore(
     (s) => s.createPracticeSessionFromTemplate,
   );
+  const duplicatePracticeSession = useOrganizerStore((s) => s.duplicatePracticeSession);
   const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
   const deletePracticeSession = useOrganizerStore((s) => s.deletePracticeSession);
   const addPracticeItems = useOrganizerStore((s) => s.addPracticeItems);
+  const addPlaybookToSession = useOrganizerStore((s) => s.addPlaybookToSession);
   const addPracticeCueBlock = useOrganizerStore((s) => s.addPracticeCueBlock);
   const updatePracticeItem = useOrganizerStore((s) => s.updatePracticeItem);
   const removePracticeItem = useOrganizerStore((s) => s.removePracticeItem);
@@ -48,6 +55,7 @@ export function PracticePlannerView() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [playbookOpen, setPlaybookOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [liveSession, setLiveSession] = useState<PracticeSession | null>(null);
   const [printTarget, setPrintTarget] = useState<{
@@ -55,6 +63,18 @@ export function PracticePlannerView() {
     rows: ReturnType<typeof resolvePracticeSessionItems>;
   } | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const sessionId = searchParams.get("session");
+    if (!sessionId || !sessions.some((s) => s.id === sessionId)) return;
+    const selectTimer = window.setTimeout(() => setSelectedId(sessionId), 0);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("session");
+    const qs = params.toString();
+    router.replace(qs ? `/library?${qs}` : "/library", { scroll: false });
+    return () => window.clearTimeout(selectTimer);
+  }, [router, searchParams, sessions]);
 
   const playById = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
   const activeSessionId = selectedId ?? sessions[0]?.id ?? null;
@@ -132,10 +152,28 @@ export function PracticePlannerView() {
       subtitle: "Add a timed block without linking a library play.",
       label: "Block name",
       placeholder: "e.g. Dynamic warm-up",
-      submitLabel: "Add block",
+      submitLabel: "Next",
     });
     if (label === null) return;
-    await addPracticeCueBlock(selected.id, label);
+    const durationRaw = await appPrompt({
+      title: "Block duration",
+      subtitle: "How many minutes for this block?",
+      label: "Minutes",
+      initialValue: "10",
+      placeholder: "10",
+      submitLabel: "Add block",
+    });
+    if (durationRaw === null) return;
+    const durationMin = Math.max(1, Number(durationRaw) || 10);
+    await addPracticeCueBlock(selected.id, label, durationMin);
+  }
+
+  async function handleDuplicateSession() {
+    if (!selected) return;
+    const copy = await duplicatePracticeSession(selected.id);
+    if (!copy) return;
+    setSelectedId(copy.id);
+    appNotice("Session duplicated", `"${copy.title}" was created.`);
   }
 
   async function handleOpenDeleteSession() {
@@ -338,6 +376,14 @@ export function PracticePlannerView() {
                   <button
                     type="button"
                     className="practice-add-items-btn"
+                    id="btn-practice-add-playbook"
+                    onClick={() => setPlaybookOpen(true)}
+                  >
+                    + Add playbook
+                  </button>
+                  <button
+                    type="button"
+                    className="practice-add-items-btn"
                     id="btn-practice-add-items"
                     onClick={() => setAddOpen(true)}
                   >
@@ -358,8 +404,9 @@ export function PracticePlannerView() {
                       row={row}
                       totalRows={rows.length}
                       dragIndex={dragIndex}
+                      dropTargetIndex={dropTargetIndex}
                       onDragStart={() => setDragIndex(row.index)}
-                      onDragOver={(e) => e.preventDefault()}
+                      onDragOver={() => setDropTargetIndex(row.index)}
                       onDrop={() => {
                         if (
                           dragIndex != null &&
@@ -373,8 +420,12 @@ export function PracticePlannerView() {
                           );
                         }
                         setDragIndex(null);
+                        setDropTargetIndex(null);
                       }}
-                      onDragEnd={() => setDragIndex(null)}
+                      onDragEnd={() => {
+                        setDragIndex(null);
+                        setDropTargetIndex(null);
+                      }}
                       onUpdate={(patch) =>
                         updatePracticeItem(selected.id, row.item.id, patch)
                       }
@@ -390,6 +441,14 @@ export function PracticePlannerView() {
               </div>
 
               <div className="practice-editor-footer">
+                <button
+                  type="button"
+                  className="practice-save-template-btn"
+                  id="btn-practice-duplicate-session"
+                  onClick={() => void handleDuplicateSession()}
+                >
+                  Duplicate session
+                </button>
                 <button
                   type="button"
                   className="practice-save-template-btn"
@@ -428,6 +487,15 @@ export function PracticePlannerView() {
         onClose={() => setAddOpen(false)}
         onConfirm={(playIds) => {
           if (selected) void addPracticeItems(selected.id, playIds);
+        }}
+      />
+
+      <PracticeAddPlaybookModal
+        open={playbookOpen}
+        playbooks={playbooks}
+        onClose={() => setPlaybookOpen(false)}
+        onSelect={(playbookId) => {
+          if (selected) void addPlaybookToSession(selected.id, playbookId);
         }}
       />
 

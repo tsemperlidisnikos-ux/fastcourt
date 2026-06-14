@@ -2,10 +2,12 @@ const PREFS_KEY = "practiceLivePrefs_v1";
 
 export type PracticeLivePrefs = {
   autoStartTimer: boolean;
+  timerSound: boolean;
 };
 
 const DEFAULT_PREFS: PracticeLivePrefs = {
   autoStartTimer: true,
+  timerSound: true,
 };
 
 export function loadPracticeLivePrefs(): PracticeLivePrefs {

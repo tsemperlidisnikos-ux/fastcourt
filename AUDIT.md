@@ -1,6 +1,6 @@
-# FastCourt Next — Baseline Audit (Βήμα 0)
+# FastCourt Next — Baseline Audit
 
-**Ημερομηνία:** 2026-06-12  
+**Ημερομηνία:** 2026-06-14 (ενημερωμένο)  
 **Legacy reference:** `C:\fastcourt` (PWA `fastcourt-v591`)  
 **Next build tag:** `next-v7`
 
@@ -8,17 +8,9 @@
 
 | Check | Αποτέλεσμα | Λεπτομέρειες |
 |-------|------------|--------------|
-| `npm run build` | **FAIL** → fixed | TypeScript error: `getAllRosterPlayers` missing από `player-roster.ts` (διορθώθηκε στο audit) |
-| `npm run lint` | **FAIL** | ~41 errors, κυρίως `react-hooks/set-state-in-effect` (LoginForm, DesignerScreen, modals) + unused vars |
-
-### Κρίσιμα lint hotspots
-
-- `LoginForm.tsx` — setState σε useEffect (team invite hydration)
-- `DesignerScreen.tsx` — setState σε useEffect (initial panel)
-- `FormationModal.tsx`, `LineTypeModal.tsx` — mounted pattern
-- Warnings: unused vars σε CourtCanvas, CourtFrameThumbnail
-
-**Σύσταση:** ξεχωριστό PR για lint cleanup (refactor effects → lazy init / useSyncExternalStore).
+| `npm run build` | **PASS** | TypeScript + Turbopack production build |
+| `npm run lint` | **PASS** | 0 errors, 0 warnings |
+| `npm test` | **PASS** | 63 unit tests (health-check) |
 
 ---
 
@@ -31,24 +23,22 @@
 | `icon.svg` | Ναι | Ναι | OK |
 | `manifest.webmanifest` | Runtime blob + static | Ναι | Partial (χωρίς SW) |
 
-**Ενέργεια:** Προσθήκη `public/icons/icon.svg` (αντιγραφή από legacy). Για PNG logo — δημιουργία/export από brand asset ή `tools/make-logo-transparent.py`.
-
 ---
 
-## Migration Status (ενημερωμένο)
+## Migration Status (ενημερωμένο 2026-06-14)
 
-| Οθόνη | Parity | Σημειώσεις |
+| Οθόνη | Parity | Σημειώσειες |
 |-------|--------|------------|
-| **Library — Draw** | ✅ Done | FastDraw table, filters, preview, bulk, import, clean, print |
+| **Library — Draw** | ✅ Done | Table, filters, preview, bulk, import, clean, print, **New practice από selection** |
 | **Library — Playbooks** | ✅ Done | Present, print, share, manage |
 | **Library — Fields** | ✅ Done | Seasons, teams, series, tags |
-| **Library — Practice** | ⚠️ Partial | UI υπάρχει· legacy πλουσιότερο (templates, drag, gym mode) |
-| **Login / Welcome** | ✅ Done | Welcome CSS, OAuth, signup wizard· gaps: onboarding modal, PWA bars |
-| **Designer — core tools** | ✅ Done | Konva, players, lines, shots, zones, shadows, formations, whiteboard |
-| **Designer — overflow menu** | ❌ Missing | Share, print, PNG/WebM export, import phase, snippets, mirror |
+| **Library — Practice** | ⚠️ Mostly done | Sessions, templates, drag reorder, live gym timer, share/PDF, duplicate, add playbook· gaps: template edit, live share sync |
+| **Library — Players** | ✅ Done | Tab routed, roster + share |
+| **Login / Welcome** | ✅ Done | OAuth, signup wizard, **post-signup onboarding** |
+| **Designer — core tools** | ✅ Done | Konva, players, lines, shots, zones, formations, whiteboard |
+| **Designer — overflow menu** | ⚠️ Mostly done | Share, print, PNG, mirror, import phase· **WebM/MP4 stub** |
 | **Settings — Coach** | ⚠️ Partial | Subscription, PDF, tools· gaps: team workspace, full backup |
-| **Settings — Admin** | ⚠️ Partial | Users, orgs, billing, appearance· gaps: device limits, cloud sync UI |
-| **Players tab** | ⚠️ Planned | `PlayersView.tsx` έτοιμο — wiring στο plan (βλ. Players tab quick win) |
+| **Settings — Admin** | ⚠️ Mostly done | Users, orgs, billing, appearance + **live header preview**, **auto tab contrast** |
 | **PlayBank** | ❌ Missing | Legacy overlay + catalog |
 | **Free-draw** | ❌ Missing | Standalone quick-draw· whiteboard-on-frame μόνο |
 | **Cloud sync** | ❌ Missing | Auth OK· library IndexedDB only |
@@ -62,11 +52,11 @@
 
 ### Login / Welcome
 
-- [x] Welcome card layout + legal links (Privacy/Terms → alert "coming soon")
+- [x] Welcome card layout + legal links (Privacy/Terms pages)
 - [x] Email/password two-step login
 - [x] OAuth Google/Apple/Facebook
 - [x] Signup wizard (role, team, trial)
-- [ ] Post-signup onboarding modal (quickstart / import FDB)
+- [x] Post-signup onboarding modal (new play / import FDB / tour)
 - [ ] PWA install/update/offline bars
 - [ ] Admin preview badge on welcome
 - [ ] Payment step parity (legacy plan picker vs trial-only copy)
@@ -74,35 +64,48 @@
 
 ### Library
 
-- [x] Tabs: Draw, Playbooks, Fields, Practice
-- [ ] Tab: Players (component exists, not routed)
+- [x] Tabs: Draw, Playbooks, Fields, Practice, Players
 - [x] Filter bar + type chips + split preview
 - [x] Create play, import .fdb, bulk ops, clean panel
-- [ ] Library sort menu
+- [x] Library sort control
+- [x] **New Practice from Draw** (selection → session)
 - [ ] Contextual Create (New Drill / New Playbook on Draw)
-- [ ] New Practice from Draw filter bar
 - [ ] PlayBank entry
 - [ ] Snippets / building blocks overlay
 - [ ] Team workspace banner
 - [ ] FastDraw post-import QA panel (full legacy)
+
+### Practice
+
+- [x] Session planner (create, edit, delete, duplicate)
+- [x] Add plays/drills, cue blocks (with duration prompt)
+- [x] Add entire playbook to session
+- [x] Templates (built-in + custom save/start)
+- [x] Drag reorder + drop indicator
+- [x] Live gym overlay (timer, auto-advance, wake lock, timer sound)
+- [x] Share plan + session PDF (incl. gym notes)
+- [x] Send to players
+- [ ] Template edit/rename
+- [ ] Replace missing play picker
+- [ ] Live share / assistant view sync
 
 ### Designer
 
 - [x] Left tool panel (O/D, lines, shots, text, cone, shadow, zone)
 - [x] Frame nav, formations, FastBuild, undo/redo
 - [x] Whiteboard ink on frames
-- [x] Animation sidebar (partial vs legacy export)
-- [ ] Court zoom UI (+/−/reset)
+- [x] Animation sidebar (playback)
+- [x] Overflow: share, print, PNG, import phase, mirror, present
+- [ ] Court zoom UI (+/−/reset) — store ready, UI missing
 - [ ] Court sheet (OOB / BLOB / SLOB)
-- [ ] Overflow: share, print, PNG/WebM/MP4 export
-- [ ] Import play / import phase
-- [ ] Mirror frame/play, blank frame, snippets
-- [ ] Present from designer
+- [ ] WebM/MP4 animation export
+- [ ] Snippets overlay
 
 ### Settings
 
 - [x] Coach: subscription, license, PDF branding, tools (JSON subset)
-- [x] Admin: users CRUD, orgs, billing config, appearance, library viewer
+- [x] Admin: users CRUD, orgs, billing config, appearance
+- [x] Header brand row + active tab colors + live preview + auto contrast
 - [ ] Cloud sync panel (sync now, iPad URL)
 - [ ] Device limits enforcement
 - [ ] Full backup (users + PlayBank + rosters)
@@ -129,17 +132,17 @@
 
 ---
 
-## Προτεραιότητες μετά το audit
+## Προτεραιότητες (2026-06-14)
 
-1. **Phase 4 cloud sync** — κρίσιμο για club deployments
-2. **Build/lint green** — lint errors σε ξεχωριστό pass
-3. **Wire Players tab** + share overlays
-4. **Designer overflow menu** (export/share/print)
-5. **PlayBank** port
-6. **PWA** (Phase 5)
+1. **Designer court zoom UI** — store έτοιμο, μικρό diff
+2. **WebM/MP4 export** — τελευταίο μεγάλο designer gap
+3. **Phase 4 cloud sync** — κρίσιμο για club deployments
+4. **PlayBank** port
+5. **PWA** (Phase 5)
 
 ---
 
 ## Επόμενα βήματα
 
-→ **Βήμα 1:** Cloud sync module (`src/lib/cloud/`)
+→ **Court zoom UI** ή **WebM export** για designer parity  
+→ **Cloud sync module** (`src/lib/cloud/`) για production clubs

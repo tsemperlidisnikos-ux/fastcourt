@@ -74,6 +74,7 @@ interface Props {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  onNewPractice?: () => void;
   tabletMode?: boolean;
 }
 
@@ -88,6 +89,7 @@ export function LibraryTable({
   page,
   pageSize,
   onPageChange,
+  onNewPractice,
   tabletMode = false,
 }: Props) {
   const total = items.length;
@@ -194,6 +196,16 @@ export function LibraryTable({
             {from}–{to} of {total}
             {selectedCount > 0 ? ` · ${selectedCount} selected` : ""}
           </span>
+          {onNewPractice && selectedCount > 0 ? (
+            <button
+              type="button"
+              className="fd-page-btn fd-new-practice-btn"
+              id="btn-library-new-practice"
+              onClick={onNewPractice}
+            >
+              New practice
+            </button>
+          ) : null}
           <div className="fd-pagination">
             <button
               type="button"

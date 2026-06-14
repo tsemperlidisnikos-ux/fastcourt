@@ -65,6 +65,9 @@ export function DrawLibraryView() {
   const playbooks = useOrganizerStore((s) => s.playbooks);
   const teamsMeta = useOrganizerStore((s) => s.teams);
   const seriesMeta = useOrganizerStore((s) => s.series);
+  const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
+  const addPracticeItems = useOrganizerStore((s) => s.addPracticeItems);
+  const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
   const deviceClass = useDeviceClass();
   const { resizerProps } = useLibrarySplitResizer();
   const addPlayToPlaybook = useOrganizerStore((s) => s.addPlayToPlaybook);
@@ -283,6 +286,23 @@ export function DrawLibraryView() {
 
   function handleCreate() {
     setCreateModalOpen(true);
+  }
+
+  async function handleNewPracticeFromSelection() {
+    const ids = [...effectiveSelectedIds];
+    if (!ids.length) return;
+    const session = await createPracticeSession();
+    await addPracticeItems(session.id, ids);
+    const label =
+      ids.length === 1
+        ? items.find((item) => item.id === ids[0])?.title?.trim()
+        : `${ids.length} plays`;
+    if (label) {
+      await updatePracticeSession(session.id, {
+        title: `Practice — ${label}`,
+      });
+    }
+    router.push(`/library?tab=practice&session=${session.id}`);
   }
 
   async function handleCreateSubmit(details: PlayDetailsValues) {
@@ -577,6 +597,7 @@ export function DrawLibraryView() {
           page={page}
           pageSize={PAGE_SIZE}
           onPageChange={setPage}
+          onNewPractice={() => void handleNewPracticeFromSelection()}
           tabletMode={deviceClass === "tablet"}
         />
         <div {...resizerProps} id="org-split-resizer" />

@@ -15,6 +15,7 @@ import {
   loadPracticeLivePrefs,
   savePracticeLivePrefs,
 } from "@/lib/practice/live-prefs";
+import { playPracticeTimerAlert } from "@/lib/practice/timer-alert";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { PracticeSession } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
@@ -74,6 +75,9 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
   const [autoStart, setAutoStart] = useState(
     () => loadPracticeLivePrefs().autoStartTimer,
   );
+  const [timerSound, setTimerSound] = useState(
+    () => loadPracticeLivePrefs().timerSound,
+  );
   const timerFiredRef = useRef(-1);
 
   const current: ResolvedPracticeRow | null = rows[index] ?? null;
@@ -115,12 +119,31 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
     if (secondsLeft > 0 || timerFiredRef.current === index) return;
     timerFiredRef.current = index;
     setTimerRunning(false);
+    if (timerSound) playPracticeTimerAlert();
     setCompleted((prev) => new Set(prev).add(index));
     if (index < rows.length - 1) {
       const id = window.setTimeout(() => goToBlock(index + 1), 1200);
       return () => window.clearTimeout(id);
     }
-  }, [secondsLeft, index, rows.length, goToBlock]);
+  }, [secondsLeft, index, rows.length, goToBlock, timerSound]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    let lock: WakeLockSentinel | null = null;
+    async function keepScreenOn() {
+      try {
+        if ("wakeLock" in navigator) {
+          lock = await navigator.wakeLock.request("screen");
+        }
+      } catch {
+        /* ignore — may require user gesture or unsupported browser */
+      }
+    }
+    void keepScreenOn();
+    return () => {
+      void lock?.release();
+    };
+  }, [mounted]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -367,10 +390,28 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                   checked={autoStart}
                   onChange={(e) => {
                     setAutoStart(e.target.checked);
-                    savePracticeLivePrefs({ autoStartTimer: e.target.checked });
+                    savePracticeLivePrefs({
+                      autoStartTimer: e.target.checked,
+                      timerSound,
+                    });
                   }}
                 />{" "}
                 Auto-start timer on each block
+              </label>
+              <label className="practice-live-auto-start">
+                <input
+                  type="checkbox"
+                  id="practice-live-timer-sound"
+                  checked={timerSound}
+                  onChange={(e) => {
+                    setTimerSound(e.target.checked);
+                    savePracticeLivePrefs({
+                      autoStartTimer: autoStart,
+                      timerSound: e.target.checked,
+                    });
+                  }}
+                />{" "}
+                Timer sound when block ends
               </label>
             </div>
 

@@ -63,12 +63,14 @@ interface OrganizerState {
   createPracticeSessionFromTemplate: (
     template: PracticeTemplate,
   ) => Promise<PracticeSession>;
+  duplicatePracticeSession: (id: string) => Promise<PracticeSession | null>;
   updatePracticeSession: (
     id: string,
     patch: Partial<PracticeSession>,
   ) => Promise<void>;
   deletePracticeSession: (id: string) => Promise<void>;
   addPracticeItems: (sessionId: string, playIds: string[]) => Promise<void>;
+  addPlaybookToSession: (sessionId: string, playbookId: string) => Promise<void>;
   addPracticeCueBlock: (
     sessionId: string,
     cueLabel: string,
@@ -297,6 +299,27 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     return session;
   },
 
+  duplicatePracticeSession: async (id) => {
+    const source = get().practiceSessions.find((s) => s.id === id);
+    if (!source) return null;
+    const now = new Date().toISOString();
+    const session = normalizePracticeSession({
+      ...source,
+      id: newId("prac"),
+      title: `${source.title || "Practice"} (copy)`,
+      items: source.items.map((item) => ({
+        ...item,
+        id: newPracticeItemId(),
+      })),
+      createdAt: now,
+      updatedAt: now,
+    });
+    const sessions = [session, ...get().practiceSessions];
+    await setPracticeData({ sessions });
+    set({ practiceSessions: sessions });
+    return session;
+  },
+
   updatePracticeSession: async (id, patch) => {
     const sessions = get().practiceSessions.map((s) =>
       s.id === id
@@ -343,6 +366,12 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     });
     await setPracticeData({ sessions });
     set({ practiceSessions: sessions });
+  },
+
+  addPlaybookToSession: async (sessionId, playbookId) => {
+    const playbook = get().playbooks.find((pb) => pb.id === playbookId);
+    if (!playbook?.playRefs.length) return;
+    await get().addPracticeItems(sessionId, playbook.playRefs);
   },
 
   addPracticeCueBlock: async (sessionId, cueLabel, durationMin = 10) => {

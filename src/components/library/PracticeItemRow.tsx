@@ -9,8 +9,9 @@ interface Props {
   row: ResolvedPracticeRow;
   totalRows: number;
   dragIndex: number | null;
+  dropTargetIndex: number | null;
   onDragStart: () => void;
-  onDragOver: (e: React.DragEvent) => void;
+  onDragOver: () => void;
   onDrop: () => void;
   onDragEnd: () => void;
   onUpdate: (patch: Partial<PracticeSessionItem>) => void;
@@ -22,6 +23,7 @@ export function PracticeItemRow({
   row,
   totalRows,
   dragIndex,
+  dropTargetIndex,
   onDragStart,
   onDragOver,
   onDrop,
@@ -39,7 +41,7 @@ export function PracticeItemRow({
 
   return (
     <div
-      className={`practice-item-row${isMissing ? " practice-item-missing" : ""}${dragIndex === index ? " is-dragging" : ""}`}
+      className={`practice-item-row${isMissing ? " practice-item-missing" : ""}${dragIndex === index ? " is-dragging" : ""}${dropTargetIndex === index && dragIndex !== index ? " is-drag-over" : ""}`}
       draggable
       onDragStart={(e) => {
         if (!(e.target as HTMLElement).closest(".practice-item-drag")) {
@@ -50,7 +52,7 @@ export function PracticeItemRow({
       }}
       onDragOver={(e) => {
         e.preventDefault();
-        onDragOver(e);
+        onDragOver();
       }}
       onDrop={(e) => {
         e.preventDefault();

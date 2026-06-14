@@ -51,6 +51,12 @@ export function PracticePrintDocument({
             <p>{session.notes.trim()}</p>
           </div>
         ) : null}
+        {session.liveNotes?.trim() ? (
+          <div className="fc-practice-print-live-notes">
+            <strong>Gym notes</strong>
+            <p>{session.liveNotes.trim()}</p>
+          </div>
+        ) : null}
       </div>
 
       <table className="fc-practice-plan-table">
