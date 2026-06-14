@@ -1,7 +1,8 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import type { StoredPlay } from "@/types/library";
 
 interface Props {
@@ -12,25 +13,20 @@ interface Props {
   onConfirm: (playIds: string[]) => void;
 }
 
-export function PracticeAddModal({
-  open,
+export function PracticeAddModal(props: Props) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  return <PracticeAddModalBody {...props} />;
+}
+
+function PracticeAddModalBody({
   plays,
   existingPlayIds,
   onClose,
   onConfirm,
 }: Props) {
-  const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!open) {
-      setSearch("");
-      setSelected(new Set());
-    }
-  }, [open]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -44,8 +40,6 @@ export function PracticeAddModal({
       return hay.includes(q);
     });
   }, [plays, existingPlayIds, search]);
-
-  if (!open || !mounted) return null;
 
   function toggle(id: string, checked: boolean) {
     setSelected((prev) => {

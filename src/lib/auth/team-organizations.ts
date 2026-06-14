@@ -1,4 +1,4 @@
-import { ensureInviteToken } from "@/lib/auth/team-invite";
+import { ensureInviteToken } from "@/lib/auth/team-invite-token";
 import type { OrgMember, TeamOrganization } from "@/types/team-org";
 
 const STORAGE_KEY = "fastcourt_team_orgs_v1";

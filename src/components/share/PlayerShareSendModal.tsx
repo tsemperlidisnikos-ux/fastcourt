@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   getTeamRoster,
   normalizeWhatsAppPhone,
@@ -17,20 +18,39 @@ import {
 } from "@/lib/players/player-share-messages";
 import { useShareStore } from "@/stores/share-store";
 import { appCopyLink, appNotice } from "@/stores/dialog-store";
-import type { PlayerRosterEntry } from "@/types/player-roster";
+import type { PlayerRosterEntry, PlayerShareSendContext } from "@/types/player-roster";
 import "@/styles/player-share.css";
 
 export function PlayerShareSendModal() {
   const open = useShareStore((s) => s.sendModalOpen);
   const context = useShareStore((s) => s.sendContext);
   const rosterModalOpen = useShareStore((s) => s.rosterModalOpen);
+  const mounted = useClientMounted();
+  if (!open || !context || !mounted) return null;
+  return (
+    <PlayerShareSendModalBody
+      key={`${context.team}:${context.url}:${rosterModalOpen ? "roster" : "send"}`}
+      context={context}
+    />
+  );
+}
+
+function PlayerShareSendModalBody({
+  context,
+}: {
+  context: PlayerShareSendContext;
+}) {
   const closeSendModal = useShareStore((s) => s.closeSendModal);
   const openRosterModal = useShareStore((s) => s.openRosterModal);
+  const roster = getTeamRoster(context.team);
 
-  const [mounted, setMounted] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [message, setMessage] = useState("");
-  const [players, setPlayers] = useState<PlayerRosterEntry[]>([]);
+  const [selectedIds, setSelectedIds] = useState(
+    () => new Set(roster.players.map((p) => p.id)),
+  );
+  const [message, setMessage] = useState(() =>
+    getDefaultPlayerShareMessage(context.contentName),
+  );
+  const [players, setPlayers] = useState(() => roster.players);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
   function resizeMessageBox() {
@@ -40,32 +60,9 @@ export function PlayerShareSendModal() {
     el.style.height = `${el.scrollHeight}px`;
   }
 
-  useEffect(() => setMounted(true), []);
-
   useEffect(() => {
-    if (!open || !context) return;
-    const roster = getTeamRoster(context.team);
-    setPlayers(roster.players);
-    setSelectedIds(new Set(roster.players.map((p) => p.id)));
-    setMessage(getDefaultPlayerShareMessage(context.contentName));
-  }, [open, context]);
-
-  useEffect(() => {
-    if (!open || !context || rosterModalOpen) return;
-    const roster = getTeamRoster(context.team);
-    setPlayers(roster.players);
-    setSelectedIds((prev) => {
-      const valid = new Set(roster.players.map((p) => p.id));
-      const next = new Set([...prev].filter((id) => valid.has(id)));
-      if (!next.size) roster.players.forEach((p) => next.add(p.id));
-      return next;
-    });
-  }, [open, context, rosterModalOpen]);
-
-  useEffect(() => {
-    if (!open) return;
     resizeMessageBox();
-  }, [open, message]);
+  }, [message]);
 
   const selected = useMemo(
     () => players.filter((p) => selectedIds.has(p.id)),
@@ -163,7 +160,12 @@ export function PlayerShareSendModal() {
     window.open(link, "_blank", "noopener,noreferrer");
   }
 
-  if (!open || !mounted || !context) return null;
+  function openRosterEditor() {
+    const latest = getTeamRoster(context.team);
+    setPlayers(latest.players);
+    setSelectedIds(new Set(latest.players.map((p) => p.id)));
+    openRosterModal(context.team);
+  }
 
   const contentLabel =
     context.contentType === "practice"
@@ -236,7 +238,7 @@ export function PlayerShareSendModal() {
             type="button"
             className="modal-cancel player-share-send-select-btn"
             id="btn-player-share-open-roster"
-            onClick={() => openRosterModal(context.team)}
+            onClick={openRosterEditor}
           >
             Roster
           </button>

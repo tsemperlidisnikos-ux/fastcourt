@@ -2,13 +2,8 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { useModalA11y } from "@/hooks/useModalA11y";
-
-function useMounted() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  return mounted;
-}
 
 interface InputDialogProps {
   open: boolean;
@@ -23,7 +18,14 @@ interface InputDialogProps {
   onSubmit: (value: string) => void | Promise<void>;
 }
 
-export function PracticeInputDialog({
+export function PracticeInputDialog(props: InputDialogProps) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  const dialogKey = `${props.title}:${props.initialValue ?? ""}`;
+  return <PracticeInputDialogBody key={dialogKey} {...props} />;
+}
+
+function PracticeInputDialogBody({
   open,
   title,
   subtitle,
@@ -35,7 +37,6 @@ export function PracticeInputDialog({
   onClose,
   onSubmit,
 }: InputDialogProps) {
-  const mounted = useMounted();
   const inputRef = useRef<HTMLInputElement>(null);
   const { panelRef, titleId, fieldId } = useModalA11y(open, onClose);
   const [value, setValue] = useState(initialValue);
@@ -43,15 +44,9 @@ export function PracticeInputDialog({
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-    setValue(initialValue);
-    setError("");
-    setSubmitting(false);
     const t = window.setTimeout(() => inputRef.current?.focus(), 0);
     return () => window.clearTimeout(t);
-  }, [open, initialValue]);
-
-  if (!open || !mounted) return null;
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -142,8 +137,13 @@ interface ConfirmDialogProps {
   onConfirm: () => void | Promise<void>;
 }
 
-export function PracticeConfirmDialog({
-  open,
+export function PracticeConfirmDialog(props: ConfirmDialogProps) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  return <PracticeConfirmDialogBody {...props} />;
+}
+
+function PracticeConfirmDialogBody({
   title,
   message,
   confirmLabel = "Confirm",
@@ -151,15 +151,8 @@ export function PracticeConfirmDialog({
   onClose,
   onConfirm,
 }: ConfirmDialogProps) {
-  const mounted = useMounted();
-  const { panelRef, titleId } = useModalA11y(open, onClose);
+  const { panelRef, titleId } = useModalA11y(true, onClose);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!open) setSubmitting(false);
-  }, [open]);
-
-  if (!open || !mounted) return null;
 
   async function handleConfirm() {
     setSubmitting(true);
@@ -187,7 +180,7 @@ export function PracticeConfirmDialog({
         <div className="modal-title" id={titleId}>
           {title}
         </div>
-        <p className="modal-subtitle fc-playbook-delete-message">{message}</p>
+        <p className="modal-subtitle">{message}</p>
         <div className="modal-actions">
           <button
             type="button"

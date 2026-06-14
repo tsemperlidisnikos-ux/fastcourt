@@ -1,7 +1,8 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import type { LibraryItem } from "@/types/library";
 import type { StoredPlay } from "@/types/library";
 
@@ -13,35 +14,25 @@ interface Props {
   onImport: (frame: StoredPlay["frames"][number]) => void;
 }
 
-export function ImportFrameModal({
-  open,
+export function ImportFrameModal(props: Props) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  return <ImportFrameModalBody {...props} />;
+}
+
+function ImportFrameModalBody({
   items,
   getPlayDocument,
   onClose,
   onImport,
 }: Props) {
-  const [mounted, setMounted] = useState(false);
-  const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [frameIndex, setFrameIndex] = useState(0);
   const [frameCount, setFrameCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setSelectedId(null);
-      setFrameIndex(0);
-      setFrameCount(1);
-      setError("");
-    }
-  }, [open]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {    const q = query.trim().toLowerCase();
     return items.filter(
       (item) =>
         item.type !== "playbook" &&
@@ -49,10 +40,7 @@ export function ImportFrameModal({
     );
   }, [items, query]);
 
-  if (!open || !mounted) return null;
-
-  async function pickPlay(id: string) {
-    setSelectedId(id);
+  async function pickPlay(id: string) {    setSelectedId(id);
     setError("");
     setLoading(true);
     try {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Circle, Ellipse, Group, Line, Rect, Text } from "react-konva";
+import { Circle, Group, Line, Text } from "react-konva";
 import type Konva from "konva";
 import { ConeMarker } from "@/components/designer/ConeMarker";
 import { ShadowMarker } from "@/components/designer/ShadowMarker";

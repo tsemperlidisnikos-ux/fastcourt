@@ -11,6 +11,7 @@ import {
   type CSSProperties,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { isAdminUser } from "@/lib/auth/roles";
 import { listStoredPlays } from "@/lib/library/idb";
@@ -62,9 +63,7 @@ function MenuModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useClientMounted();
 
   useEffect(() => {
     if (!open) return;
@@ -125,7 +124,7 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
   const [open, setOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  const [menuMounted, setMenuMounted] = useState(false);
+  const menuMounted = useClientMounted();
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
 
   const label = useMemo(() => {
@@ -137,8 +136,6 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
   }, [session]);
 
   const closeMenu = useCallback(() => setOpen(false), []);
-
-  useEffect(() => setMenuMounted(true), []);
 
   const updateMenuPosition = useCallback(() => {
     const btn = btnRef.current;

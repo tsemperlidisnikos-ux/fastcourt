@@ -227,19 +227,14 @@ export function DrawLibraryView() {
     };
   }, [previewId, getPlayDocument, items]);
 
-  useEffect(() => {
-    const valid = new Set(items.map((item) => item.id));
-    setSelectedIds((prev) => {
-      const next = new Set([...prev].filter((id) => valid.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-    if (previewId && !valid.has(previewId)) {
-      setPreviewId(null);
-      setSelectedPlay(null);
-    }
-  }, [items, previewId]);
-
-  const previewPlay = previewId ? (selectedPlay ?? null) : null;
+  const itemIds = useMemo(() => new Set(items.map((item) => item.id)), [items]);
+  const effectiveSelectedIds = useMemo(() => {
+    const next = new Set([...selectedIds].filter((id) => itemIds.has(id)));
+    return next.size === selectedIds.size ? selectedIds : next;
+  }, [itemIds, selectedIds]);
+  const effectivePreviewId =
+    previewId && itemIds.has(previewId) ? previewId : null;
+  const previewPlay = effectivePreviewId ? (selectedPlay ?? null) : null;
 
   function toggleRow(id: string) {
     setSelectedIds((prev) => {
@@ -302,8 +297,8 @@ export function DrawLibraryView() {
   }, [seriesMeta, items]);
 
   function resolveContextTargetIds(playId: string) {
-    if (selectedIds.has(playId) && selectedIds.size > 0) {
-      return [...selectedIds];
+    if (effectiveSelectedIds.has(playId) && effectiveSelectedIds.size > 0) {
+      return [...effectiveSelectedIds];
     }
     return [playId];
   }
@@ -545,7 +540,7 @@ export function DrawLibraryView() {
       <div className="org-library-split fd-library-split" id="org-library-split">
         <LibraryTable
           items={filtered}
-          selectedIds={selectedIds}
+          selectedIds={effectiveSelectedIds}
           previewId={previewId}
           onToggleRow={toggleRow}
           onToggleAllFiltered={toggleAllFiltered}

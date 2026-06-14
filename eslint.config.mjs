@@ -10,15 +10,31 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "warn",
     },
   },
-  // Override default ignores of eslint-config-next.
+  {
+    files: [
+      "src/components/library/PlaybookPrintDocument.tsx",
+      "src/components/library/PlaybookPrintSettingsPanel.tsx",
+      "src/components/library/PlayDetailsModal.tsx",
+      "src/components/library/FdAppHeader.tsx",
+      "src/components/library/PracticePrintDocument.tsx",
+      "src/components/library/PracticeSheetDocument.tsx",
+      "src/components/settings/AppearanceSettingsSection.tsx",
+      "src/components/settings/ClubLogoUpload.tsx",
+    ],
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
     "public/pdf.worker.min.mjs",
     "server.js",
+    "src/lib/fastdraw/legacy/**",
+    "lint-report.json",
+    "project-analysis.json",
   ]),
 ]);
 

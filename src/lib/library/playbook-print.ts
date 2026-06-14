@@ -15,9 +15,7 @@ export interface PlaybookGridLayout {
   gridClass: "fd-grid-9" | "fd-grid-6";
 }
 
-export function getPlaybookGridLayout(
-  _orientation: PlaybookPrintOrientation = "portrait",
-): PlaybookGridLayout {
+export function getPlaybookGridLayout(): PlaybookGridLayout {
   // FastDraw classic layout: 3×3 grid on every content page (portrait or landscape).
   return {
     framesPerPage: FASTDRAW_FRAMES_PER_PAGE_LANDSCAPE,
@@ -100,7 +98,7 @@ export function computePlaybookPagination(
   plays: StoredPlay[],
   settings: PlaybookPrintSettings,
 ): PlaybookPagination {
-  const grid = getPlaybookGridLayout(settings.orientation ?? "portrait");
+  const grid = getPlaybookGridLayout();
   const framesPerPage = grid.framesPerPage;
   const includeToc = settings.includeToc !== false && plays.length > 0;
   const coverPages = settings.includeCover !== false ? 1 : 0;

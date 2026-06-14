@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import type { PlaybookSection } from "@/types/library-meta";
 
 interface Props {
@@ -19,11 +19,7 @@ export function AddToPlaybookModal({
   onClose,
   onSelect,
 }: Props) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientMounted();
 
   if (!open || !mounted) return null;
 

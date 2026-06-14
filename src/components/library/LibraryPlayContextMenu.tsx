@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 
 export interface LibraryPlayContextMenuState {
   x: number;
@@ -54,12 +55,8 @@ export function LibraryPlayContextMenu({
   onDelete,
 }: Props) {
   const menuRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useClientMounted();
   const [position, setPosition] = useState({ left: menu.x, top: menu.y });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useLayoutEffect(() => {
     const el = menuRef.current;

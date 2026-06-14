@@ -32,7 +32,6 @@ import { PdfBrandingSection } from "@/components/settings/PdfBrandingSection";
 import { TeamOrganizationsSection } from "@/components/settings/TeamOrganizationsSection";
 import { ToolsSection } from "@/components/settings/ToolsSection";
 import { useAuthStore } from "@/stores/auth-store";
-import { useLibraryStore } from "@/stores/library-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { appConfirm } from "@/stores/dialog-store";
 import {
@@ -479,7 +478,6 @@ function ProfileForm({
 
 export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const router = useRouter();
-  const libraryItems = useLibraryStore((s) => s.items);
 
   const [navId, setNavId] = useState<NavId>("all-users");
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
@@ -488,7 +486,9 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const [dirty, setDirty] = useState(false);
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [profileDraft, setProfileDraft] = useState<Partial<AdminUserRecord>>({});
-  const [orgs, setOrgs] = useState<TeamOrganization[]>([]);
+  const [orgs, setOrgs] = useState<TeamOrganization[]>(() =>
+    loadTeamOrganizations(),
+  );
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [libraryModalTitle, setLibraryModalTitle] = useState("Coach library");
   const [libraryModalSubtitle, setLibraryModalSubtitle] = useState("");
@@ -508,22 +508,20 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const persistAll = useSettingsStore((s) => s.persistAll);
   const setSession = useAuthStore((s) => s.setSession);
 
-  const loadUsers = useCallback(() => {
-    const list = ensureAdminUserRegistry(session.user);
-    setUsers(list);
-    setDrafts(Object.fromEntries(list.map((u) => [u.id, { ...u }])));
+  const registryUsers = useMemo(
+    () => ensureAdminUserRegistry(session.user),
+    [session.user],
+  );
+
+  useEffect(() => {
+    setUsers(registryUsers);
+    setDrafts(Object.fromEntries(registryUsers.map((u) => [u.id, { ...u }])));
     setSelectedId((prev) =>
-      prev && list.some((u) => u.id === prev) ? prev : (list[0]?.id ?? null),
+      prev && registryUsers.some((u) => u.id === prev)
+        ? prev
+        : (registryUsers[0]?.id ?? null),
     );
-  }, [session.user]);
-
-  useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
-
-  useEffect(() => {
-    setOrgs(loadTeamOrganizations());
-  }, []);
+  }, [registryUsers]);
 
   const selectedUser = useMemo(
     () => users.find((u) => u.id === selectedId) ?? null,

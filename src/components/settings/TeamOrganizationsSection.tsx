@@ -1,10 +1,8 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import {
-  buildTeamInviteUrl,
-  ensureInviteToken,
-} from "@/lib/auth/team-invite";
+import { buildTeamInviteUrl } from "@/lib/auth/team-invite";
+import { ensureInviteToken } from "@/lib/auth/team-invite-token";
 import {
   canAddCoach,
   formatCoachSeatSummary,

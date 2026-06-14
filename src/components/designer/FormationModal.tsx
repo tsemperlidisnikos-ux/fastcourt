@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   FORMATION_PRESETS,
   type FormationKey,
@@ -14,11 +14,7 @@ interface Props {
 }
 
 export function FormationModal({ open, onClose, onSelect }: Props) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientMounted();
 
   if (!open || !mounted) return null;
 

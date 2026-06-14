@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { PracticeAddModal } from "@/components/library/PracticeAddModal";
 import { PracticeItemRow } from "@/components/library/PracticeItemRow";
 import { PracticeLiveOverlay } from "@/components/library/PracticeLiveOverlay";
@@ -57,7 +57,8 @@ export function PracticePlannerView() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const playById = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
-  const selected = sessions.find((s) => s.id === selectedId) ?? null;
+  const activeSessionId = selectedId ?? sessions[0]?.id ?? null;
+  const selected = sessions.find((s) => s.id === activeSessionId) ?? null;
   const rows = useMemo(
     () =>
       selected ? resolvePracticeSessionItems(selected, playById) : [],
@@ -69,10 +70,6 @@ export function PracticePlannerView() {
     () => new Set(selected?.items.map((i) => i.playId).filter(Boolean) as string[]),
     [selected],
   );
-
-  useEffect(() => {
-    if (!selectedId && sessions.length) setSelectedId(sessions[0].id);
-  }, [sessions, selectedId]);
 
   async function handleNewSession() {
     const session = await createPracticeSession();
@@ -248,7 +245,7 @@ export function PracticePlannerView() {
                   <button
                     key={session.id}
                     type="button"
-                    className={`practice-session-card${selectedId === session.id ? " active" : ""}`}
+                    className={`practice-session-card${activeSessionId === session.id ? " active" : ""}`}
                     onClick={() => setSelectedId(session.id)}
                   >
                     <div className="practice-session-card-date">{session.date}</div>

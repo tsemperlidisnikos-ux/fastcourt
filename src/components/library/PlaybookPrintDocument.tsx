@@ -233,11 +233,8 @@ export function PlaybookPrintDocument({
   }, [pageDims, printConfig, cover]);
 
   const gridLayout = useMemo(
-    () =>
-      getPlaybookGridLayout(
-        printConfig?.orientation ?? settings.orientation ?? "portrait",
-      ),
-    [printConfig?.orientation, settings.orientation],
+    () => getPlaybookGridLayout(),
+    [],
   );
 
   const pagination = useMemo(

@@ -1,5 +1,5 @@
 import { ROLES } from "@/lib/config";
-import type { SignupWizardValues } from "@/components/auth/SignupWizard";
+import type { SignupWizardValues } from "@/types/signup";
 
 export type SignupStep =
   | "basic"

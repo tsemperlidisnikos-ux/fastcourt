@@ -2,6 +2,9 @@
 
 import type { ComponentType } from "react";
 import type { SignupStep } from "@/components/auth/signup-flow";
+import type { SignupWizardValues } from "@/types/signup";
+
+export type { SignupWizardValues };
 
 const SIGNUP_STEP_ORDER: SignupStep[] = [
   "basic",
@@ -11,16 +14,6 @@ const SIGNUP_STEP_ORDER: SignupStep[] = [
   "payment",
   "done",
 ];
-
-export interface SignupWizardValues {
-  displayName: string;
-  password: string;
-  verifyCode: string;
-  signupRole: "coach" | "team";
-  teamName: string;
-  teamCountry: string;
-  teamLevel: string;
-}
 
 interface Props {
   step: SignupStep;

@@ -1,0 +1,1118 @@
+﻿{
+    "generatedAt":  "2026-06-14T01:33:33.0245128+03:00",
+    "projectRoot":  "C:\\fastcourt-next",
+    "projectName":  "fastcourt-next",
+    "version":  "0.1.0",
+    "summary":  {
+                    "totalFiles":  267,
+                    "totalDirs":  45,
+                    "totalSize":  "7,90 MB",
+                    "excludedDirs":  "node_modules, .next, .git, backups, .cursor"
+                },
+    "git":  {
+                "branch":  "main",
+                "changedFiles":  76,
+                "lastCommit":  "dca46b6 Harden production deploy and designer fixes (restore point). (7 hours ago)"
+            },
+    "npmScripts":  {
+                       "dev":  "next dev",
+                       "build":  "next build",
+                       "postinstall":  "node scripts/copy-pdf-worker.mjs",
+                       "start":  "next start",
+                       "start:plesk":  "node server.js",
+                       "lint":  "eslint"
+                   },
+    "dependencies":  {
+                         "@supabase/ssr":  "^0.12.0",
+                         "@supabase/supabase-js":  "^2.108.1",
+                         "idb":  "^8.0.3",
+                         "konva":  "^10.3.0",
+                         "lz-string":  "^1.5.0",
+                         "next":  "16.2.9",
+                         "pdfjs-dist":  "^6.0.227",
+                         "react":  "19.2.4",
+                         "react-dom":  "19.2.4",
+                         "react-konva":  "^19.2.5",
+                         "zustand":  "^5.0.14"
+                     },
+    "devDependencies":  {
+                            "@tailwindcss/postcss":  "^4",
+                            "@types/lz-string":  "^1.3.34",
+                            "@types/node":  "^20",
+                            "@types/react":  "^19",
+                            "@types/react-dom":  "^19",
+                            "eslint":  "^9",
+                            "eslint-config-next":  "16.2.9",
+                            "tailwindcss":  "^4",
+                            "typescript":  "^5"
+                        },
+    "layers":  {
+                   "components":  {
+                                      "Prefix":  "src\\components",
+                                      "FileCount":  96,
+                                      "TotalBytes":  666974,
+                                      "Extensions":  ".tsx:95, .ts:1"
+                                  },
+                   "lib":  {
+                               "Prefix":  "src\\lib",
+                               "FileCount":  72,
+                               "TotalBytes":  328869,
+                               "Extensions":  ".ts:69, .js:3"
+                           },
+                   "types":  {
+                                 "Prefix":  "src\\types",
+                                 "FileCount":  12,
+                                 "TotalBytes":  10335,
+                                 "Extensions":  ".ts:12"
+                             },
+                   "app-routes":  {
+                                      "Prefix":  "src\\app",
+                                      "FileCount":  17,
+                                      "TotalBytes":  35920,
+                                      "Extensions":  ".tsx:14, .ts:1, .css:1, .ico:1"
+                                  },
+                   "scripts":  {
+                                   "Prefix":  "scripts",
+                                   "FileCount":  4,
+                                   "TotalBytes":  30311,
+                                   "Extensions":  ".ps1:2, .mjs:2"
+                               },
+                   "styles":  {
+                                  "Prefix":  "src\\styles",
+                                  "FileCount":  26,
+                                  "TotalBytes":  444297,
+                                  "Extensions":  ".css:26"
+                              },
+                   "hooks":  {
+                                 "Prefix":  "src\\hooks",
+                                 "FileCount":  5,
+                                 "TotalBytes":  10782,
+                                 "Extensions":  ".ts:5"
+                             },
+                   "stores":  {
+                                  "Prefix":  "src\\stores",
+                                  "FileCount":  8,
+                                  "TotalBytes":  68153,
+                                  "Extensions":  ".ts:8"
+                              },
+                   "public-assets":  {
+                                         "Prefix":  "public",
+                                         "FileCount":  7,
+                                         "TotalBytes":  3321876,
+                                         "Extensions":  ".png:3, .pdf:1, .mjs:1, .svg:1, .webmanifest:1"
+                                     },
+                   "config-root":  {
+                                       "Prefix":  "(root)",
+                                       "FileCount":  19,
+                                       "TotalBytes":  3364859,
+                                       "Extensions":  ".md:5, .json:4, .ts:2, .mjs:2, .tsbuildinfo:1, .js:1, .ps1:1, .gitignore:1"
+                                   }
+               },
+    "libSubLayers":  [
+                         {
+                             "Name":  "designer",
+                             "Count":  19
+                         },
+                         {
+                             "Name":  "library",
+                             "Count":  14
+                         },
+                         {
+                             "Name":  "auth",
+                             "Count":  10
+                         },
+                         {
+                             "Name":  "settings",
+                             "Count":  8
+                         },
+                         {
+                             "Name":  "fastdraw",
+                             "Count":  5
+                         },
+                         {
+                             "Name":  "practice",
+                             "Count":  4
+                         },
+                         {
+                             "Name":  "players",
+                             "Count":  4
+                         },
+                         {
+                             "Name":  "supabase",
+                             "Count":  4
+                         },
+                         {
+                             "Name":  "billing",
+                             "Count":  2
+                         },
+                         {
+                             "Name":  "config.ts",
+                             "Count":  1
+                         },
+                         {
+                             "Name":  "share",
+                             "Count":  1
+                         }
+                     ],
+    "componentSubLayers":  [
+                               {
+                                   "Name":  "library",
+                                   "Count":  40
+                               },
+                               {
+                                   "Name":  "designer",
+                                   "Count":  22
+                               },
+                               {
+                                   "Name":  "settings",
+                                   "Count":  11
+                               },
+                               {
+                                   "Name":  "share",
+                                   "Count":  6
+                               },
+                               {
+                                   "Name":  "billing",
+                                   "Count":  6
+                               },
+                               {
+                                   "Name":  "auth",
+                                   "Count":  6
+                               },
+                               {
+                                   "Name":  "shell",
+                                   "Count":  3
+                               },
+                               {
+                                   "Name":  "ui",
+                                   "Count":  2
+                               }
+                           ],
+    "extensions":  [
+                       {
+                           "Extension":  ".tsx",
+                           "Count":  109,
+                           "TotalSize":  "656,87 KB"
+                       },
+                       {
+                           "Extension":  ".ts",
+                           "Count":  99,
+                           "TotalSize":  "294,53 KB"
+                       },
+                       {
+                           "Extension":  ".css",
+                           "Count":  27,
+                           "TotalSize":  "434,67 KB"
+                       },
+                       {
+                           "Extension":  ".mjs",
+                           "Count":  5,
+                           "TotalSize":  "1,20 MB"
+                       },
+                       {
+                           "Extension":  ".md",
+                           "Count":  5,
+                           "TotalSize":  "13,64 KB"
+                       },
+                       {
+                           "Extension":  ".js",
+                           "Count":  4,
+                           "TotalSize":  "119,65 KB"
+                       },
+                       {
+                           "Extension":  ".json",
+                           "Count":  4,
+                           "TotalSize":  "269,53 KB"
+                       },
+                       {
+                           "Extension":  ".ps1",
+                           "Count":  3,
+                           "TotalSize":  "23,94 KB"
+                       },
+                       {
+                           "Extension":  ".png",
+                           "Count":  3,
+                           "TotalSize":  "1,86 MB"
+                       },
+                       {
+                           "Extension":  ".pdf",
+                           "Count":  1,
+                           "TotalSize":  "126,01 KB"
+                       },
+                       {
+                           "Extension":  ".example",
+                           "Count":  1,
+                           "TotalSize":  "242 B"
+                       },
+                       {
+                           "Extension":  ".gitignore",
+                           "Count":  1,
+                           "TotalSize":  "480 B"
+                       },
+                       {
+                           "Extension":  ".ico",
+                           "Count":  1,
+                           "TotalSize":  "25,32 KB"
+                       },
+                       {
+                           "Extension":  ".tsbuildinfo",
+                           "Count":  1,
+                           "TotalSize":  "176,45 KB"
+                       },
+                       {
+                           "Extension":  ".zip",
+                           "Count":  1,
+                           "TotalSize":  "2,75 MB"
+                       },
+                       {
+                           "Extension":  ".webmanifest",
+                           "Count":  1,
+                           "TotalSize":  "426 B"
+                       },
+                       {
+                           "Extension":  ".svg",
+                           "Count":  1,
+                           "TotalSize":  "277 B"
+                       }
+                   ],
+    "routes":  [
+                   {
+                       "Path":  "src\\app\\(app)\\designer\\layout.tsx",
+                       "Name":  "layout.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\(app)\\designer\\page.tsx",
+                       "Name":  "page.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\(app)\\error.tsx",
+                       "Name":  "error.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\(app)\\layout.tsx",
+                       "Name":  "layout.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\(app)\\library\\layout.tsx",
+                       "Name":  "layout.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\(app)\\library\\page.tsx",
+                       "Name":  "page.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\(app)\\settings\\page.tsx",
+                       "Name":  "page.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\auth\\callback\\route.ts",
+                       "Name":  "route.ts"
+                   },
+                   {
+                       "Path":  "src\\app\\global-error.tsx",
+                       "Name":  "global-error.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\layout.tsx",
+                       "Name":  "layout.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\login\\layout.tsx",
+                       "Name":  "layout.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\login\\page.tsx",
+                       "Name":  "page.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\page.tsx",
+                       "Name":  "page.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\privacy\\page.tsx",
+                       "Name":  "page.tsx"
+                   },
+                   {
+                       "Path":  "src\\app\\terms\\page.tsx",
+                       "Name":  "page.tsx"
+                   }
+               ],
+    "stores":  [
+                   {
+                       "Path":  "src\\stores\\auth-store.ts",
+                       "Lines":  36
+                   },
+                   {
+                       "Path":  "src\\stores\\designer-store.ts",
+                       "Lines":  1266
+                   },
+                   {
+                       "Path":  "src\\stores\\dialog-store.ts",
+                       "Lines":  120
+                   },
+                   {
+                       "Path":  "src\\stores\\library-store.ts",
+                       "Lines":  187
+                   },
+                   {
+                       "Path":  "src\\stores\\organizer-store.ts",
+                       "Lines":  433
+                   },
+                   {
+                       "Path":  "src\\stores\\playbook-print-config-store.ts",
+                       "Lines":  40
+                   },
+                   {
+                       "Path":  "src\\stores\\settings-store.ts",
+                       "Lines":  174
+                   },
+                   {
+                       "Path":  "src\\stores\\share-store.ts",
+                       "Lines":  70
+                   }
+               ],
+    "cssFiles":  [
+                     {
+                         "Path":  "src\\styles\\fd-ui.css",
+                         "Size":  "63,70 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fd-library-laptop.css",
+                         "Size":  "53,45 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fd-library-tablet.css",
+                         "Size":  "41,66 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fastdraw-editor-ui.css",
+                         "Size":  "40,75 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\admin-settings.css",
+                         "Size":  "38,71 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-library.css",
+                         "Size":  "25,05 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\designer-ui-v240.css",
+                         "Size":  "19,33 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-practice.css",
+                         "Size":  "15,48 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-playbooks.css",
+                         "Size":  "12,78 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-modern-library.css",
+                         "Size":  "12,75 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\player-share.css",
+                         "Size":  "12,38 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-playbook-print.css",
+                         "Size":  "11,88 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\welcome.css",
+                         "Size":  "10,62 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-players.css",
+                         "Size":  "7,77 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-designer-base.css",
+                         "Size":  "7,68 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-practice-live.css",
+                         "Size":  "7,36 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\player-portal.css",
+                         "Size":  "7,36 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-playbook-print-settings.css",
+                         "Size":  "7,35 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-modern-designer.css",
+                         "Size":  "7,35 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-practice-sheet.css",
+                         "Size":  "7,35 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-library-header.css",
+                         "Size":  "6,00 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\billing-ui.css",
+                         "Size":  "4,90 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-fields.css",
+                         "Size":  "4,59 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\app-error.css",
+                         "Size":  "2,93 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\fc-presentation.css",
+                         "Size":  "2,85 KB"
+                     },
+                     {
+                         "Path":  "src\\styles\\overflow-menus.css",
+                         "Size":  "1,84 KB"
+                     },
+                     {
+                         "Path":  "src\\app\\globals.css",
+                         "Size":  "807 B"
+                     }
+                 ],
+    "largestSource":  [
+                          {
+                              "Path":  "src\\styles\\fd-ui.css",
+                              "Size":  "63,70 KB"
+                          },
+                          {
+                              "Path":  "src\\lib\\fastdraw\\legacy\\fastdraw-decode.js",
+                              "Size":  "60,59 KB"
+                          },
+                          {
+                              "Path":  "src\\styles\\fd-library-laptop.css",
+                              "Size":  "53,45 KB"
+                          },
+                          {
+                              "Path":  "src\\styles\\fd-library-tablet.css",
+                              "Size":  "41,66 KB"
+                          },
+                          {
+                              "Path":  "src\\styles\\fastdraw-editor-ui.css",
+                              "Size":  "40,75 KB"
+                          },
+                          {
+                              "Path":  "src\\components\\designer\\DesignerScreen.tsx",
+                              "Size":  "39,47 KB"
+                          },
+                          {
+                              "Path":  "src\\styles\\admin-settings.css",
+                              "Size":  "38,71 KB"
+                          },
+                          {
+                              "Path":  "src\\lib\\fastdraw\\legacy\\fastdraw-import.js",
+                              "Size":  "36,09 KB"
+                          },
+                          {
+                              "Path":  "src\\stores\\designer-store.ts",
+                              "Size":  "35,02 KB"
+                          },
+                          {
+                              "Path":  "src\\components\\settings\\AdminSettingsPanel.tsx",
+                              "Size":  "32,06 KB"
+                          },
+                          {
+                              "Path":  "src\\components\\designer\\CourtCanvas.tsx",
+                              "Size":  "26,45 KB"
+                          },
+                          {
+                              "Path":  "src\\styles\\fc-library.css",
+                              "Size":  "25,05 KB"
+                          },
+                          {
+                              "Path":  "src\\lib\\designer\\action-geometry.ts",
+                              "Size":  "24,52 KB"
+                          },
+                          {
+                              "Path":  "src\\components\\auth\\LoginForm.tsx",
+                              "Size":  "24,03 KB"
+                          },
+                          {
+                              "Path":  "src\\components\\library\\DrawLibraryView.tsx",
+                              "Size":  "21,83 KB"
+                          }
+                      ],
+    "directoryTree":  [
+                          "public/  (7 files)",
+                          "  assets/  (2 files)",
+                          "  data/  (0 files)",
+                          "  icons/  (1 files)",
+                          "  templates/  (1 files)",
+                          "scripts/  (4 files)",
+                          "src/  (237 files)",
+                          "  app/  (17 files)",
+                          "  components/  (96 files)",
+                          "  hooks/  (5 files)",
+                          "  lib/  (72 files)",
+                          "  stores/  (8 files)",
+                          "  styles/  (26 files)",
+                          "  types/  (12 files)"
+                      ],
+    "environment":  [
+                        {
+                            "Name":  "NEXT_PUBLIC_SUPABASE_URL",
+                            "Description":  "Supabase project URL (cloud auth)",
+                            "Status":  "missing",
+                            "Value":  "(not set)",
+                            "Source":  "none"
+                        },
+                        {
+                            "Name":  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+                            "Description":  "Supabase anon key (cloud auth)",
+                            "Status":  "missing",
+                            "Value":  "(not set)",
+                            "Source":  "none"
+                        },
+                        {
+                            "Name":  "NEXT_PUBLIC_APP_BUILD",
+                            "Description":  "Build tag shown in UI (default: next-v7)",
+                            "Status":  "missing",
+                            "Value":  "(not set)",
+                            "Source":  "none"
+                        },
+                        {
+                            "Name":  "NEXT_PUBLIC_ADMIN_EMAIL",
+                            "Description":  "Admin contact email",
+                            "Status":  "missing",
+                            "Value":  "(not set)",
+                            "Source":  "none"
+                        },
+                        {
+                            "Name":  "NEXT_PUBLIC_MASTER_ADMIN_EMAIL",
+                            "Description":  "Bootstrap admin on signup",
+                            "Status":  "missing",
+                            "Value":  "(not set)",
+                            "Source":  "none"
+                        }
+                    ],
+    "auditChecklist":  {
+                           "doneCount":  13,
+                           "pendingCount":  28,
+                           "pendingItems":  [
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Post-signup onboarding modal (quickstart / import FDB)"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "PWA install/update/offline bars"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Admin preview badge on welcome"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Payment step parity (legacy plan picker vs trial-only copy)"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Trial days: legacy 7 vs Next 14"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Tab: Players (component exists, not routed)"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Library sort menu"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Contextual Create (New Drill / New Playbook on Draw)"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "New Practice from Draw filter bar"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "PlayBank entry"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Snippets / building blocks overlay"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Team workspace banner"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "FastDraw post-import QA panel (full legacy)"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Court zoom UI (+/−/reset)"
+                                                },
+                                                {
+                                                    "Status":  "pending",
+                                                    "Text":  "Court sheet (OOB / BLOB / SLOB)"
+                                                }
+                                            ],
+                           "doneItems":  [
+                                             {
+                                                 "Status":  "done",
+                                                 "Text":  "Welcome card layout + legal links (Privacy/Terms → alert \"coming soon\")"
+                                             },
+                                             {
+                                                 "Status":  "done",
+                                                 "Text":  "Email/password two-step login"
+                                             },
+                                             {
+                                                 "Status":  "done",
+                                                 "Text":  "OAuth Google/Apple/Facebook"
+                                             },
+                                             {
+                                                 "Status":  "done",
+                                                 "Text":  "Signup wizard (role, team, trial)"
+                                             },
+                                             {
+                                                 "Status":  "done",
+                                                 "Text":  "Tabs: Draw, Playbooks, Fields, Practice"
+                                             }
+                                         ]
+                       },
+    "imports":  {
+                    "sourceFiles":  209,
+                    "entryPoints":  14,
+                    "reachableFromEntries":  195,
+                    "orphans":  [
+                                    "src/app/layout.tsx",
+                                    "src/app/page.tsx",
+                                    "src/components/auth/TeamInviteBootstrap.tsx",
+                                    "src/components/library/PlaybookDialogs.tsx",
+                                    "src/components/library/PracticeDialogs.tsx",
+                                    "src/components/share/PlayerPortalOverlay.tsx",
+                                    "src/components/share/PlayerRosterModal.tsx",
+                                    "src/components/share/PlayerShareSendModal.tsx",
+                                    "src/components/share/PracticeShareOverlay.tsx",
+                                    "src/components/share/ShareBootstrap.tsx",
+                                    "src/components/share/ShareProviders.tsx",
+                                    "src/components/ui/AppDialogHost.tsx",
+                                    "src/hooks/useModalA11y.ts",
+                                    "src/lib/players/player-share-messages.ts"
+                                ],
+                    "orphanCount":  14,
+                    "topImported":  [
+                                        {
+                                            "file":  "src/types/designer.ts",
+                                            "count":  37,
+                                            "importedBy":  37
+                                        },
+                                        {
+                                            "file":  "src/types/library.ts",
+                                            "count":  35,
+                                            "importedBy":  35
+                                        },
+                                        {
+                                            "file":  "src/stores/dialog-store.ts",
+                                            "count":  20,
+                                            "importedBy":  20
+                                        },
+                                        {
+                                            "file":  "src/types/library-meta.ts",
+                                            "count":  19,
+                                            "importedBy":  19
+                                        },
+                                        {
+                                            "file":  "src/lib/config.ts",
+                                            "count":  17,
+                                            "importedBy":  17
+                                        },
+                                        {
+                                            "file":  "src/stores/settings-store.ts",
+                                            "count":  15,
+                                            "importedBy":  15
+                                        },
+                                        {
+                                            "file":  "src/types/auth.ts",
+                                            "count":  15,
+                                            "importedBy":  15
+                                        },
+                                        {
+                                            "file":  "src/stores/organizer-store.ts",
+                                            "count":  14,
+                                            "importedBy":  14
+                                        },
+                                        {
+                                            "file":  "src/stores/auth-store.ts",
+                                            "count":  12,
+                                            "importedBy":  12
+                                        },
+                                        {
+                                            "file":  "src/lib/designer/action-geometry.ts",
+                                            "count":  11,
+                                            "importedBy":  11
+                                        },
+                                        {
+                                            "file":  "src/stores/library-store.ts",
+                                            "count":  10,
+                                            "importedBy":  10
+                                        },
+                                        {
+                                            "file":  "src/components/designer/CourtFrameThumbnail.tsx",
+                                            "count":  10,
+                                            "importedBy":  10
+                                        },
+                                        {
+                                            "file":  "src/lib/auth/roles.ts",
+                                            "count":  9,
+                                            "importedBy":  9
+                                        },
+                                        {
+                                            "file":  "src/stores/designer-store.ts",
+                                            "count":  9,
+                                            "importedBy":  9
+                                        },
+                                        {
+                                            "file":  "src/lib/supabase/client.ts",
+                                            "count":  8,
+                                            "importedBy":  8
+                                        },
+                                        {
+                                            "file":  "src/lib/designer/action-constants.ts",
+                                            "count":  8,
+                                            "importedBy":  8
+                                        },
+                                        {
+                                            "file":  "src/lib/share/share-link.ts",
+                                            "count":  8,
+                                            "importedBy":  8
+                                        },
+                                        {
+                                            "file":  "src/lib/practice/practice-items.ts",
+                                            "count":  8,
+                                            "importedBy":  8
+                                        },
+                                        {
+                                            "file":  "src/lib/library/idb.ts",
+                                            "count":  8,
+                                            "importedBy":  8
+                                        },
+                                        {
+                                            "file":  "src/stores/share-store.ts",
+                                            "count":  8,
+                                            "importedBy":  8
+                                        }
+                                    ],
+                    "externalPackages":  [
+                                             {
+                                                 "pkg":  "react",
+                                                 "count":  78
+                                             },
+                                             {
+                                                 "pkg":  "next",
+                                                 "count":  29
+                                             },
+                                             {
+                                                 "pkg":  "react-dom",
+                                                 "count":  24
+                                             },
+                                             {
+                                                 "pkg":  "react-konva",
+                                                 "count":  9
+                                             },
+                                             {
+                                                 "pkg":  "zustand",
+                                                 "count":  9
+                                             },
+                                             {
+                                                 "pkg":  "konva",
+                                                 "count":  5
+                                             },
+                                             {
+                                                 "pkg":  "@supabase/ssr",
+                                                 "count":  3
+                                             },
+                                             {
+                                                 "pkg":  "@supabase/supabase-js",
+                                                 "count":  2
+                                             },
+                                             {
+                                                 "pkg":  "idb",
+                                                 "count":  1
+                                             },
+                                             {
+                                                 "pkg":  "pdfjs-dist",
+                                                 "count":  1
+                                             },
+                                             {
+                                                 "pkg":  "lz-string",
+                                                 "count":  1
+                                             }
+                                         ],
+                    "layerCoupling":  [
+                                          {
+                                              "edge":  "components-\u003elib",
+                                              "count":  133
+                                          },
+                                          {
+                                              "edge":  "components-\u003ecomponents",
+                                              "count":  130
+                                          },
+                                          {
+                                              "edge":  "components-\u003estores",
+                                              "count":  77
+                                          },
+                                          {
+                                              "edge":  "components-\u003etypes",
+                                              "count":  65
+                                          },
+                                          {
+                                              "edge":  "lib-\u003etypes",
+                                              "count":  65
+                                          },
+                                          {
+                                              "edge":  "lib-\u003elib",
+                                              "count":  58
+                                          },
+                                          {
+                                              "edge":  "stores-\u003elib",
+                                              "count":  26
+                                          },
+                                          {
+                                              "edge":  "stores-\u003etypes",
+                                              "count":  12
+                                          },
+                                          {
+                                              "edge":  "app-\u003ecomponents",
+                                              "count":  9
+                                          },
+                                          {
+                                              "edge":  "components-\u003ehooks",
+                                              "count":  8
+                                          },
+                                          {
+                                              "edge":  "lib-\u003estores",
+                                              "count":  7
+                                          },
+                                          {
+                                              "edge":  "app-\u003elib",
+                                              "count":  5
+                                          },
+                                          {
+                                              "edge":  "types-\u003etypes",
+                                              "count":  4
+                                          },
+                                          {
+                                              "edge":  "app-\u003estores",
+                                              "count":  3
+                                          },
+                                          {
+                                              "edge":  "hooks-\u003elib",
+                                              "count":  3
+                                          },
+                                          {
+                                              "edge":  "hooks-\u003estores",
+                                              "count":  2
+                                          },
+                                          {
+                                              "edge":  "types-\u003elib",
+                                              "count":  2
+                                          },
+                                          {
+                                              "edge":  "other-\u003elib",
+                                              "count":  1
+                                          },
+                                          {
+                                              "edge":  "stores-\u003estores",
+                                              "count":  1
+                                          }
+                                      ],
+                    "storeUsage":  {
+                                       "useAuthStore":  {
+                                                            "files":  13,
+                                                            "paths":  [
+                                                                          "src/app/(app)/settings/page.tsx",
+                                                                          "src/components/auth/AuthProvider.tsx",
+                                                                          "src/components/auth/LoginForm.tsx",
+                                                                          "src/components/billing/SubscriptionSection.tsx",
+                                                                          "src/components/billing/TrialExpiredGate.tsx",
+                                                                          "src/components/library/LibraryScreen.tsx",
+                                                                          "src/components/settings/AdminSettingsPanel.tsx",
+                                                                          "src/components/shell/AppNav.tsx",
+                                                                          "src/components/shell/AppShell.tsx",
+                                                                          "src/components/shell/UserMenu.tsx",
+                                                                          "src/lib/auth/hydration.ts",
+                                                                          "src/lib/players/player-roster.ts",
+                                                                          "src/stores/auth-store.ts"
+                                                                      ]
+                                                        },
+                                       "useLibraryStore":  {
+                                                               "files":  11,
+                                                               "paths":  [
+                                                                             "src/app/(app)/settings/page.tsx",
+                                                                             "src/components/designer/DesignerScreen.tsx",
+                                                                             "src/components/library/AddPlayToPlaybookModal.tsx",
+                                                                             "src/components/library/DrawLibraryView.tsx",
+                                                                             "src/components/library/FdAppHeader.tsx",
+                                                                             "src/components/library/FdImportPanel.tsx",
+                                                                             "src/components/library/LibraryScreen.tsx",
+                                                                             "src/components/settings/AdminSettingsPanel.tsx",
+                                                                             "src/components/settings/ToolsSection.tsx",
+                                                                             "src/components/shell/UserMenu.tsx",
+                                                                             "src/stores/library-store.ts"
+                                                                         ]
+                                                           },
+                                       "useDesignerStore":  {
+                                                                "files":  10,
+                                                                "paths":  [
+                                                                              "src/components/designer/ActionEditHandles.tsx",
+                                                                              "src/components/designer/ActionSequencePanel.tsx",
+                                                                              "src/components/designer/CourtCanvas.tsx",
+                                                                              "src/components/designer/CourtWhiteboardToolbar.tsx",
+                                                                              "src/components/designer/DesignerScreen.tsx",
+                                                                              "src/components/designer/LineThicknessControl.tsx",
+                                                                              "src/components/designer/LineTypeModal.tsx",
+                                                                              "src/components/designer/ShadowEditHandles.tsx",
+                                                                              "src/hooks/useFrameAnimationPlayback.ts",
+                                                                              "src/stores/designer-store.ts"
+                                                                          ]
+                                                            },
+                                       "useSettingsStore":  {
+                                                                "files":  16,
+                                                                "paths":  [
+                                                                              "src/app/(app)/settings/page.tsx",
+                                                                              "src/components/billing/SubscriptionSection.tsx",
+                                                                              "src/components/billing/TrialBanner.tsx",
+                                                                              "src/components/billing/TrialExpiredGate.tsx",
+                                                                              "src/components/designer/CourtCanvas.tsx",
+                                                                              "src/components/designer/DesignerScreen.tsx",
+                                                                              "src/components/designer/PlayerMarker.tsx",
+                                                                              "src/components/library/FdAppHeader.tsx",
+                                                                              "src/components/library/LibraryScreen.tsx",
+                                                                              "src/components/library/PlaybookPrintDocument.tsx",
+                                                                              "src/components/library/PracticeSheetOverlay.tsx",
+                                                                              "src/components/settings/AdminSettingsPanel.tsx",
+                                                                              "src/components/settings/CoachSettingsPanel.tsx",
+                                                                              "src/components/settings/SettingsProvider.tsx",
+                                                                              "src/hooks/useAppLogoSrc.ts",
+                                                                              "src/stores/settings-store.ts"
+                                                                          ]
+                                                            },
+                                       "useShareStore":  {
+                                                             "files":  9,
+                                                             "paths":  [
+                                                                           "src/components/share/PlayerPortalOverlay.tsx",
+                                                                           "src/components/share/PlayerRosterModal.tsx",
+                                                                           "src/components/share/PlayerShareSendModal.tsx",
+                                                                           "src/components/share/PracticeShareOverlay.tsx",
+                                                                           "src/components/share/ShareBootstrap.tsx",
+                                                                           "src/components/shell/AppShell.tsx",
+                                                                           "src/components/shell/UserMenu.tsx",
+                                                                           "src/lib/players/share-to-players.ts",
+                                                                           "src/stores/share-store.ts"
+                                                                       ]
+                                                         },
+                                       "useOrganizerStore":  {
+                                                                 "files":  15,
+                                                                 "paths":  [
+                                                                               "src/components/designer/DesignerScreen.tsx",
+                                                                               "src/components/library/DrawLibraryView.tsx",
+                                                                               "src/components/library/FieldsView.tsx",
+                                                                               "src/components/library/LibraryScreen.tsx",
+                                                                               "src/components/library/PlaybooksView.tsx",
+                                                                               "src/components/library/PlayDetailsModal.tsx",
+                                                                               "src/components/library/PlayersView.tsx",
+                                                                               "src/components/library/PracticeLiveOverlay.tsx",
+                                                                               "src/components/library/PracticePlannerView.tsx",
+                                                                               "src/components/share/PlayerPortalOverlay.tsx",
+                                                                               "src/components/share/PlayerRosterModal.tsx",
+                                                                               "src/components/shell/UserMenu.tsx",
+                                                                               "src/lib/players/share-to-players.ts",
+                                                                               "src/stores/library-store.ts",
+                                                                               "src/stores/organizer-store.ts"
+                                                                           ]
+                                                             },
+                                       "useDialogStore":  {
+                                                              "files":  2,
+                                                              "paths":  [
+                                                                            "src/components/ui/AppDialogHost.tsx",
+                                                                            "src/stores/dialog-store.ts"
+                                                                        ]
+                                                          },
+                                       "usePlaybookPrintConfigStore":  {
+                                                                           "files":  3,
+                                                                           "paths":  [
+                                                                                         "src/components/library/PlaybookPrintSettingsPanel.tsx",
+                                                                                         "src/components/library/PlaybooksView.tsx",
+                                                                                         "src/stores/playbook-print-config-store.ts"
+                                                                                     ]
+                                                                       }
+                                   },
+                    "routes":  [
+                                   {
+                                       "file":  "src/app/page.tsx",
+                                       "url":  "/",
+                                       "type":  "page"
+                                   },
+                                   {
+                                       "file":  "src/app/auth/callback/route.ts",
+                                       "url":  "/auth/callback",
+                                       "type":  "api"
+                                   },
+                                   {
+                                       "file":  "src/app/(app)/designer/page.tsx",
+                                       "url":  "/designer",
+                                       "type":  "page"
+                                   },
+                                   {
+                                       "file":  "src/app/(app)/library/page.tsx",
+                                       "url":  "/library",
+                                       "type":  "page"
+                                   },
+                                   {
+                                       "file":  "src/app/login/page.tsx",
+                                       "url":  "/login",
+                                       "type":  "page"
+                                   },
+                                   {
+                                       "file":  "src/app/privacy/page.tsx",
+                                       "url":  "/privacy",
+                                       "type":  "page"
+                                   },
+                                   {
+                                       "file":  "src/app/(app)/settings/page.tsx",
+                                       "url":  "/settings",
+                                       "type":  "page"
+                                   },
+                                   {
+                                       "file":  "src/app/terms/page.tsx",
+                                       "url":  "/terms",
+                                       "type":  "page"
+                                   }
+                               ],
+                    "unresolvedImports":  [
+
+                                          ],
+                    "circularDependencies":  [
+                                                 "src/lib/auth/team-organizations.ts -\u003e src/lib/auth/team-invite.ts -\u003e src/lib/auth/team-organizations.ts",
+                                                 "src/components/auth/SignupWizard.tsx -\u003e src/components/auth/signup-flow.ts -\u003e src/components/auth/SignupWizard.tsx"
+                                             ],
+                    "emptyDirectories":  [
+                                             "backups",
+                                             "public/assets/courts",
+                                             "public/data",
+                                             "public/icons",
+                                             "public/templates",
+                                             "src/components/playbank",
+                                             "src/lib/playbank",
+                                             "src/styles"
+                                         ]
+                },
+    "healthChecks":  [
+
+                     ]
+}

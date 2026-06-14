@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { LINE_ACTION_CHOICES } from "@/lib/designer/action-constants";
 import { getActionColor } from "@/lib/designer/action-geometry";
 import { guessLineActionType } from "@/lib/designer/freehand-geometry";
@@ -14,11 +14,7 @@ export function LineTypeModal() {
   const lineActionType = useDesignerStore((s) => s.lineActionType);
   const commit = useDesignerStore((s) => s.commitPendingFreehand);
   const cancel = useDesignerStore((s) => s.cancelPendingFreehand);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientMounted();
 
   if (!pending || !mounted) return null;
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   addRosterPlayer,
   getTeamRoster,
@@ -16,7 +17,6 @@ import {
 } from "@/lib/players/team-options";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import { useShareStore } from "@/stores/share-store";
-import { appNotice } from "@/stores/dialog-store";
 import type { PlayerRosterEntry } from "@/types/player-roster";
 import "@/styles/player-share.css";
 
@@ -32,14 +32,22 @@ function playerInitials(name: string) {
 
 export function PlayerRosterModal() {
   const open = useShareStore((s) => s.rosterModalOpen);
+  const mounted = useClientMounted();
+  if (!open || !mounted) return null;
+  return <PlayerRosterModalBody />;
+}
+
+function PlayerRosterModalBody() {
   const initialTeam = useShareStore((s) => s.rosterModalTeam);
   const closeRosterModal = useShareStore((s) => s.closeRosterModal);
-
   const configuredTeams = useOrganizerStore((s) => s.teams);
 
-  const [mounted, setMounted] = useState(false);
-  const [team, setTeam] = useState(initialTeam);
-  const [players, setPlayers] = useState<PlayerRosterEntry[]>([]);
+  const [team, setTeam] = useState(() =>
+    defaultRosterTeam(configuredTeams, initialTeam),
+  );
+  const [players, setPlayers] = useState<PlayerRosterEntry[]>(() =>
+    getTeamRoster(defaultRosterTeam(configuredTeams, initialTeam)).players,
+  );
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -53,20 +61,8 @@ export function PlayerRosterModal() {
 
   const needsTeamSetup = teamList.length === 1 && teamList[0] === "No Team";
 
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!open) return;
-    setTeam(defaultRosterTeam(configuredTeams, initialTeam));
-  }, [open, initialTeam, configuredTeams]);
-
-  useEffect(() => {
-    if (!open) return;
-    setPlayers(getTeamRoster(team).players);
-  }, [open, team]);
-
-  function refreshRoster() {
-    setPlayers(getTeamRoster(team).players);
+  function refreshRoster(nextTeam = team) {
+    setPlayers(getTeamRoster(nextTeam).players);
   }
 
   function handleSubmit(e: FormEvent) {
@@ -93,8 +89,6 @@ export function PlayerRosterModal() {
     setPhone("");
     refreshRoster();
   }
-
-  if (!open || !mounted) return null;
 
   return createPortal(
     <div
@@ -132,7 +126,11 @@ export function PlayerRosterModal() {
               <select
                 id="player-roster-team"
                 value={team}
-                onChange={(e) => setTeam(e.target.value)}
+                onChange={(e) => {
+                  const nextTeam = e.target.value;
+                  setTeam(nextTeam);
+                  refreshRoster(nextTeam);
+                }}
                 disabled={needsTeamSetup}
               >
                 {teamList.map((t) => (

@@ -17,12 +17,6 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function generateInviteToken() {
-  const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 export function memberRoleLabel(role: PendingTeamInvite["memberRole"]) {
   if (role === "team_admin") return "Team Administrator";
   if (role === "player") return "Player";
@@ -124,6 +118,3 @@ export function consumeInviteFromUrlHash(): PendingTeamInvite | null {
   return invite;
 }
 
-export function ensureInviteToken(existing?: string) {
-  return existing || generateInviteToken();
-}

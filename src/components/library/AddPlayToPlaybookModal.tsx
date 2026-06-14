@@ -1,7 +1,8 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { LibraryFilterFields } from "@/components/library/LibraryFilterFields";
 import { LibraryTable } from "@/components/library/LibraryTable";
 import { LibrarySortControl, useLibrarySortId } from "@/components/library/LibrarySortControl";
@@ -18,14 +19,18 @@ interface Props {
   onAdd: (playIds: string[]) => void;
 }
 
-export function AddPlayToPlaybookModal({
-  open,
+export function AddPlayToPlaybookModal(props: Props) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  return <AddPlayToPlaybookModalBody {...props} />;
+}
+
+function AddPlayToPlaybookModalBody({
   playbookName,
   excludedPlayIds,
   onClose,
   onAdd,
 }: Props) {
-  const [mounted, setMounted] = useState(false);
   const items = useLibraryStore((s) => s.items);
   const [sortId, setSortId] = useLibrarySortId();
   const [query, setQuery] = useState("");
@@ -37,22 +42,6 @@ export function AddPlayToPlaybookModal({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setSeasonFilter("");
-      setTypeFilter("");
-      setTeamFilter("");
-      setSeriesFilter("");
-      setTagsFilter("");
-      setSelectedIds(new Set());
-      setPreviewId(null);
-      setPage(0);
-    }
-  }, [open]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -100,8 +89,6 @@ export function AddPlayToPlaybookModal({
     tagsFilter,
     sortId,
   ]);
-
-  if (!open || !mounted) return null;
 
   function toggleRow(id: string) {
     setSelectedIds((prev) => {

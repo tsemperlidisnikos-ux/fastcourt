@@ -1,7 +1,8 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { courtImagePath } from "@/lib/designer/court-assets";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { CourtType } from "@/types/designer";
@@ -34,8 +35,41 @@ function isValidVideoUrl(raw: string) {
   }
 }
 
-export function PlayDetailsModal({
-  open,
+function buildFormState(
+  initial: Partial<PlayDetailsValues> | undefined,
+  teams: string[],
+  seriesList: string[],
+  seasons: string[],
+) {
+  const nextType = initial?.type ?? "play";
+  return {
+    type: nextType,
+    title: initial?.title ?? "",
+    team: initial?.team ?? teams[0] ?? "No Team",
+    series:
+      initial?.series ??
+      (nextType === "drill" ? "Drill" : (seriesList[0] ?? "Offense")),
+    tagsText: (initial?.tags ?? []).join(", "),
+    courtType: initial?.courtType ?? "half",
+    season: initial?.season ?? seasons[0] ?? "Default",
+    playNotes: initial?.playNotes ?? "",
+    videoUrl: initial?.videoUrl ?? "",
+  };
+}
+
+export function PlayDetailsModal(props: Props) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  const initialKey = JSON.stringify(props.initial ?? {});
+  return (
+    <PlayDetailsModalBody
+      key={`${props.mode}:${initialKey}`}
+      {...props}
+    />
+  );
+}
+
+function PlayDetailsModalBody({
   mode,
   initial,
   onClose,
@@ -46,19 +80,19 @@ export function PlayDetailsModal({
   const seriesList = useOrganizerStore((s) => s.series);
   const fieldTags = useOrganizerStore((s) => s.fieldTags);
   const addField = useOrganizerStore((s) => s.addField);
-  const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const [type, setType] = useState<LibraryItemType>("play");
-  const [title, setTitle] = useState("");
-  const [team, setTeam] = useState("");
-  const [series, setSeries] = useState("");
-  const [tagsText, setTagsText] = useState("");
-  const [courtType, setCourtType] = useState<CourtType>("half");
-  const [season, setSeason] = useState("");
-  const [playNotes, setPlayNotes] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
+  const defaults = buildFormState(initial, teams, seriesList, seasons);
+  const [type, setType] = useState<LibraryItemType>(defaults.type);
+  const [title, setTitle] = useState(defaults.title);
+  const [team, setTeam] = useState(defaults.team);
+  const [series, setSeries] = useState(defaults.series);
+  const [tagsText, setTagsText] = useState(defaults.tagsText);
+  const [courtType, setCourtType] = useState<CourtType>(defaults.courtType);
+  const [season, setSeason] = useState(defaults.season);
+  const [playNotes, setPlayNotes] = useState(defaults.playNotes);
+  const [videoUrl, setVideoUrl] = useState(defaults.videoUrl);
 
   const isDrill = type === "drill";
   const modalTitle = isDrill ? "Drill Details" : "Play Details";
@@ -69,30 +103,6 @@ export function PlayDetailsModal({
     () => Array.from(new Set([...fieldTags, ...parseTags(tagsText)])),
     [fieldTags, tagsText],
   );
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const nextType = initial?.type ?? "play";
-    setType(nextType);
-    setTitle(initial?.title ?? "");
-    setTeam(initial?.team ?? teams[0] ?? "No Team");
-    setSeries(
-      initial?.series ??
-        (nextType === "drill" ? "Drill" : seriesList[0] ?? "Offense"),
-    );
-    setTagsText((initial?.tags ?? []).join(", "));
-    setCourtType(initial?.courtType ?? "half");
-    setSeason(initial?.season ?? seasons[0] ?? "Default");
-    setPlayNotes(initial?.playNotes ?? "");
-    setVideoUrl(initial?.videoUrl ?? "");
-    setFormError("");
-  }, [open, initial, teams, seriesList, seasons]);
-
-  if (!open || !mounted) return null;
 
   async function handleSubmit() {
     const trimmedTitle = title.trim();

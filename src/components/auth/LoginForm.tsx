@@ -118,13 +118,20 @@ function PasswordField({
   );
 }
 
+function readClientInvite(): PendingTeamInvite | null {
+  if (typeof window === "undefined") return null;
+  return getPendingInvite();
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
   const appLogoSrc = useAppLogoSrc();
 
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(() =>
+    readClientInvite()?.email ? "signup" : "login",
+  );
   const [loginStep, setLoginStep] = useState<LoginStep>("email");
   const [signupStep, setSignupStep] = useState<SignupStep>("basic");
   const [skipVerify, setSkipVerify] = useState(false);
@@ -132,12 +139,14 @@ export function LoginForm() {
     defaultSignupValues(),
   );
   const [resendSeconds, setResendSeconds] = useState(0);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => readClientInvite()?.email ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [teamInvite, setTeamInvite] = useState<PendingTeamInvite | null>(null);
-  const [emailInviteLocked, setEmailInviteLocked] = useState(false);
+  const [teamInvite] = useState<PendingTeamInvite | null>(readClientInvite);
+  const [emailInviteLocked] = useState(() =>
+    Boolean(readClientInvite()?.email),
+  );
 
   const cloud = isCloudEnabled();
   const next = searchParams.get("next") || "/library";
@@ -170,16 +179,6 @@ export function LoginForm() {
   }, [mode, cloud, signupStep]);
 
   useEffect(() => {
-    const invite = getPendingInvite();
-    if (!invite?.email) return;
-    setTeamInvite(invite);
-    setEmail(invite.email);
-    setEmailInviteLocked(true);
-    setMode("signup");
-    setSignupStep("basic");
-  }, []);
-
-  useEffect(() => {
     if (resendSeconds <= 0) return;
     const timer = window.setTimeout(() => {
       setResendSeconds((s) => Math.max(0, s - 1));
@@ -195,9 +194,6 @@ export function LoginForm() {
     setPassword("");
     setResendSeconds(0);
     setError(null);
-    if (!teamInvite) {
-      setEmailInviteLocked(false);
-    }
   }
 
   function switchMode(nextMode: AuthMode) {
@@ -418,7 +414,7 @@ export function LoginForm() {
     }
   }
 
-  async function submitSignupPayment(_normalized: string) {
+  async function submitSignupPayment() {
     setLoading(true);
     try {
       if (!cloud) {
@@ -629,7 +625,7 @@ export function LoginForm() {
     }
 
     if (signupStep === "payment") {
-      await submitSignupPayment(normalized);
+      await submitSignupPayment();
     }
   }
 

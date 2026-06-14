@@ -30,6 +30,7 @@ export function mirrorFrameHorizontal(
   frame: DesignerFrame,
   _courtType: CourtType,
 ): DesignerFrame {
+  void _courtType;
   const next: DesignerFrame = JSON.parse(JSON.stringify(frame)) as DesignerFrame;
 
   next.objects = next.objects.map((object) => ({

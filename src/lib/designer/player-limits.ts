@@ -3,8 +3,6 @@ import type { DesignerObject, ObjectKind } from "@/types/designer";
 export const MAX_OFFENSE_PLAYERS = 5;
 export const MAX_DEFENSE_PLAYERS = 5;
 
-const PLAYER_KINDS = new Set<ObjectKind>(["offense", "defense"]);
-
 export function isRosterKind(kind: ObjectKind) {
   return kind === "offense" || kind === "defense";
 }

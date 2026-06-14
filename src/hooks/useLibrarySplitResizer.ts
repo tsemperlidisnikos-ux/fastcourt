@@ -8,16 +8,15 @@ const MIN_PCT = 28;
 const MAX_PCT = 62;
 
 export function useLibrarySplitResizer(shellId = "org-library-shell") {
-  const [splitPct, setSplitPct] = useState(DEFAULT_PCT);
-  const draggingRef = useRef(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const [splitPct, setSplitPct] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_PCT;
     const saved = Number(localStorage.getItem(STORAGE_KEY));
     if (Number.isFinite(saved) && saved >= MIN_PCT && saved <= MAX_PCT) {
-      setSplitPct(saved);
+      return saved;
     }
-  }, []);
+    return DEFAULT_PCT;
+  });
+  const draggingRef = useRef(false);
 
   useEffect(() => {
     if (typeof document === "undefined") return;

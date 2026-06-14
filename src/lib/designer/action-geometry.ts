@@ -7,7 +7,6 @@ import {
 import {
   courtNormToStage,
   getPlayableCourtRect,
-  stageToCourtNorm,
 } from "@/lib/designer/court-view-layout";
 import type { ActionType, CourtRect, CourtType, DesignerAction } from "@/types/designer";
 
@@ -253,9 +252,8 @@ export function buildSampledCurveRender(
   actionType: ActionType,
 ) {
   const controls = symmetrizeControlPoints8(controls8, actionType);
-  const [sx, sy, c1x, c1y, c2x, c2y, ex, ey] = controls;
+  const [sx, sy, c1x, c1y, , , ex, ey] = controls;
   const chordLen = Math.hypot(ex - sx, ey - sy);
-  const curveType = curveTypeForAction(actionType);
   let renderPts: number[];
   if (actionType === "curl") {
     const b1 = pointBulgeFromChord(c1x, c1y, sx, sy, ex, ey);

@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   deleteCustomPracticeTemplate,
   getAllPracticeTemplates,
@@ -16,15 +17,22 @@ interface Props {
 }
 
 export function PracticeTemplateModal({ open, onClose, onSelect }: Props) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useClientMounted();
+  if (!open || !mounted) return null;
+  return (
+    <PracticeTemplateModalBody onClose={onClose} onSelect={onSelect} />
+  );
+}
+
+function PracticeTemplateModalBody({
+  onClose,
+  onSelect,
+}: Pick<Props, "onClose" | "onSelect">) {
   const [templates, setTemplates] = useState<PracticeTemplate[]>([]);
 
-  useEffect(() => setMounted(true), []);
-
   useEffect(() => {
-    if (!open) return;
     void getAllPracticeTemplates().then(setTemplates);
-  }, [open]);
+  }, []);
 
   async function handleDeleteTemplate(tpl: PracticeTemplate) {
     if (tpl.builtin) return;
@@ -39,9 +47,7 @@ export function PracticeTemplateModal({ open, onClose, onSelect }: Props) {
     setTemplates(await getAllPracticeTemplates());
   }
 
-  if (!mounted) return null;
-
-  const modal = !open ? null : createPortal(
+  return createPortal(
     <div className="modal-overlay active" role="presentation" onClick={onClose}>
       <div
         className="modal-box modal-box-wide"
@@ -114,6 +120,4 @@ export function PracticeTemplateModal({ open, onClose, onSelect }: Props) {
     </div>,
     document.body,
   );
-
-  return modal;
 }

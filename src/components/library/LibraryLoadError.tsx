@@ -1,8 +1,6 @@
 "use client";
 
-import { AppErrorFallback } from "@/components/ui/AppErrorFallback";
 import "@/styles/app-error.css";
-
 interface LibraryLoadErrorProps {
   message: string;
   onRetry: () => void;

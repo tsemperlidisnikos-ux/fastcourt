@@ -89,7 +89,7 @@ export async function decodeLazyPlay(
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-  const fastDraw = await loadFastDrawModules();
+  await loadFastDrawModules();
   const decode = window.FastDrawDecode as {
     decodeNativeCandidate?: (
       bytes: Uint8Array,

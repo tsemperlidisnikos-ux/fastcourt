@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { APP_BUILD, APP_NAME } from "@/lib/config";
 import { formatExpiryLabel } from "@/lib/auth/admin-users";
@@ -25,12 +25,7 @@ export function CoachSettingsPanel({ session }: { session: AuthSession }) {
 
   const [draftBrand, setDraftBrand] = useState<PdfBrandSettings>(pdfBrand);
   const [dirty, setDirty] = useState(false);
-
-  useEffect(() => {
-    if (hydrated && !dirty) {
-      setDraftBrand(pdfBrand);
-    }
-  }, [hydrated, pdfBrand, dirty]);
+  const displayedBrand = dirty ? draftBrand : pdfBrand;
 
   const accessLabel = useMemo(() => {
     if (hasFullAccess(session.user)) return "Unlimited access";
@@ -79,7 +74,7 @@ export function CoachSettingsPanel({ session }: { session: AuthSession }) {
 
           <div className="org-settings-coach-split">
             <PdfBrandingSection
-              brand={draftBrand}
+              brand={displayedBrand}
               onChange={(next) => {
                 setDraftBrand(next);
                 setDirty(true);

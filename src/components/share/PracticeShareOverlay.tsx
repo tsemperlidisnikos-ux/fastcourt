@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
 import { shareMinifiedToStoredPlay } from "@/lib/share/share-link";
@@ -26,9 +27,7 @@ export function PracticeShareOverlay() {
     (s) => s.clearPracticeShareSession,
   );
   const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useClientMounted();
 
   const totalMin = useMemo(
     () =>

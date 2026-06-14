@@ -2,13 +2,8 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { useModalA11y } from "@/hooks/useModalA11y";
-
-function useMounted() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  return mounted;
-}
 
 interface NameDialogProps {
   open: boolean;
@@ -21,7 +16,14 @@ interface NameDialogProps {
   onSubmit: (name: string, team: string) => void | Promise<void>;
 }
 
-export function PlaybookNameDialog({
+export function PlaybookNameDialog(props: NameDialogProps) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  const dialogKey = `${props.mode}:${props.initialName}:${props.initialTeam}:${props.teams.join(",")}`;
+  return <PlaybookNameDialogBody key={dialogKey} {...props} />;
+}
+
+function PlaybookNameDialogBody({
   open,
   mode,
   initialName = "",
@@ -31,27 +33,19 @@ export function PlaybookNameDialog({
   onClose,
   onSubmit,
 }: NameDialogProps) {
-  const mounted = useMounted();
   const nameRef = useRef<HTMLInputElement>(null);
   const { panelRef, titleId, fieldId } = useModalA11y(open, onClose);
   const nameFieldId = `${fieldId}-name`;
   const teamFieldId = `${fieldId}-team`;
   const [name, setName] = useState(initialName);
-  const [team, setTeam] = useState(initialTeam);
+  const [team, setTeam] = useState(initialTeam || teams[0] || "No Team");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-    setName(initialName);
-    setTeam(initialTeam || teams[0] || "No Team");
-    setError("");
-    setSubmitting(false);
     const t = window.setTimeout(() => nameRef.current?.focus(), 0);
     return () => window.clearTimeout(t);
-  }, [open, initialName, initialTeam, teams]);
-
-  if (!open || !mounted) return null;
+  }, []);
 
   const title = mode === "create" ? "Create playbook" : "Rename playbook";
   const submitLabel = mode === "create" ? "Create" : "Save";
@@ -175,22 +169,20 @@ interface DeleteDialogProps {
   onConfirm: () => void | Promise<void>;
 }
 
-export function PlaybookDeleteDialog({
-  open,
+export function PlaybookDeleteDialog(props: DeleteDialogProps) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  return <PlaybookDeleteDialogBody {...props} />;
+}
+
+function PlaybookDeleteDialogBody({
   playbookName,
   playCount,
   onClose,
   onConfirm,
 }: DeleteDialogProps) {
-  const mounted = useMounted();
-  const { panelRef, titleId } = useModalA11y(open, onClose);
+  const { panelRef, titleId } = useModalA11y(true, onClose);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!open) setSubmitting(false);
-  }, [open]);
-
-  if (!open || !mounted) return null;
 
   async function handleConfirm() {
     setSubmitting(true);
@@ -257,22 +249,20 @@ interface RemovePlayDialogProps {
   onConfirm: () => void | Promise<void>;
 }
 
-export function PlaybookRemovePlayDialog({
-  open,
+export function PlaybookRemovePlayDialog(props: RemovePlayDialogProps) {
+  const mounted = useClientMounted();
+  if (!props.open || !mounted) return null;
+  return <PlaybookRemovePlayDialogBody {...props} />;
+}
+
+function PlaybookRemovePlayDialogBody({
   playTitle,
   playbookName,
   onClose,
   onConfirm,
 }: RemovePlayDialogProps) {
-  const mounted = useMounted();
-  const { panelRef, titleId } = useModalA11y(open, onClose);
+  const { panelRef, titleId } = useModalA11y(true, onClose);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!open) setSubmitting(false);
-  }, [open]);
-
-  if (!open || !mounted) return null;
 
   async function handleConfirm() {
     setSubmitting(true);
@@ -341,7 +331,7 @@ export function PlaybookNoticeDialog({
   message,
   onClose,
 }: NoticeDialogProps) {
-  const mounted = useMounted();
+  const mounted = useClientMounted();
   const { panelRef, titleId } = useModalA11y(open, onClose);
 
   if (!open || !mounted) return null;

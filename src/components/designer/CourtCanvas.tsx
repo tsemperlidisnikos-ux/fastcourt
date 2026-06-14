@@ -334,7 +334,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     [],
   );
 
-  function resolveDrawStart(x: number, y: number, towardX: number, towardY: number) {
+  function resolveDrawStart(x: number, y: number) {
     if (!frame) return { x, y };
     const chain =
       lineActionType === "pass"
@@ -402,7 +402,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     if (tool === "line" && isOnCourt(norm)) {
       drawingRef.current = true;
       tapRef.current = null;
-      const start = resolveDrawStart(norm.x, norm.y, norm.x, norm.y + 0.02);
+      const start = resolveDrawStart(norm.x, norm.y);
       beginFreehandDraft(start.x, start.y);
       return;
     }
@@ -410,7 +410,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     if (tool === "shoot" && isOnCourt(norm)) {
       drawingRef.current = true;
       tapRef.current = null;
-      const start = resolveDrawStart(norm.x, norm.y, norm.x, norm.y + 0.02);
+      const start = resolveDrawStart(norm.x, norm.y);
       beginLineDraft(start.x, start.y);
       return;
     }

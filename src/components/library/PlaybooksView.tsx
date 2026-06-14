@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { PrintPreviewIcon } from "@/components/library/PrintPreviewIcon";
@@ -60,13 +60,11 @@ export function PlaybooksView() {
   const [manageMenuOpen, setManageMenuOpen] = useState(false);
   const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
   const [addPlayOpen, setAddPlayOpen] = useState(false);
-  const [headerActionsSlot, setHeaderActionsSlot] = useState<HTMLElement | null>(
-    null,
+  const headerActionsSlot = useSyncExternalStore(
+    () => () => {},
+    () => document.getElementById("fd-main-tabs-actions"),
+    () => null,
   );
-
-  useEffect(() => {
-    setHeaderActionsSlot(document.getElementById("fd-main-tabs-actions"));
-  }, []);
 
   useEffect(() => {
     if (!manageMenuOpen) return;
@@ -86,20 +84,21 @@ export function PlaybooksView() {
   }, [printConfigHydrated, hydratePrintConfig]);
 
   const selected = playbooks.find((p) => p.id === selectedId) ?? null;
-  const selectedPlays = selected ? resolvePlaybookPlays(selected) : [];
+  const selectedPlays = useMemo(
+    () => (selected ? resolvePlaybookPlays(selected) : []),
+    [selected, resolvePlaybookPlays],
+  );
 
-  useEffect(() => {
-    if (!selectedPlays.length) {
-      setSelectedPlayId(null);
-      return;
-    }
+  const activePlayId = useMemo(() => {
+    if (!selectedPlays.length) return null;
     if (
-      !selectedPlayId ||
-      !selectedPlays.some((play) => play.id === selectedPlayId)
+      selectedPlayId &&
+      selectedPlays.some((play) => play.id === selectedPlayId)
     ) {
-      setSelectedPlayId(selectedPlays[0].id);
+      return selectedPlayId;
     }
-  }, [selected?.id, selectedPlays, selectedPlayId]);
+    return selectedPlays[0]?.id ?? null;
+  }, [selectedPlays, selectedPlayId]);
 
   const totalPages = Math.max(1, Math.ceil(playbooks.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -206,7 +205,7 @@ export function PlaybooksView() {
   function handlePresent() {
     if (!selectedPlays.length) return;
     const play =
-      selectedPlays.find((item) => item.id === selectedPlayId) ?? selectedPlays[0];
+      selectedPlays.find((item) => item.id === activePlayId) ?? selectedPlays[0];
     setPresentPlay(play);
   }
 
@@ -482,7 +481,7 @@ export function PlaybooksView() {
                       >
                         <button
                           type="button"
-                          className={`fc-playbooks-list-item${selectedPlayId === play.id ? " selected" : ""}`}
+                          className={`fc-playbooks-list-item${activePlayId === play.id ? " selected" : ""}`}
                           onClick={() => setSelectedPlayId(play.id)}
                           onDoubleClick={(e) => {
                             e.preventDefault();
@@ -521,7 +520,7 @@ export function PlaybooksView() {
                     <PlaybookInlinePreview
                       playbook={selected}
                       plays={selectedPlays}
-                      scrollToPlayId={selectedPlayId}
+                      scrollToPlayId={activePlayId}
                       printConfig={printConfig}
                     />
                   )

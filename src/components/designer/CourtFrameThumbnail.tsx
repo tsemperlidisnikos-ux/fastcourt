@@ -146,9 +146,6 @@ export function CourtFrameThumbnail({
       const courtHost = el.closest(
         ".fc-print-frame-court, .org-preview-frame-court, .fd-cell-court, .frame-item-court, .ds-thumb-court",
       ) as HTMLElement | null;
-      const frameCard = el.closest(
-        ".org-preview-frame-card",
-      ) as HTMLElement | null;
       const gridCell = el.closest(".fd-cell") as HTMLElement | null;
       const host = courtHost ?? el.parentElement ?? el;
       const previewGrid = el.closest(".org-preview-frames") as HTMLElement | null;
