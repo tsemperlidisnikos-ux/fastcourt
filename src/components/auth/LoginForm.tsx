@@ -18,6 +18,7 @@ import {
   sessionToAdminUser,
   upsertAdminUser,
 } from "@/lib/auth/admin-users";
+import { buildPostSignupLibraryUrl } from "@/lib/auth/onboarding";
 import { upsertProfileForUser } from "@/lib/auth/signup";
 import {
   getPendingInvite,
@@ -232,7 +233,7 @@ export function LoginForm() {
       const record = sessionToAdminUser(session.user);
       record.organization = signupValues.teamName.trim() || undefined;
       upsertAdminUser(record);
-      router.replace(next);
+      router.replace(buildPostSignupLibraryUrl(next));
       return;
     }
 
@@ -292,7 +293,7 @@ export function LoginForm() {
     }
 
     setSession(session);
-    router.replace(next);
+    router.replace(buildPostSignupLibraryUrl(next));
   }
 
   async function submitSignupBasic(normalized: string) {

@@ -884,6 +884,8 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
                         setDirty(true);
                       }}
                       appLogoDataUrl={appLogoDataUrl}
+                      teamTitle={pdfBrand.clubName.trim() || "FastCourt"}
+                      clubLogoDataUrl={pdfBrand.logoDataUrl}
                       onAppLogoChange={(dataUrl) => {
                         const saved = setAppLogo(dataUrl, true);
                         if (!saved) return false;

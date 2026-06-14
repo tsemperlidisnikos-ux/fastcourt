@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DrawLibraryView } from "@/components/library/DrawLibraryView";
 import { FdAppFooter, FdAppHeader } from "@/components/library/FdAppHeader";
 import { FieldsView } from "@/components/library/FieldsView";
@@ -9,11 +9,19 @@ import {
   LibraryLoadError,
   LibraryLoadingState,
 } from "@/components/library/LibraryLoadError";
+import { OnboardingModal } from "@/components/library/OnboardingModal";
 import { PlaybooksView } from "@/components/library/PlaybooksView";
 import { PracticePlannerView } from "@/components/library/PracticePlannerView";
 import { PlayersView } from "@/components/library/PlayersView";
 import { TrialBanner } from "@/components/billing/TrialBanner";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import { useDeviceClass } from "@/hooks/useDeviceClass";
+import {
+  dismissOnboardingForever,
+  isOnboardingDismissed,
+  shouldShowOnboarding,
+  stripWelcomeFromPath,
+} from "@/lib/auth/onboarding";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
@@ -42,8 +50,17 @@ const SECTION_LABEL: Record<LibraryTab, string> = {
 };
 
 export function LibraryScreen() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = parseTab(searchParams.get("tab"));
+  const mounted = useClientMounted();
+  const [onboardingSuppressed, setOnboardingSuppressed] = useState(false);
+  const onboardingOpen =
+    mounted &&
+    !onboardingSuppressed &&
+    !isOnboardingDismissed() &&
+    shouldShowOnboarding(searchParams.get("welcome"), false);
 
   const hydrated = useLibraryStore((s) => s.hydrated);
   const loading = useLibraryStore((s) => s.loading);
@@ -74,6 +91,23 @@ export function LibraryScreen() {
   useEffect(() => {
     if (!metaHydrated) void loadMeta();
   }, [metaHydrated, loadMeta]);
+
+  function closeOnboarding() {
+    setOnboardingSuppressed(true);
+    dismissOnboardingForever();
+    const clean = stripWelcomeFromPath(pathname, searchParams.toString());
+    router.replace(clean, { scroll: false });
+  }
+
+  function runOnboardingAction(action: "new" | "import") {
+    setOnboardingSuppressed(true);
+    dismissOnboardingForever();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("welcome");
+    params.set("tab", "draw");
+    params.set(action, "1");
+    router.replace(`/library?${params.toString()}`, { scroll: false });
+  }
 
   const modeClass =
     [
@@ -123,6 +157,12 @@ export function LibraryScreen() {
         )}
       </div>
       <FdAppFooter />
+      <OnboardingModal
+        open={onboardingOpen}
+        onClose={closeOnboarding}
+        onNewPlay={() => runOnboardingAction("new")}
+        onImportFdb={() => runOnboardingAction("import")}
+      />
     </div>
   );
 }

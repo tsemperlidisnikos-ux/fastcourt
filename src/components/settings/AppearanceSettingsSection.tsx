@@ -2,6 +2,7 @@
 
 import { APP_LOGO_PATH } from "@/lib/config";
 import { ClubLogoUpload } from "@/components/settings/ClubLogoUpload";
+import { HeaderAppearancePreview } from "@/components/settings/HeaderAppearancePreview";
 import { resolveAppLogoSrc } from "@/lib/settings/app-logo";
 import {
   ACTION_COLOR_LABELS,
@@ -27,11 +28,15 @@ export function AppearanceSettingsSection({
   onChange,
   appLogoDataUrl = null,
   onAppLogoChange,
+  teamTitle = "Your team",
+  clubLogoDataUrl = null,
 }: {
   settings: AppearanceSettings;
   onChange: (next: AppearanceSettings) => void;
   appLogoDataUrl?: string | null;
   onAppLogoChange?: (dataUrl: string | null) => boolean | void;
+  teamTitle?: string;
+  clubLogoDataUrl?: string | null;
 }) {
   function patch<K extends keyof AppearanceSettings>(
     key: K,
@@ -169,6 +174,12 @@ export function AppearanceSettingsSection({
             Fill color for the selected library tab (Draw, Playbooks, Fields,
             Practice, Players).
           </p>
+          <HeaderAppearancePreview
+            settings={settings}
+            teamTitle={teamTitle}
+            appLogoDataUrl={appLogoDataUrl}
+            clubLogoDataUrl={clubLogoDataUrl}
+          />
           <label className="org-settings-brand-field" id="org-settings-app-font-wrap">
             <span>App font</span>
             <select

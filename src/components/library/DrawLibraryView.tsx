@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { FdImportPanelHandle } from "@/components/library/FdImportPanel";
 import { FdImportPanel } from "@/components/library/FdImportPanel";
 import {
@@ -53,6 +53,7 @@ const PAGE_SIZE = 50;
 
 export function DrawLibraryView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const importPanelRef = useRef<FdImportPanelHandle>(null);
   const items = useLibraryStore((s) => s.items);
   const createPlayFromDetails = useLibraryStore((s) => s.createPlayFromDetails);
@@ -101,6 +102,33 @@ export function DrawLibraryView() {
   const [contextMenu, setContextMenu] = useState<LibraryPlayContextMenuState | null>(
     null,
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    let changed = false;
+    let openNewTimer: ReturnType<typeof window.setTimeout> | undefined;
+
+    if (params.get("new") === "1") {
+      openNewTimer = window.setTimeout(() => setCreateModalOpen(true), 0);
+      params.delete("new");
+      changed = true;
+    }
+
+    if (params.get("import") === "1") {
+      importPanelRef.current?.openPicker();
+      params.delete("import");
+      changed = true;
+    }
+
+    if (changed) {
+      const qs = params.toString();
+      router.replace(qs ? `/library?${qs}` : "/library", { scroll: false });
+    }
+
+    return () => {
+      if (openNewTimer !== undefined) window.clearTimeout(openNewTimer);
+    };
+  }, [router, searchParams]);
 
   const assignedPlayIds = useMemo(() => {
     const ids = new Set<string>();
