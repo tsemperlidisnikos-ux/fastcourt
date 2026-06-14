@@ -10,6 +10,10 @@ export interface AppearanceSettings {
   utilityBar: string;
   actionColors: Record<ActionColorKey, string>;
   headerColor: string;
+  /** Middle library header row (app logo, team name, club logo). */
+  headerBrandRowColor: string;
+  /** Border/frame color for the active library nav tab (Draw, Playbooks, …). */
+  headerNavActiveColor: string;
   appFont: string;
   theme: AppTheme;
   playerDisplay: PlayerDisplayMode;

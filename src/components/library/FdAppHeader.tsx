@@ -139,7 +139,11 @@ export function FdAppFooter() {
   }, null);
 
   const savedLabel = latestSave
-    ? `Saved ${new Date(latestSave).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    ? `Saved ${new Date(latestSave).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })}`
     : "Saved";
 
   return (

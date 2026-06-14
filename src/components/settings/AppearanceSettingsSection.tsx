@@ -144,8 +144,30 @@ export function AppearanceSettingsSection({
             />
           </label>
           <p className="org-settings-hint">
-            Applies to library headers, tablet sidebar header, and the play
-            editor top bar.
+            Top bar (PLAYS / account), navigation tabs, and designer top bar.
+          </p>
+          <label className="org-settings-brand-field org-settings-brand-color-field">
+            <span>Brand row color</span>
+            <input
+              type="color"
+              value={settings.headerBrandRowColor}
+              onChange={(e) => patch("headerBrandRowColor", e.target.value)}
+            />
+          </label>
+          <p className="org-settings-hint">
+            Middle header row only: application logo, team name, and club logo.
+          </p>
+          <label className="org-settings-brand-field org-settings-brand-color-field">
+            <span>Active tab frame color</span>
+            <input
+              type="color"
+              value={settings.headerNavActiveColor}
+              onChange={(e) => patch("headerNavActiveColor", e.target.value)}
+            />
+          </label>
+          <p className="org-settings-hint">
+            Fill color for the selected library tab (Draw, Playbooks, Fields,
+            Practice, Players).
           </p>
           <label className="org-settings-brand-field" id="org-settings-app-font-wrap">
             <span>App font</span>

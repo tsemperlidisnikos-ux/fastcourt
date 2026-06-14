@@ -17,6 +17,8 @@ export const DEFAULT_APPEARANCE: AppearanceSettings = {
     shoot: "#16a34a",
   },
   headerColor: "#000000",
+  headerBrandRowColor: "#000000",
+  headerNavActiveColor: "#16a34a",
   appFont: "system-ui",
   theme: "light",
   playerDisplay: "number",
@@ -74,6 +76,14 @@ export function loadAppearanceSettings(): AppearanceSettings {
     return {
       ...DEFAULT_APPEARANCE,
       ...parsed,
+      headerBrandRowColor:
+        parsed.headerBrandRowColor ??
+        parsed.headerColor ??
+        DEFAULT_APPEARANCE.headerBrandRowColor,
+      headerNavActiveColor:
+        parsed.headerNavActiveColor ??
+        parsed.panelAccent ??
+        DEFAULT_APPEARANCE.headerNavActiveColor,
       actionColors: {
         ...DEFAULT_APPEARANCE.actionColors,
         ...parsed.actionColors,

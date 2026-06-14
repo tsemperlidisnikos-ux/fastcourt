@@ -37,30 +37,33 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-team-title {
   font-weight: 800;
 }
 
-/* Main tabs — green accent underline */
+/* Main tabs — active tab frame uses --fd-header-nav-active-color (admin setting) */
 #screen-organizer .fd-main-tab,
 #screen-organizer .org-main-tab {
-  border-radius: 8px 8px 0 0;
+  border-radius: 6px;
   letter-spacing: 0.02em;
   text-transform: none;
   font-weight: 600;
   font-size: 17px;
-  padding: 12px 22px 14px;
+  padding: 10px 20px;
+  border: 2px solid transparent;
+  margin: 4px 2px;
 }
 
 html[data-device-class="laptop"] #screen-organizer .fd-main-tab,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab,
 html[data-device-class="laptop"] #screen-organizer .org-main-tab,
 html[data-device-class="desktop-wide"] #screen-organizer .org-main-tab {
-  border-radius: 0;
-  padding: 12px 22px 14px;
+  border-radius: 6px;
+  padding: 10px 20px;
 }
 
 #screen-organizer .fd-main-tab.active,
 #screen-organizer .org-main-tab.active,
 html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active {
-  border-bottom-color: var(--fc-modern-accent) !important;
+  border-color: var(--fd-header-nav-active-color, var(--fc-modern-accent)) !important;
+  background: var(--fd-header-nav-active-color, var(--fc-modern-accent)) !important;
   color: #fff !important;
   box-shadow: none;
 }

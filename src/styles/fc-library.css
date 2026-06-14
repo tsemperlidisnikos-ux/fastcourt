@@ -32,7 +32,7 @@ html[data-device-class="laptop"] #screen-organizer,
 html[data-device-class="desktop-wide"] #screen-organizer {
   --fd-topbar-util-height: 40px;
   --fd-hero-brand-slot: 72px;
-  --fd-hero-inner-pad-top: 10px;
+  --fd-hero-inner-pad-top: 0;
   --fd-hero-inner-pad-bottom: 0;
   --fd-main-tabs-height: 48px;
 }

@@ -1,5 +1,4 @@
 import {
-  collectBallHolderIds,
   createPropagationContext,
   propagateActionToContext,
 } from "@/lib/designer/action-propagation";
@@ -85,5 +84,3 @@ export function applyActionResultsToFrame(
     actionSequence: options.clearActions ? [] : targetFrame.actionSequence,
   };
 }
-
-export { collectBallHolderIds };

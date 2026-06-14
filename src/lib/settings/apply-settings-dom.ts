@@ -135,6 +135,14 @@ export function applyAppearanceToDocument(settings: AppearanceSettings) {
   setVar(root, "--fd-red", settings.panelAccent);
   setVar(root, "--od-accent", settings.panelAccent);
   applyHeaderColorToDocument(settings.headerColor);
+  applyHeaderBrandRowColorToDocument(
+    settings.headerBrandRowColor || settings.headerColor,
+  );
+  setVar(root, "--fd-header-nav-active-color", settings.headerNavActiveColor);
+  const organizer = document.getElementById("screen-organizer");
+  if (organizer instanceof HTMLElement) {
+    setVar(organizer, "--fd-header-nav-active-color", settings.headerNavActiveColor);
+  }
   setVar(root, "--fd-utility-bar-gradient", settings.utilityBar);
 
   const lc = settings.libraryColumns;
@@ -173,6 +181,22 @@ export function applyAppearanceToDocument(settings: AppearanceSettings) {
       settings.theme === "dark" ? "#0f172a" : settings.headerColor,
     );
   }
+}
+
+function applyHeaderBrandRowColorToDocument(color: string | null | undefined) {
+  if (typeof document === "undefined") return;
+  const brandRowColor = color?.trim();
+  const targets: HTMLElement[] = [document.documentElement];
+  const organizer = document.getElementById("screen-organizer");
+  if (organizer instanceof HTMLElement) targets.push(organizer);
+
+  targets.forEach((el) => {
+    if (!brandRowColor) {
+      el.style.removeProperty("--fd-header-brand-row-bg");
+      return;
+    }
+    setVar(el, "--fd-header-brand-row-bg", brandRowColor);
+  });
 }
 
 function applyHeaderColorToDocument(color: string | null | undefined) {
