@@ -106,7 +106,7 @@ export function DrawLibraryView() {
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
     let changed = false;
-    let openNewTimer: ReturnType<typeof window.setTimeout> | undefined;
+    let openNewTimer: number | undefined;
 
     if (params.get("new") === "1") {
       openNewTimer = window.setTimeout(() => setCreateModalOpen(true), 0);

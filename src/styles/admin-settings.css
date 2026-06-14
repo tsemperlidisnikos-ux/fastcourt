@@ -1884,5 +1884,5 @@ html[data-theme="dark"] body {
 .fc-hp-tab.is-active {
   background: var(--fc-preview-nav-active, #16a34a);
   border-color: var(--fc-preview-nav-active, #16a34a);
-  color: #fff;
+  color: var(--fc-preview-nav-active-text, #fff);
 }

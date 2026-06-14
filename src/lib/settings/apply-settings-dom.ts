@@ -1,4 +1,5 @@
 import { setRuntimeActionColors } from "@/lib/designer/action-geometry";
+import { resolveHeaderNavActiveTextColor } from "@/lib/settings/color-contrast";
 import type { ActionType } from "@/types/designer";
 import type { AppearanceSettings } from "@/types/appearance-settings";
 import type { PdfBrandSettings } from "@/types/pdf-branding";
@@ -139,9 +140,19 @@ export function applyAppearanceToDocument(settings: AppearanceSettings) {
     settings.headerBrandRowColor || settings.headerColor,
   );
   setVar(root, "--fd-header-nav-active-color", settings.headerNavActiveColor);
+  setVar(
+    root,
+    "--fd-header-nav-active-text-color",
+    resolveHeaderNavActiveTextColor(settings.headerNavActiveColor),
+  );
   const organizer = document.getElementById("screen-organizer");
   if (organizer instanceof HTMLElement) {
     setVar(organizer, "--fd-header-nav-active-color", settings.headerNavActiveColor);
+    setVar(
+      organizer,
+      "--fd-header-nav-active-text-color",
+      resolveHeaderNavActiveTextColor(settings.headerNavActiveColor),
+    );
   }
   setVar(root, "--fd-utility-bar-gradient", settings.utilityBar);
 

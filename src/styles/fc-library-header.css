@@ -6,6 +6,7 @@
 #screen-organizer {
   --fd-header-black: #000;
   --fd-header-nav-active-color: #16a34a;
+  --fd-header-nav-active-text-color: #fff;
   --fd-topbar-util-height: 40px;
   --fd-hero-brand-slot: 72px;
   --fd-hero-inner-pad-top: 0;
@@ -292,7 +293,7 @@
 #screen-organizer .fd-app-header .fd-main-tab.active,
 #screen-organizer .fd-app-header .org-main-tab.active {
   background: var(--fd-header-nav-active-color, #16a34a) !important;
-  color: #fff !important;
+  color: var(--fd-header-nav-active-text-color, #fff) !important;
   border-color: var(--fd-header-nav-active-color, #16a34a) !important;
   box-shadow: none !important;
 }
@@ -307,6 +308,6 @@
 #screen-organizer .fd-app-header .fd-main-tab.active:hover,
 #screen-organizer .fd-app-header .org-main-tab.active:hover {
   background: var(--fd-header-nav-active-color, #16a34a) !important;
-  color: #fff !important;
+  color: var(--fd-header-nav-active-text-color, #fff) !important;
   border-color: var(--fd-header-nav-active-color, #16a34a) !important;
 }

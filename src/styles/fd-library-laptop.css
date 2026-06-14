@@ -212,7 +212,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active {
   background: var(--fd-header-nav-active-color, #16a34a);
-  color: #fff;
+  color: var(--fd-header-nav-active-text-color, #fff);
   border-color: var(--fd-header-nav-active-color, #16a34a);
   box-shadow: none;
 }
@@ -226,7 +226,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab:hover:not(
 html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active:hover,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active:hover {
   background: var(--fd-header-nav-active-color, #16a34a);
-  color: #fff;
+  color: var(--fd-header-nav-active-text-color, #fff);
 }
 
 /* Hide type chips row — main tabs replace them on laptop */

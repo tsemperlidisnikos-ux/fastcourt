@@ -172,7 +172,8 @@ export function AppearanceSettingsSection({
           </label>
           <p className="org-settings-hint">
             Fill color for the selected library tab (Draw, Playbooks, Fields,
-            Practice, Players).
+            Practice, Players). Label text switches light/dark automatically for
+            readability.
           </p>
           <HeaderAppearancePreview
             settings={settings}

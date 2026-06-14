@@ -64,7 +64,7 @@ html[data-device-class="laptop"] #screen-organizer .fd-main-tab.active,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab.active {
   border-color: var(--fd-header-nav-active-color, var(--fc-modern-accent)) !important;
   background: var(--fd-header-nav-active-color, var(--fc-modern-accent)) !important;
-  color: #fff !important;
+  color: var(--fd-header-nav-active-text-color, #fff) !important;
   box-shadow: none;
 }
 

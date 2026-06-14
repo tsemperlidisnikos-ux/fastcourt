@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { resolveAppLogoSrc } from "@/lib/settings/app-logo";
+import { resolveHeaderNavActiveTextColor } from "@/lib/settings/color-contrast";
 import type { AppearanceSettings } from "@/types/appearance-settings";
 
 const PREVIEW_TABS = ["Draw", "Playbooks", "Fields"] as const;
@@ -26,6 +27,9 @@ export function HeaderAppearancePreview({
     "--fc-preview-header": settings.headerColor,
     "--fc-preview-brand-row": settings.headerBrandRowColor,
     "--fc-preview-nav-active": settings.headerNavActiveColor,
+    "--fc-preview-nav-active-text": resolveHeaderNavActiveTextColor(
+      settings.headerNavActiveColor,
+    ),
   } as CSSProperties;
 
   return (
