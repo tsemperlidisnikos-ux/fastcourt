@@ -12,6 +12,7 @@ import { isMasterAdminEmail } from "@/lib/auth/roles";
 import {
   fetchProfile,
   localDemoSession,
+  PROFILE_SELECT_COLUMNS,
   profileToAuthSession,
 } from "@/lib/auth/profile";
 import { buildPostSignupLibraryUrl } from "@/lib/auth/onboarding";
@@ -295,13 +296,24 @@ export function LoginForm() {
       },
     });
 
+    const orgName = signupValues.teamName.trim() || teamInvite?.organizationName || "";
+
     let profile = await fetchProfile(supabase, user.id);
     if (!profile) {
       profile = await upsertProfileForUser(
         supabase,
         user,
         signupValues.displayName,
+        orgName,
       );
+    } else if (orgName && !profile.organization) {
+      const { data } = await supabase
+        .from("profiles")
+        .update({ organization: orgName, updated_at: new Date().toISOString() })
+        .eq("id", user.id)
+        .select(PROFILE_SELECT_COLUMNS)
+        .maybeSingle();
+      if (data) profile = data as typeof profile;
     }
 
     if (!profile) {

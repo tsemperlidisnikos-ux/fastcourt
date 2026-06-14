@@ -14,7 +14,14 @@ export interface ProfileRow {
   access_type: SessionUser["accessType"];
   trial_days: number;
   created_at: string;
+  organization: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  updated_at: string;
 }
+
+export const PROFILE_SELECT_COLUMNS =
+  "id, email, display_name, role, expires_at, access_type, trial_days, created_at, organization, stripe_customer_id, stripe_subscription_id, updated_at";
 
 export function profileToSessionUser(profile: ProfileRow): SessionUser {
   return {
@@ -24,6 +31,7 @@ export function profileToSessionUser(profile: ProfileRow): SessionUser {
     role: profile.role,
     accessType: profile.access_type,
     expiresAt: profile.expires_at,
+    organizationName: profile.organization ?? undefined,
   };
 }
 
@@ -41,9 +49,7 @@ export async function fetchProfile(
 ): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select(
-      "id, email, display_name, role, expires_at, access_type, trial_days, created_at",
-    )
+    .select(PROFILE_SELECT_COLUMNS)
     .eq("id", userId)
     .maybeSingle();
 

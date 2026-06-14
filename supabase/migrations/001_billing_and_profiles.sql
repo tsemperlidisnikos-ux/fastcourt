@@ -1,0 +1,181 @@
+-- FastCourt: profiles, license keys, Stripe billing columns, RLS
+-- Run in Supabase SQL editor or via supabase db push
+
+-- ---------------------------------------------------------------------------
+-- Profiles
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email text NOT NULL,
+  display_name text NOT NULL DEFAULT '',
+  role text NOT NULL DEFAULT 'coach' CHECK (role IN ('admin', 'coach', 'team_admin')),
+  access_type text NOT NULL DEFAULT 'trial' CHECK (access_type IN ('trial', 'subscription', 'unlimited')),
+  trial_days integer NOT NULL DEFAULT 14,
+  expires_at timestamptz,
+  organization text,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS organization text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS stripe_customer_id text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+
+CREATE INDEX IF NOT EXISTS profiles_email_idx ON public.profiles (lower(email));
+CREATE INDEX IF NOT EXISTS profiles_stripe_customer_idx ON public.profiles (stripe_customer_id)
+  WHERE stripe_customer_id IS NOT NULL;
+
+-- Auto-update updated_at
+CREATE OR REPLACE FUNCTION public.set_profiles_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS profiles_set_updated_at ON public.profiles;
+CREATE TRIGGER profiles_set_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_profiles_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- License keys
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.license_keys (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key_code text NOT NULL UNIQUE,
+  duration_days integer NOT NULL DEFAULT 365 CHECK (duration_days > 0),
+  redeemed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  redeemed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS license_keys_code_idx ON public.license_keys (lower(key_code));
+
+-- ---------------------------------------------------------------------------
+-- redeem_license_key RPC (used by src/lib/auth/license.ts)
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.redeem_license_key(key_code text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_key public.license_keys%ROWTYPE;
+  v_user_id uuid;
+  v_base timestamptz;
+  v_new_expires timestamptz;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Sign in required to redeem a license.');
+  END IF;
+
+  IF trim(key_code) = '' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Enter a license key.');
+  END IF;
+
+  SELECT * INTO v_key
+  FROM public.license_keys
+  WHERE lower(license_keys.key_code) = lower(trim(redeem_license_key.key_code))
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Invalid license key.');
+  END IF;
+
+  IF v_key.redeemed_by IS NOT NULL AND v_key.redeemed_by <> v_user_id THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'This key was already used.');
+  END IF;
+
+  SELECT COALESCE(expires_at, now()) INTO v_base
+  FROM public.profiles
+  WHERE id = v_user_id;
+
+  IF v_base IS NULL THEN
+    v_base := now();
+  END IF;
+
+  IF v_base < now() THEN
+    v_base := now();
+  END IF;
+
+  v_new_expires := v_base + (v_key.duration_days || ' days')::interval;
+
+  UPDATE public.license_keys
+  SET redeemed_by = v_user_id,
+      redeemed_at = now()
+  WHERE id = v_key.id
+    AND (redeemed_by IS NULL OR redeemed_by = v_user_id);
+
+  UPDATE public.profiles
+  SET access_type = 'subscription',
+      expires_at = v_new_expires,
+      updated_at = now()
+  WHERE id = v_user_id;
+
+  RETURN jsonb_build_object('ok', true);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.redeem_license_key(text) TO authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Row level security
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.license_keys ENABLE ROW LEVEL SECURITY;
+
+-- Profiles: users read/update own row
+DROP POLICY IF EXISTS profiles_select_own ON public.profiles;
+CREATE POLICY profiles_select_own ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS profiles_update_own ON public.profiles;
+CREATE POLICY profiles_update_own ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS profiles_insert_own ON public.profiles;
+CREATE POLICY profiles_insert_own ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Profiles: admins read/update all rows
+DROP POLICY IF EXISTS profiles_select_admin ON public.profiles;
+CREATE POLICY profiles_select_admin ON public.profiles
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles admin_row
+      WHERE admin_row.id = auth.uid()
+        AND admin_row.role = 'admin'
+    )
+  );
+
+DROP POLICY IF EXISTS profiles_update_admin ON public.profiles;
+CREATE POLICY profiles_update_admin ON public.profiles
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles admin_row
+      WHERE admin_row.id = auth.uid()
+        AND admin_row.role = 'admin'
+    )
+  );
+
+-- License keys: no direct client access (RPC only)
+DROP POLICY IF EXISTS license_keys_deny_all ON public.license_keys;
+CREATE POLICY license_keys_deny_all ON public.license_keys
+  FOR ALL
+  USING (false);

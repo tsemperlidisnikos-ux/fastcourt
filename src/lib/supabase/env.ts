@@ -19,6 +19,36 @@ export function getSupabaseAnonKey() {
   return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 }
 
+export function getSupabaseServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+}
+
+export function getStripeSecretKey() {
+  return process.env.STRIPE_SECRET_KEY ?? "";
+}
+
+export function getStripeWebhookSecret() {
+  return process.env.STRIPE_WEBHOOK_SECRET ?? "";
+}
+
+export function isServiceRoleConfigured() {
+  const url = getSupabaseUrl().trim();
+  const key = getSupabaseServiceRoleKey().trim();
+  return Boolean(
+    url &&
+      key &&
+      !isPlaceholder(url) &&
+      !isPlaceholder(key) &&
+      isValidSupabaseProjectUrl(url),
+  );
+}
+
+export function isStripeConfigured() {
+  const key = getStripeSecretKey().trim();
+  const webhook = getStripeWebhookSecret().trim();
+  return Boolean(key && !isPlaceholder(key) && webhook && !isPlaceholder(webhook));
+}
+
 export function isCloudConfigured() {
   const url = getSupabaseUrl().trim();
   const key = getSupabaseAnonKey().trim();

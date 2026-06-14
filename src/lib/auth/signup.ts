@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveSignupRole, isMasterAdminEmail } from "@/lib/auth/roles";
-import type { ProfileRow } from "@/lib/auth/profile";
+import { PROFILE_SELECT_COLUMNS, type ProfileRow } from "@/lib/auth/profile";
 import type { AccessType } from "@/types/auth";
 
 function signupAccessType(email: string): AccessType {
@@ -19,6 +19,7 @@ export async function upsertProfileForUser(
   supabase: SupabaseClient,
   user: { id: string; email?: string | null },
   displayName?: string,
+  organization?: string,
 ): Promise<ProfileRow | null> {
   const email = (user.email ?? "").trim().toLowerCase();
   if (!email) return null;
@@ -32,15 +33,15 @@ export async function upsertProfileForUser(
     access_type: signupAccessType(email),
     trial_days: isMasterAdminEmail(email) ? 0 : 14,
     expires_at: trialExpiresAt(email),
+    organization: organization?.trim() || null,
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select(
-      "id, email, display_name, role, expires_at, access_type, trial_days, created_at",
-    )
+    .select(PROFILE_SELECT_COLUMNS)
     .maybeSingle();
 
   if (error) {

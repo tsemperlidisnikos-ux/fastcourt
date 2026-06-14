@@ -140,7 +140,12 @@ export function findAdminUserByEmail(email: string): AdminUserRecord | null {
   );
 }
 
+function isCloudBackedUser(user: SessionUser): boolean {
+  return !user.id.startsWith("local-") && !user.id.startsWith("demo-");
+}
+
 export function applyAdminRegistryToSession(user: SessionUser): SessionUser {
+  if (isCloudBackedUser(user)) return user;
   const row = findAdminUserByEmail(user.email);
   if (!row || row.role === ROLES.admin) return user;
   return {

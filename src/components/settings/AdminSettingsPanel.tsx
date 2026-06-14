@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { APP_BUILD, APP_NAME } from "@/lib/config";
 import {
@@ -20,6 +20,11 @@ import {
   saveAdminUsers,
 } from "@/lib/auth/admin-users";
 import {
+  fetchCloudAdminUsers,
+  saveCloudAdminUsers,
+} from "@/lib/auth/profiles-cloud";
+import { createClient } from "@/lib/supabase/client";
+import {
   loadTeamOrganizations,
   saveTeamOrganizations,
 } from "@/lib/auth/team-organizations";
@@ -33,7 +38,7 @@ import { TeamOrganizationsSection } from "@/components/settings/TeamOrganization
 import { ToolsSection } from "@/components/settings/ToolsSection";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { appConfirm } from "@/stores/dialog-store";
+import { appConfirm, appNotice } from "@/stores/dialog-store";
 import {
   summarizeAllCoachLibraries,
   summarizeCoachLibrary,
@@ -519,6 +524,33 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const persistAll = useSettingsStore((s) => s.persistAll);
   const setSession = useAuthStore((s) => s.setSession);
 
+  const [cloudUsersLoaded, setCloudUsersLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!session.cloud || cloudUsersLoaded) return;
+    const supabase = createClient();
+    if (!supabase) {
+      const timer = window.setTimeout(() => setCloudUsersLoaded(true), 0);
+      return () => window.clearTimeout(timer);
+    }
+
+    void fetchCloudAdminUsers(supabase).then((result) => {
+      if (result.ok && result.users.length > 0) {
+        setUsers(result.users);
+        setDrafts(Object.fromEntries(result.users.map((u) => [u.id, { ...u }])));
+        setSelectedId((prev) =>
+          prev && result.users.some((u) => u.id === prev)
+            ? prev
+            : (result.users[0]?.id ?? null),
+        );
+        saveAdminUsers(result.users);
+      } else if (!result.ok) {
+        console.warn("FastCourt: cloud admin users load failed", result.error);
+      }
+      setCloudUsersLoaded(true);
+    });
+  }, [session.cloud, cloudUsersLoaded]);
+
   if (registryUsers !== prevRegistryUsers) {
     setPrevRegistryUsers(registryUsers);
     setUsers(registryUsers);
@@ -545,9 +577,19 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
     setDirty(true);
   }
 
-  function handleApply() {
+  async function handleApply() {
     if (navId === "all-users") {
       const merged = users.map((u) => drafts[u.id] ?? u);
+      if (session.cloud) {
+        const supabase = createClient();
+        if (supabase) {
+          const result = await saveCloudAdminUsers(supabase, merged);
+          if (!result.ok) {
+            appNotice("Cloud sync", result.error);
+            return;
+          }
+        }
+      }
       saveAdminUsers(merged);
       setUsers(merged);
       const self = merged.find(
