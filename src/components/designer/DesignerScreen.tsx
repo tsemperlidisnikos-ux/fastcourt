@@ -1,12 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LINE_ACTION_CHOICES } from "@/lib/designer/action-constants";
 import { APP_BUILD } from "@/lib/config";
 import { blankStoredPlay } from "@/lib/library/convert";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
+import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { ActionSequencePanel } from "@/components/designer/ActionSequencePanel";
 import { CourtWhiteboardToolbar } from "@/components/designer/CourtWhiteboardToolbar";
 import { NotesFormatToolbar } from "@/components/designer/NotesFormatToolbar";
@@ -17,7 +18,6 @@ import { ConeToolIcon } from "@/components/designer/ConeMarker";
 import { LineTypeBar } from "@/components/designer/LineTypeBar";
 import { ShadowTypeBar } from "@/components/designer/ShadowTypeBar";
 import { ZoneTypeBar } from "@/components/designer/ZoneTypeBar";
-import { LineTypeModal } from "@/components/designer/LineTypeModal";
 import { ImportFrameModal } from "@/components/designer/ImportFrameModal";
 import {
   PlayDetailsModal,
@@ -108,6 +108,8 @@ export function DesignerScreen() {
   const setCourtType = useDesignerStore((s) => s.setCourtType);
   const lineActionType = useDesignerStore((s) => s.lineActionType);
   const setLineActionType = useDesignerStore((s) => s.setLineActionType);
+  const selectedActionId = useDesignerStore((s) => s.selectedActionId);
+  const changeActionType = useDesignerStore((s) => s.changeActionType);
   const applyFormation = useDesignerStore((s) => s.applyFormation);
   const fastBuildFiveOut = useDesignerStore((s) => s.fastBuildFiveOut);
   const courtZoom = useDesignerStore((s) => s.courtZoom);
@@ -152,6 +154,15 @@ export function DesignerScreen() {
   const hydrateSettings = useSettingsStore((s) => s.hydrate);
 
   const currentFrame = play.frames[currentFrameIndex];
+  const selectedAction = currentFrame?.actions.find(
+    (a) => a.id === selectedActionId,
+  );
+  const showLineTypeBar =
+    currentTool === "line" || (currentTool === "select" && !!selectedAction);
+  const thumbnailFrames = useMemo(
+    () => framesForDesignerThumbnails(play.frames),
+    [play.frames],
+  );
 
   useEffect(() => {
     if (!settingsHydrated) hydrateSettings();
@@ -711,22 +722,34 @@ export function DesignerScreen() {
         <main className="ds-canvas-area">
           <div className="ds-center-stack">
             <div className="ds-court-block">
-              <div
-                className="ds-canvas-wrap"
-                id="ds-canvas-wrap"
-                style={{
-                  transform: `scale(${courtZoom / 100})`,
-                  transformOrigin: "center center",
-                }}
-              >
-                <CourtCanvas ref={courtRef} />
+              <div className="ds-court-stage">
+                <div
+                  className="ds-canvas-wrap"
+                  id="ds-canvas-wrap"
+                  style={{
+                    transform: `scale(${courtZoom / 100})`,
+                    transformOrigin: "center center",
+                  }}
+                >
+                  <CourtCanvas ref={courtRef} />
+                </div>
+                {showLineTypeBar ? (
+                  <LineTypeBar
+                    value={
+                      currentTool === "select" && selectedAction
+                        ? selectedAction.type
+                        : lineActionType
+                    }
+                    onChange={(type) => {
+                      if (currentTool === "select" && selectedActionId) {
+                        changeActionType(selectedActionId, type);
+                        return;
+                      }
+                      setLineActionType(type);
+                    }}
+                  />
+                ) : null}
               </div>
-              {currentTool === "line" ? (
-                <LineTypeBar
-                  value={lineActionType}
-                  onChange={setLineActionType}
-                />
-              ) : null}
               <div className="ds-fd-court-toolbar-stack">
               <div className="ds-fd-court-toolbar" aria-label="Court tools">
                 <div className="ds-fd-frame-nav" aria-label="Frame navigation">
@@ -982,7 +1005,7 @@ export function DesignerScreen() {
               role="tabpanel"
             >
               <div className="ds-thumb-list-vertical" id="frames-container">
-                {play.frames.map((frame, index) => {
+                {thumbnailFrames.map((frame, index) => {
                   const active = index === currentFrameIndex;
                   return (
                     <div
@@ -1026,7 +1049,6 @@ export function DesignerScreen() {
         </aside>
       </div>
 
-      <LineTypeModal />
       <FormationModal
         open={formationOpen}
         onClose={() => setFormationOpen(false)}

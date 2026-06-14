@@ -82,7 +82,7 @@ export function LibraryPreviewPanel({
     const ro = new ResizeObserver(applyThumbSize);
     ro.observe(grid);
     return () => ro.disconnect();
-  }, [play?.id, play?.courtType]);
+  }, [play]);
 
   if (!play) {
     return (

@@ -561,7 +561,7 @@ export function LoginForm() {
       setSession(session);
       router.replace(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed.");
+      setError(friendlyAuthError(err instanceof Error ? err.message : "Authentication failed."));
     } finally {
       setLoading(false);
     }

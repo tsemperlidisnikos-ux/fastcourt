@@ -516,6 +516,21 @@ html[data-viewport-form="tablet"] #screen-designer .ds-fd-user-btn:active {
   flex-direction: column;
 }
 
+#screen-designer .ds-court-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+#screen-designer .ds-court-stage .ds-canvas-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
 #screen-designer .ds-canvas-wrap {
   flex: 1 1 auto;
   min-height: 0;

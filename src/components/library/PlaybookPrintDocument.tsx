@@ -179,11 +179,14 @@ export function PlaybookPrintDocument({
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const teamLogo = useSettingsStore((s) => s.pdfBrand.logoDataUrl?.trim() ?? "");
-  const settings = {
-    ...DEFAULT_PLAYBOOK_PRINT_SETTINGS,
-    ...(printConfig ? toPlaybookPrintSettings(printConfig) : {}),
-    ...settingsProp,
-  };
+  const settings = useMemo(
+    () => ({
+      ...DEFAULT_PLAYBOOK_PRINT_SETTINGS,
+      ...(printConfig ? toPlaybookPrintSettings(printConfig) : {}),
+      ...settingsProp,
+    }),
+    [printConfig, settingsProp],
+  );
   const cover = printConfig?.cover;
   const safeTitle = (playbookName || "Playbook").toUpperCase();
   const displayTeam =

@@ -22,46 +22,6 @@ export function prepareFreehandPath(
   return flat.slice();
 }
 
-function pointToSegmentDistance(
-  px: number,
-  py: number,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
-  const t = Math.max(
-    0,
-    Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)),
-  );
-  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
-}
-
-export function guessLineActionType(flat: number[]): ActionType {
-  if (flat.length < 4) return "cut";
-  const sx = flat[0];
-  const sy = flat[1];
-  const ex = flat[flat.length - 2];
-  const ey = flat[flat.length - 1];
-  const chord = Math.hypot(ex - sx, ey - sy) || 1;
-  const tortuosity = polylineLengthNorm(flat) / chord;
-
-  let maxDev = 0;
-  for (let i = 2; i < flat.length - 2; i += 2) {
-    maxDev = Math.max(
-      maxDev,
-      pointToSegmentDistance(flat[i], flat[i + 1], sx, sy, ex, ey),
-    );
-  }
-
-  if (tortuosity > 1.45 || maxDev > chord * 0.22) return "dribble";
-  if (maxDev > chord * 0.12) return "curl";
-  return "cut";
-}
-
 export function freehandEndpoints(flat: number[]) {
   return {
     x1: flat[0],

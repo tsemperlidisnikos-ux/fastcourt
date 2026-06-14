@@ -22,6 +22,12 @@ interface Props {
   compactFontSize?: number;
   /** Override compact circle / ball ring stroke (print thumbnails). */
   compactStrokeWidth?: number;
+  /** Extra radius for ball-possession ring (legacy additive override). */
+  ballRingExtra?: number;
+  /** Ball ring stroke width override. */
+  ballRingStrokeWidth?: number;
+  /** Court editor vs thumbnail ball ring styling. */
+  ballRingMode?: "editor" | "thumbnail";
   listening?: boolean;
   draggable?: boolean;
   onPointerUp?: (e: { cancelBubble: boolean }) => void;
@@ -38,6 +44,9 @@ export function PlayerMarker({
   compact = false,
   compactFontSize,
   compactStrokeWidth,
+  ballRingExtra,
+  ballRingStrokeWidth,
+  ballRingMode,
   listening = false,
   draggable = false,
   onPointerUp,
@@ -70,10 +79,29 @@ export function PlayerMarker({
     : circleDisplayMode || selected;
   const ringRadius = radius * 1.12;
   const labelRadius = showCircleRing && isPlayer ? ringRadius : radius;
-  const offenseCircle = isOffense && showCircleRing;
+  const hasBallRing = isOffense && !!object.hasBall;
+  const offenseCircle = isOffense && showCircleRing && !hasBallRing;
   const defenseCircle = isDefense && showCircleRing;
   const markerStroke = compactStrokeWidth ?? (compact ? 1.15 : 2.5);
   const jerseyFontStyle = compact ? "normal" : "bold";
+  const resolvedBallMode =
+    ballRingMode ?? (compact ? "thumbnail" : "editor");
+  const ballBase =
+    showCircleRing && isPlayer && !hasBallRing ? ringRadius : radius;
+  const ballRingPadding =
+    resolvedBallMode === "editor"
+      ? Math.max(14, ballBase * 0.5)
+      : Math.max(3, ballBase * 0.24);
+  const ballRingRadius =
+    ballRingExtra != null
+      ? ballBase + ballRingExtra
+      : resolvedBallMode === "editor"
+        ? ballBase + ballRingPadding
+        : Math.max(ballBase + ballRingPadding, 9);
+  const ballStroke =
+    ballRingStrokeWidth ??
+    (resolvedBallMode === "editor" ? 3 : 1);
+  const ballStrokeColor = resolvedBallMode === "editor" ? "#000000" : "#1f2937";
 
   function handleDragStart(e: Konva.KonvaEventObject<DragEvent>) {
     e.cancelBubble = true;
@@ -119,15 +147,6 @@ export function PlayerMarker({
         fill="rgba(0,0,0,0.001)"
         listening={hitListening}
       />
-      {isOffense && object.hasBall ? (
-        <Circle
-          radius={(showCircleRing ? ringRadius : radius) + 5}
-          fill="transparent"
-          stroke="#111111"
-          strokeWidth={markerStroke}
-          listening={false}
-        />
-      ) : null}
       {isDefense && defenseCircle ? (
         <Circle
           radius={ringRadius}
@@ -159,6 +178,16 @@ export function PlayerMarker({
           y={-labelRadius}
           width={labelRadius * 2}
           height={labelRadius * 2}
+          listening={false}
+        />
+      ) : null}
+      {hasBallRing ? (
+        <Circle
+          radius={ballRingRadius}
+          fill="transparent"
+          stroke={ballStrokeColor}
+          strokeWidth={ballStroke}
+          strokeScaleEnabled={false}
           listening={false}
         />
       ) : null}
@@ -215,13 +244,14 @@ export function PlayerMarker({
           scaleY={object.scaleY ?? 1}
         />
       ) : null}
-      {selected && isPlayer && !showCircleRing ? (
+      {selected && isPlayer && !showCircleRing && !hasBallRing ? (
         <Circle
           x={0}
           y={0}
           radius={radius}
-          stroke="#111111"
+          stroke="#64748b"
           strokeWidth={markerStroke}
+          dash={[5, 4]}
           fill="transparent"
           listening={false}
         />

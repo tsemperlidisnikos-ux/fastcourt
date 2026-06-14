@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { applyActionResultsToFrame } from "@/lib/designer/frame-propagation";
 import {
   computeAnimStepState,
@@ -32,7 +32,10 @@ export function useFrameAnimationPlayback() {
   const tickRef = useRef<(now: number) => void>(() => {});
 
   const frame = play.frames[frameIndex];
-  const actionIds = frame ? getPlaybackActionIds(frame) : [];
+  const actionIds = useMemo(
+    () => (frame ? getPlaybackActionIds(frame) : []),
+    [frame],
+  );
 
   const stop = useCallback(() => {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -173,10 +176,7 @@ export function useFrameAnimationPlayback() {
     selectAction(state.activeActionId);
   }, [actionIds.length, frame, selectAction, setAnimRuntime, stepIndex, stop]);
 
-  useEffect(() => () => stop(), [stop]);
-  useEffect(() => {
-    stop();
-  }, [frameIndex, stop]);
+  useEffect(() => () => stop(), [frameIndex, stop]);
 
   return {
     playing,

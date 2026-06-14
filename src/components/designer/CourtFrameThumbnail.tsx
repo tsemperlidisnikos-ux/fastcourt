@@ -16,6 +16,7 @@ import {
   computeCourtViewLayout,
   courtNormToStage,
 } from "@/lib/designer/court-view-layout";
+import { frameObjectsForDesignerThumbnail } from "@/lib/designer/thumbnail-objects";
 import { getLibraryPreviewThumbSize } from "@/lib/library/library-preview-thumb-size";
 import { useCourtImage } from "@/lib/designer/use-court-image";
 import { CourtActionShape } from "@/components/designer/CourtActionShape";
@@ -245,7 +246,10 @@ export function CourtFrameThumbnail({
     };
   }, [courtType, isLarge, isPrint]);
 
-  const objects = frame.objects.filter((o) => o.kind !== "ball");
+  const objects = useMemo(() => {
+    if (isLarge) return frameObjectsForDesignerThumbnail(frame);
+    return frame.objects.filter((o) => o.kind !== "ball");
+  }, [frame, isLarge]);
 
   const thumbClassName = [
     className,
@@ -331,8 +335,10 @@ export function CourtFrameThumbnail({
                 radius={radius}
                 court={viewLayout.court}
                 compact
+                ballRingMode="thumbnail"
                 compactFontSize={compactFontSize}
-                compactStrokeWidth={isPrint ? 1.1 : 1.05}
+                compactStrokeWidth={1.05}
+                ballRingStrokeWidth={1}
               />
             );
           })}

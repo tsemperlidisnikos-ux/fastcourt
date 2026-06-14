@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { DEFAULT_PLAYBOOK_PRINT_CONFIG } from "@/lib/library/playbook-print-config";
 import { usePlaybookPrintConfigStore } from "@/stores/playbook-print-config-store";
 import type {
@@ -83,11 +83,13 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
 
   const [tab, setTab] = useState<TabId>("print");
   const [draft, setDraft] = useState<PlaybookPrintConfig>(stored);
+  const [prevStored, setPrevStored] = useState(stored);
   const coverFileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  if (stored !== prevStored) {
+    setPrevStored(stored);
     setDraft(stored);
-  }, [stored]);
+  }
 
   function handleSave() {
     setStored(draft, true);

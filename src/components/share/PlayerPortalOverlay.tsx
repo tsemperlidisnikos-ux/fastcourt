@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   defaultRosterTeam,
   getRosterTeamOptions,
@@ -16,7 +17,6 @@ import { copyShareResult } from "@/lib/share/share-link";
 import { appNotice } from "@/stores/dialog-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import { useShareStore } from "@/stores/share-store";
-import type { PlaybookSection } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
 import "@/styles/player-portal.css";
 
@@ -33,35 +33,37 @@ export function PlayerPortalOverlay() {
   const resolvePlaybookPlays = useOrganizerStore((s) => s.resolvePlaybookPlays);
 
   const shareMode = !!playerShareSession;
-  const sourcePlaybooks = shareMode
-    ? [
-        {
-          id: "share_playbook",
-          name: playerShareSession.section.name,
-          team: playerShareSession.section.team || "",
-          subtitle: playerShareSession.section.subtitle,
-          playRefs: playerShareSession.plays.map((p) => p.id),
-          updatedAt: new Date().toISOString(),
-        },
-      ]
-    : playbooks;
-  const sourcePlays = shareMode ? playerShareSession.plays : plays;
+  const sourcePlaybooks = useMemo(() => {
+    if (!shareMode || !playerShareSession) return playbooks;
+    return [
+      {
+        id: "share_playbook",
+        name: playerShareSession.section.name,
+        team: playerShareSession.section.team || "",
+        subtitle: playerShareSession.section.subtitle,
+        playRefs: playerShareSession.plays.map((p) => p.id),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+  }, [shareMode, playerShareSession, playbooks]);
+  const sourcePlays = shareMode && playerShareSession
+    ? playerShareSession.plays
+    : plays;
 
   const [teamFilter, setTeamFilter] = useState("");
   const [selectedPlaybookId, setSelectedPlaybookId] = useState<string | null>(null);
   const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
   const [checkedPlayIds, setCheckedPlayIds] = useState<Set<string>>(new Set());
   const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useClientMounted();
 
   const teamList = useMemo(() => getRosterTeamOptions(teams), [teams]);
 
-  useEffect(() => {
-    if (!portalOpen) return;
+  const activeTeamFilter = useMemo(() => {
+    if (!portalOpen) return teamFilter;
     const initial = defaultRosterTeam(teams, teamFilter);
-    if (!teamFilter || !teamList.includes(teamFilter)) setTeamFilter(initial);
+    if (!teamFilter || !teamList.includes(teamFilter)) return initial;
+    return teamFilter;
   }, [portalOpen, teamFilter, teamList, teams]);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export function PlayerPortalOverlay() {
   }, [portalOpen]);
 
   const filteredPlaybooks = useMemo(() => {
-    const norm = teamFilter.trim();
+    const norm = activeTeamFilter.trim();
     return sourcePlaybooks.filter((section) => {
       const sectionPlays = shareMode
         ? sourcePlays
@@ -80,28 +82,25 @@ export function PlayerPortalOverlay() {
       if (!norm || norm === "No Team") return true;
       return (section.team || "No Team") === norm;
     });
-  }, [teamFilter, sourcePlaybooks, sourcePlays, shareMode, resolvePlaybookPlays]);
+  }, [activeTeamFilter, sourcePlaybooks, sourcePlays, shareMode, resolvePlaybookPlays]);
 
   const filteredPlays = useMemo(() => {
-    const norm = teamFilter.trim();
+    const norm = activeTeamFilter.trim();
     return sourcePlays.filter((play) => {
       if (!norm || norm === "No Team") return true;
       return (play.team || "No Team") === norm;
     });
-  }, [teamFilter, sourcePlays]);
+  }, [activeTeamFilter, sourcePlays]);
+
+  const effectiveCheckedPlayIds = useMemo(() => {
+    const valid = new Set(filteredPlays.map((play) => play.id));
+    return new Set([...checkedPlayIds].filter((id) => valid.has(id)));
+  }, [checkedPlayIds, filteredPlays]);
 
   const checkedPlays = useMemo(
-    () => filteredPlays.filter((play) => checkedPlayIds.has(play.id)),
-    [filteredPlays, checkedPlayIds],
+    () => filteredPlays.filter((play) => effectiveCheckedPlayIds.has(play.id)),
+    [filteredPlays, effectiveCheckedPlayIds],
   );
-
-  useEffect(() => {
-    const valid = new Set(filteredPlays.map((play) => play.id));
-    setCheckedPlayIds((prev) => {
-      const next = new Set([...prev].filter((id) => valid.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [filteredPlays]);
 
   const selectedPlaybook =
     sourcePlaybooks.find((p) => p.id === selectedPlaybookId) ?? null;
@@ -184,11 +183,11 @@ export function PlayerPortalOverlay() {
 
   function sendPlaysToPlayers(playsToSend: StoredPlay[]) {
     sharePlaysAsPlaybookToPlayers(playsToSend, {
-      team: teamFilter,
+      team: activeTeamFilter,
       name:
         playsToSend.length === 1
           ? playsToSend[0].title || "Playbook"
-          : `${teamFilter} — Selected plays`,
+          : `${activeTeamFilter} — Selected plays`,
       subtitle: `${playsToSend.length} ${playsToSend.length === 1 ? "play" : "plays"}`,
     });
   }
@@ -242,7 +241,7 @@ export function PlayerPortalOverlay() {
                   <span>Team</span>
                   <select
                     id="player-portal-team"
-                    value={teamFilter}
+                    value={activeTeamFilter}
                     onChange={(e) => {
                       setTeamFilter(e.target.value);
                       setSelectedPlaybookId(null);
@@ -264,7 +263,7 @@ export function PlayerPortalOverlay() {
                     type="button"
                     className="player-portal-btn player-portal-btn-ghost"
                     id="btn-player-portal-roster"
-                    onClick={() => openRosterModal(teamFilter)}
+                    onClick={() => openRosterModal(activeTeamFilter)}
                   >
                     👥 Roster
                   </button>
@@ -359,13 +358,13 @@ export function PlayerPortalOverlay() {
                   filteredPlays.map((play) => (
                     <div
                       key={play.id}
-                      className={`player-portal-play-row${selectedPlayId === play.id ? " is-previewing" : ""}${checkedPlayIds.has(play.id) ? " is-checked" : ""}`}
+                      className={`player-portal-play-row${selectedPlayId === play.id ? " is-previewing" : ""}${effectiveCheckedPlayIds.has(play.id) ? " is-checked" : ""}`}
                     >
                       {!shareMode ? (
                         <input
                           type="checkbox"
                           className="player-portal-play-check"
-                          checked={checkedPlayIds.has(play.id)}
+                          checked={effectiveCheckedPlayIds.has(play.id)}
                           aria-label={`Select ${play.title}`}
                           onChange={(e) => togglePlayCheck(play.id, e.target.checked)}
                         />

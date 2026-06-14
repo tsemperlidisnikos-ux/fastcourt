@@ -5,8 +5,11 @@ import {
   DEFAULT_LINE_THICKNESS,
   MIN_ACTION_LENGTH_NORM,
 } from "@/lib/designer/action-constants";
+import { convertActionType } from "@/lib/designer/action-convert";
 import { buildCurvePoints8 } from "@/lib/designer/action-geometry";
 import { applyActionResultsToFrame } from "@/lib/designer/frame-propagation";
+import { closestOffenseAt } from "@/lib/designer/action-propagation";
+import { snapPassEndpoints } from "@/lib/designer/player-edge-snap";
 import {
   mirrorFrameHorizontal,
   mirrorPlayHorizontal,
@@ -131,6 +134,47 @@ function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
 }
 
+function propagateDirtyFramesForward(
+  play: PlayDocument,
+  fromIndex: number,
+  toIndex: number,
+): PlayDocument {
+  let frames = [...play.frames];
+  for (let i = fromIndex; i < toIndex; i++) {
+    const source = frames[i];
+    const target = frames[i + 1];
+    if (!source || !target) break;
+    frames = [...frames];
+    frames[i + 1] = applyActionResultsToFrame(source, target);
+  }
+  return { ...play, frames };
+}
+
+function snapPassActionPatch(
+  action: DesignerAction,
+  patch: Partial<DesignerAction>,
+  frame: DesignerFrame,
+): Partial<DesignerAction> {
+  const merged = { ...action, ...patch };
+  const snapped = snapPassEndpoints(
+    merged.x1,
+    merged.y1,
+    merged.x2,
+    merged.y2,
+    frame.objects,
+    frame.actions.filter((a) => a.id !== action.id),
+  );
+  return {
+    ...patch,
+    x1: snapped.x1,
+    y1: snapped.y1,
+    x2: snapped.x2,
+    y2: snapped.y2,
+    midX: (snapped.x1 + snapped.x2) / 2,
+    midY: (snapped.y1 + snapped.y2) / 2,
+  };
+}
+
 interface DesignerState {
   play: PlayDocument;
   currentFrameIndex: number;
@@ -142,7 +186,6 @@ interface DesignerState {
   lineThickness: number;
   lineDraft: DesignerAction | null;
   freehandDraft: number[] | null;
-  pendingFreehand: number[] | null;
   activeShadowType: ShadowType;
   shadowDraft: { x1: number; y1: number; x2: number; y2: number } | null;
   activeZoneType: ZoneType;
@@ -207,8 +250,6 @@ interface DesignerState {
   appendFreehandDraftPoint: (x: number, y: number) => void;
   finishFreehandDraft: () => void;
   cancelFreehandDraft: () => void;
-  commitPendingFreehand: (type: ActionType) => void;
-  cancelPendingFreehand: () => void;
   setAnimRuntime: (
     state: DesignerState["animRuntime"],
   ) => void;
@@ -218,6 +259,7 @@ interface DesignerState {
     patch: Partial<DesignerAction>,
     options?: { recordUndo?: boolean },
   ) => void;
+  changeActionType: (actionId: string, type: ActionType) => void;
   removeAction: (actionId: string) => void;
   setActionTiming: (actionId: string, timing: ActionTiming) => void;
   reorderActionSequence: (fromIndex: number, toIndex: number) => void;
@@ -286,6 +328,28 @@ function replaceOffensePlayers(frame: DesignerFrame, spots: ReturnType<typeof of
   return { ...frame, objects: [...others, ...spots] };
 }
 
+function syncBallToActionStart(
+  frame: DesignerFrame,
+  action: DesignerAction,
+): DesignerFrame {
+  if (
+    action.type !== "dribble" &&
+    action.type !== "pass" &&
+    action.type !== "handoff" &&
+    action.type !== "shoot"
+  ) {
+    return frame;
+  }
+  const player = closestOffenseAt(action.x1, action.y1, frame.objects);
+  if (!player) return frame;
+  return {
+    ...frame,
+    objects: frame.objects.map((o) =>
+      o.kind === "offense" ? { ...o, hasBall: o.id === player.id } : o,
+    ),
+  };
+}
+
 function appendActionToFrame(
   frame: DesignerFrame,
   action: DesignerAction,
@@ -293,11 +357,14 @@ function appendActionToFrame(
   let actions = [...frame.actions];
   if (action.type === "shoot") actions = actions.filter((a) => a.type !== "shoot");
   actions.push(action);
-  return {
-    ...frame,
-    actions,
-    actionSequence: appendToSequence(frame, action.id),
-  };
+  return syncBallToActionStart(
+    {
+      ...frame,
+      actions,
+      actionSequence: appendToSequence(frame, action.id),
+    },
+    action,
+  );
 }
 
 function buildActionFromEndpoints(
@@ -345,7 +412,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   lineThickness: DEFAULT_LINE_THICKNESS,
   lineDraft: null,
   freehandDraft: null,
-  pendingFreehand: null,
   activeShadowType: "rect",
   shadowDraft: null,
   activeZoneType: "paint",
@@ -368,7 +434,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       currentFrameIndex: 0,
       lineDraft: null,
       freehandDraft: null,
-      pendingFreehand: null,
       selectedActionId: null,
       frameActionsDirty: false,
       undoStack: [],
@@ -384,7 +449,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       currentFrameIndex: 0,
       lineDraft: null,
       freehandDraft: null,
-      pendingFreehand: null,
       selectedActionId: null,
       frameActionsDirty: false,
       undoStack: [],
@@ -398,7 +462,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       tool,
       lineDraft: null,
       freehandDraft: null,
-      pendingFreehand: null,
       animRuntime: null,
       whiteboardInkMode: tool === "whiteboard" ? get().whiteboardInkMode : "draw",
       whiteboardErasing: false,
@@ -421,7 +484,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       play: { ...state.play, courtType },
       lineDraft: null,
       freehandDraft: null,
-      pendingFreehand: null,
     })),
 
   setTitle: (title) => set((state) => ({ play: { ...state.play, title } })),
@@ -435,25 +497,19 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       if (index < 0 || index >= state.play.frames.length) return state;
       let play = state.play;
       let frameActionsDirty = state.frameActionsDirty;
-      if (
-        index === state.currentFrameIndex + 1 &&
-        state.frameActionsDirty
-      ) {
-        const source = state.play.frames[state.currentFrameIndex];
-        const next = state.play.frames[index];
-        if (source && next) {
-          const frames = [...state.play.frames];
-          frames[index] = applyActionResultsToFrame(source, next);
-          play = { ...state.play, frames };
-          frameActionsDirty = false;
-        }
+      if (index > state.currentFrameIndex && state.frameActionsDirty) {
+        play = propagateDirtyFramesForward(
+          play,
+          state.currentFrameIndex,
+          index,
+        );
+        frameActionsDirty = false;
       }
       return {
         play,
         currentFrameIndex: index,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
         frameActionsDirty,
       };
@@ -466,7 +522,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         currentFrameIndex: currentFrameIndex - 1,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
       });
     }
@@ -478,24 +533,18 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       let play = state.play;
       let frameActionsDirty = state.frameActionsDirty;
       if (state.frameActionsDirty) {
-        const source = state.play.frames[state.currentFrameIndex];
-        const next = state.play.frames[state.currentFrameIndex + 1];
-        if (source && next) {
-          const frames = [...state.play.frames];
-          frames[state.currentFrameIndex + 1] = applyActionResultsToFrame(
-            source,
-            next,
-          );
-          play = { ...state.play, frames };
-          frameActionsDirty = false;
-        }
+        play = propagateDirtyFramesForward(
+          play,
+          state.currentFrameIndex,
+          state.currentFrameIndex + 1,
+        );
+        frameActionsDirty = false;
       }
       return {
         play,
         currentFrameIndex: state.currentFrameIndex + 1,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
         frameActionsDirty,
       };
@@ -529,7 +578,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         currentFrameIndex: state.play.frames.length,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
         frameActionsDirty: false,
       };
@@ -563,7 +611,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         currentFrameIndex: state.currentFrameIndex + 1,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
       };
     }),
@@ -583,7 +630,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ),
       lineDraft: null,
       freehandDraft: null,
-      pendingFreehand: null,
       selectedActionId: null,
       frameActionsDirty: true,
     })),
@@ -601,7 +647,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         currentFrameIndex: nextIndex,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
       };
     }),
@@ -854,7 +899,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       if (!target || target.kind !== "offense") return state;
 
       const turnOff = !!target.hasBall;
-      return updateCurrentFrame(
+      const nextState = updateCurrentFrame(
         state,
         (f) => ({
           ...f,
@@ -868,6 +913,16 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         }),
         { recordUndo: true },
       );
+      let play = nextState.play ?? state.play;
+      const idx = state.currentFrameIndex;
+      if (idx < play.frames.length - 1) {
+        play = propagateDirtyFramesForward(play, idx, play.frames.length - 1);
+      }
+      return {
+        ...nextState,
+        play,
+        frameActionsDirty: true,
+      };
     }),
 
   moveObject: (objectId, x, y) =>
@@ -973,7 +1028,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set({
       freehandDraft: [x, y],
       lineDraft: null,
-      pendingFreehand: null,
     }),
 
   appendFreehandDraftPoint: (x, y) =>
@@ -1015,16 +1069,27 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         ) {
           return { freehandDraft: null };
         }
+        let { x1, y1, x2, y2 } = ends;
+        if (state.lineActionType === "pass") {
+          ({ x1, y1, x2, y2 } = snapPassEndpoints(
+            x1,
+            y1,
+            x2,
+            y2,
+            frame.objects,
+            frame.actions,
+          ));
+        }
         const isCurvedDribble =
           (state.lineActionType === "dribble" || state.lineActionType === "handoff") &&
           isFreehandStroke(prepared);
         const dribbleMid = isCurvedDribble ? dribbleMidFromFlat(prepared) : null;
         const action = buildActionFromEndpoints(
           state.lineActionType,
-          ends.x1,
-          ends.y1,
-          ends.x2,
-          ends.y2,
+          x1,
+          y1,
+          x2,
+          y2,
           state.lineThickness,
           dribbleMid
             ? { midX: dribbleMid.midX, midY: dribbleMid.midY }
@@ -1042,25 +1107,32 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         };
       }
 
-      return { freehandDraft: null, pendingFreehand: prepared };
-    }),
-
-  cancelFreehandDraft: () => set({ freehandDraft: null, pendingFreehand: null }),
-
-  commitPendingFreehand: (type) =>
-    set((state) => {
-      const flat = state.pendingFreehand;
-      const frame = currentFrame(state);
-      if (!flat || !frame) return { pendingFreehand: null };
-
-      const ends = freehandEndpoints(flat);
-      const mid = curveMidFromFlat(flat, type);
+      const type = state.lineActionType;
+      const ends = freehandEndpoints(prepared);
+      if (
+        Math.hypot(ends.x2 - ends.x1, ends.y2 - ends.y1) <
+        MIN_ACTION_LENGTH_NORM
+      ) {
+        return { freehandDraft: null };
+      }
+      let { x1, y1, x2, y2 } = ends;
+      if (type === "pass") {
+        ({ x1, y1, x2, y2 } = snapPassEndpoints(
+          x1,
+          y1,
+          x2,
+          y2,
+          frame.objects,
+          frame.actions,
+        ));
+      }
+      const mid = curveMidFromFlat(prepared, type);
       const action = buildActionFromEndpoints(
         type,
-        ends.x1,
-        ends.y1,
-        ends.x2,
-        ends.y2,
+        x1,
+        y1,
+        x2,
+        y2,
         state.lineThickness,
         {
           midX: mid.midX,
@@ -1069,25 +1141,23 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
           c1y: mid.c1y,
           c2x: mid.c2x,
           c2y: mid.c2y,
-          points: type === "pass" ? undefined : flat.map(clamp01),
+          points: type === "pass" ? undefined : prepared.map(clamp01),
           isFreehand: true,
         },
       );
-
       return {
         ...updateCurrentFrame(
           state,
           (f) => appendActionToFrame(f, action),
           { recordUndo: true },
         ),
-        pendingFreehand: null,
-        lineActionType: type,
+        freehandDraft: null,
         selectedActionId: action.id,
         frameActionsDirty: true,
       };
     }),
 
-  cancelPendingFreehand: () => set({ pendingFreehand: null }),
+  cancelFreehandDraft: () => set({ freehandDraft: null }),
 
   setAnimRuntime: (state) => set({ animRuntime: state }),
 
@@ -1095,19 +1165,85 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set({ selectedActionId: actionId, selectedObjectId: null }),
 
   updateAction: (actionId, patch, options) =>
-    set((state) => ({
-      ...updateCurrentFrame(
-        state,
-        (frame) => ({
-          ...frame,
-          actions: frame.actions.map((a) =>
-            a.id === actionId ? { ...a, ...patch } : a,
-          ),
-        }),
-        options,
-      ),
-      frameActionsDirty: true,
-    })),
+    set((state) => {
+      const frame = currentFrame(state);
+      if (!frame) return state;
+      const action = frame.actions.find((a) => a.id === actionId);
+      const finalPatch =
+        action?.type === "pass" && options?.recordUndo
+          ? snapPassActionPatch(action, patch, frame)
+          : patch;
+      return {
+        ...updateCurrentFrame(
+          state,
+          (f) => ({
+            ...f,
+            actions: f.actions.map((a) =>
+              a.id === actionId ? { ...a, ...finalPatch } : a,
+            ),
+          }),
+          options,
+        ),
+        frameActionsDirty: true,
+      };
+    }),
+
+  changeActionType: (actionId, newType) =>
+    set((state) => {
+      const frame = currentFrame(state);
+      if (!frame) return state;
+      const action = frame.actions.find((a) => a.id === actionId);
+      if (!action || action.type === newType) return state;
+
+      const converted = convertActionType(action, newType);
+      let merged: DesignerAction = { ...action, ...converted };
+
+      if (newType === "pass") {
+        const snapped = snapPassEndpoints(
+          merged.x1,
+          merged.y1,
+          merged.x2,
+          merged.y2,
+          frame.objects,
+          frame.actions.filter((a) => a.id !== actionId),
+        );
+        merged = { ...merged, ...snapped };
+      }
+
+      let actions = frame.actions.map((a) =>
+        a.id === actionId ? merged : a,
+      );
+      if (newType === "shoot") {
+        actions = actions.filter((a) => a.type !== "shoot" || a.id === actionId);
+      }
+
+      let nextFrame: DesignerFrame = { ...frame, actions };
+      if (
+        newType === "dribble" ||
+        newType === "pass" ||
+        newType === "handoff" ||
+        newType === "shoot"
+      ) {
+        nextFrame = syncBallToActionStart(nextFrame, merged);
+      }
+
+      let play = state.play;
+      const idx = state.currentFrameIndex;
+      const nextState = updateCurrentFrame(state, () => nextFrame, {
+        recordUndo: true,
+      });
+      play = nextState.play ?? state.play;
+      if (idx < play.frames.length - 1) {
+        play = propagateDirtyFramesForward(play, idx, play.frames.length - 1);
+      }
+
+      return {
+        ...nextState,
+        play,
+        lineActionType: newType,
+        frameActionsDirty: true,
+      };
+    }),
 
   removeAction: (actionId) =>
     set((state) => ({
@@ -1214,7 +1350,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         redoStack,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
       };
     }),
@@ -1232,7 +1367,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         redoStack,
         lineDraft: null,
         freehandDraft: null,
-        pendingFreehand: null,
         selectedActionId: null,
       };
     }),

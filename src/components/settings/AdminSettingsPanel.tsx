@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { APP_BUILD, APP_NAME } from "@/lib/config";
 import {
@@ -480,9 +480,20 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const router = useRouter();
 
   const [navId, setNavId] = useState<NavId>("all-users");
-  const [users, setUsers] = useState<AdminUserRecord[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, AdminUserRecord>>({});
+  const registryUsers = useMemo(
+    () => ensureAdminUserRegistry(session.user),
+    [session.user],
+  );
+
+  const [users, setUsers] = useState<AdminUserRecord[]>(registryUsers);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => registryUsers[0]?.id ?? null,
+  );
+  const [drafts, setDrafts] = useState<Record<string, AdminUserRecord>>(() =>
+    Object.fromEntries(registryUsers.map((u) => [u.id, { ...u }])),
+  );
+  const [prevRegistryUsers, setPrevRegistryUsers] =
+    useState<AdminUserRecord[]>(registryUsers);
   const [dirty, setDirty] = useState(false);
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [profileDraft, setProfileDraft] = useState<Partial<AdminUserRecord>>({});
@@ -508,12 +519,8 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const persistAll = useSettingsStore((s) => s.persistAll);
   const setSession = useAuthStore((s) => s.setSession);
 
-  const registryUsers = useMemo(
-    () => ensureAdminUserRegistry(session.user),
-    [session.user],
-  );
-
-  useEffect(() => {
+  if (registryUsers !== prevRegistryUsers) {
+    setPrevRegistryUsers(registryUsers);
     setUsers(registryUsers);
     setDrafts(Object.fromEntries(registryUsers.map((u) => [u.id, { ...u }])));
     setSelectedId((prev) =>
@@ -521,7 +528,7 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
         ? prev
         : (registryUsers[0]?.id ?? null),
     );
-  }, [registryUsers]);
+  }
 
   const selectedUser = useMemo(
     () => users.find((u) => u.id === selectedId) ?? null,

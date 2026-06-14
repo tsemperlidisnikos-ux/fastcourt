@@ -15,5 +15,8 @@ export function friendlyAuthError(msg: string) {
   if (/user cancelled|access_denied|popup closed/i.test(m)) {
     return "Sign-in was cancelled.";
   }
+  if (/failed to fetch|networkerror|network error/i.test(m)) {
+    return "Cannot reach Supabase. Check NEXT_PUBLIC_SUPABASE_URL in .env (must be https://YOUR_REF.supabase.co) and your internet connection.";
+  }
   return m || "Authentication failed.";
 }

@@ -8,7 +8,10 @@
     "postinstall": "node scripts/copy-pdf-worker.mjs",
     "start": "next start",
     "start:plesk": "node server.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node scripts/health-check.mjs",
+    "health-check": "node scripts/health-check.mjs",
+    "health-check:full": "node scripts/health-check.mjs --lint --build --json=health-check-report.json"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -32,6 +35,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

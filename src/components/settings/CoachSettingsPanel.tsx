@@ -19,7 +19,6 @@ import "@/styles/billing-ui.css";
 export function CoachSettingsPanel({ session }: { session: AuthSession }) {
   const router = useRouter();
   const pdfBrand = useSettingsStore((s) => s.pdfBrand);
-  const hydrated = useSettingsStore((s) => s.hydrated);
   const setPdfBrand = useSettingsStore((s) => s.setPdfBrand);
   const persistAll = useSettingsStore((s) => s.persistAll);
 

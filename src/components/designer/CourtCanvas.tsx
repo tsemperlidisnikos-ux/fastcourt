@@ -144,6 +144,7 @@ function PlayerToken({
       y={pos.y}
       radius={radius}
       court={court}
+      ballRingMode="editor"
       selected={selected}
       listening={interactive}
       draggable={draggable}
@@ -518,6 +519,10 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     }
 
     if (tool === "select" && !isStageBackground(e)) return;
+    if (tool === "offense" && !isStageBackground(e)) {
+      tapRef.current = null;
+      return;
+    }
 
     const norm = pointerNorm(e);
     if (norm && frame && tool === "offense") {

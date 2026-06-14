@@ -843,7 +843,7 @@ export function getEditorPlayerJerseyFontSize(
 ) {
   const base = kind === "defense" ? 24 : 26;
   const radiusScale = Math.max(0.85, radius / 24);
-  return Math.round(base * radiusScale * 1.5);
+  return Math.round(base * radiusScale * 1.72);
 }
 
 /** Library / print / presentation player numbers (legacy FastCourt bases). */

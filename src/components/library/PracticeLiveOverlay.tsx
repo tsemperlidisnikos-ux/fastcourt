@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
+import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   getPracticeItemVideoUrl,
   isPracticeBlockRunnable,
@@ -30,23 +31,23 @@ function formatTime(totalSec: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function blockTimerState(
+  row: ResolvedPracticeRow | null,
+  autoStartTimer: boolean,
+) {
+  const mins = Number(row?.item.durationMin) || 10;
+  const total = Math.max(60, mins * 60);
+  return {
+    secondsTotal: total,
+    secondsLeft: total,
+    timerRunning: autoStartTimer,
+  };
+}
+
 export function PracticeLiveOverlay({ session, onClose }: Props) {
   const plays = useOrganizerStore((s) => s.plays);
   const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
-  const [mounted, setMounted] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [completed, setCompleted] = useState<Set<number>>(new Set());
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [secondsTotal, setSecondsTotal] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [sessionStart] = useState(() => Date.now());
-  const [sessionElapsed, setSessionElapsed] = useState(0);
-  const [planCollapsed, setPlanCollapsed] = useState(false);
-  const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
-  const [autoStart, setAutoStart] = useState(
-    () => loadPracticeLivePrefs().autoStartTimer,
-  );
-  const timerFiredRef = useRef(-1);
+  const mounted = useClientMounted();
 
   const playById = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
   const rows = useMemo(
@@ -57,26 +58,50 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
     [session, playById],
   );
 
+  const bootTimer = blockTimerState(
+    rows[0] ?? null,
+    loadPracticeLivePrefs().autoStartTimer,
+  );
+  const [index, setIndex] = useState(0);
+  const [completed, setCompleted] = useState<Set<number>>(new Set());
+  const [secondsLeft, setSecondsLeft] = useState(bootTimer.secondsLeft);
+  const [secondsTotal, setSecondsTotal] = useState(bootTimer.secondsTotal);
+  const [timerRunning, setTimerRunning] = useState(bootTimer.timerRunning);
+  const [sessionStart] = useState(() => Date.now());
+  const [sessionElapsed, setSessionElapsed] = useState(0);
+  const [planCollapsed, setPlanCollapsed] = useState(false);
+  const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
+  const [autoStart, setAutoStart] = useState(
+    () => loadPracticeLivePrefs().autoStartTimer,
+  );
+  const timerFiredRef = useRef(-1);
+
   const current: ResolvedPracticeRow | null = rows[index] ?? null;
 
-  useEffect(() => setMounted(true), []);
-
-  const resetBlockTimer = useCallback(
-    (autoStartTimer = autoStart) => {
-      const mins = Number(current?.item.durationMin) || 10;
-      const total = Math.max(60, mins * 60);
-      setSecondsTotal(total);
-      setSecondsLeft(total);
-      setTimerRunning(false);
+  const goToBlock = useCallback(
+    (nextIndex: number, autoStartTimer = loadPracticeLivePrefs().autoStartTimer) => {
+      const clamped = Math.max(0, Math.min(rows.length - 1, nextIndex));
+      const row = rows[clamped] ?? null;
+      const timer = blockTimerState(row, autoStartTimer);
+      setIndex(clamped);
+      setSecondsTotal(timer.secondsTotal);
+      setSecondsLeft(timer.secondsLeft);
+      setTimerRunning(timer.timerRunning);
       timerFiredRef.current = -1;
-      if (autoStartTimer) setTimerRunning(true);
     },
-    [autoStart, current?.item.durationMin],
+    [rows],
   );
 
-  useEffect(() => {
-    resetBlockTimer(loadPracticeLivePrefs().autoStartTimer);
-  }, [index, resetBlockTimer]);
+  const restartBlockTimer = useCallback(
+    (autoStartTimer = false) => {
+      const timer = blockTimerState(current, autoStartTimer);
+      setSecondsTotal(timer.secondsTotal);
+      setSecondsLeft(timer.secondsLeft);
+      setTimerRunning(timer.timerRunning);
+      timerFiredRef.current = -1;
+    },
+    [current],
+  );
 
   useEffect(() => {
     if (!timerRunning || secondsLeft <= 0) return;
@@ -92,10 +117,10 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
     setTimerRunning(false);
     setCompleted((prev) => new Set(prev).add(index));
     if (index < rows.length - 1) {
-      const id = window.setTimeout(() => setIndex((i) => i + 1), 1200);
+      const id = window.setTimeout(() => goToBlock(index + 1), 1200);
       return () => window.clearTimeout(id);
     }
-  }, [secondsLeft, index, rows.length]);
+  }, [secondsLeft, index, rows.length, goToBlock]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -106,8 +131,8 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
 
   const markDoneAndNext = useCallback(() => {
     setCompleted((prev) => new Set(prev).add(index));
-    if (index < rows.length - 1) setIndex((i) => i + 1);
-  }, [index, rows.length]);
+    if (index < rows.length - 1) goToBlock(index + 1);
+  }, [goToBlock, index, rows.length]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -122,10 +147,10 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
         setTimerRunning((r) => !r);
       } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        setIndex((i) => Math.min(rows.length - 1, i + 1));
+        goToBlock(index + 1);
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        setIndex((i) => Math.max(0, i - 1));
+        goToBlock(index - 1);
       } else if (e.key === "Enter") {
         e.preventDefault();
         markDoneAndNext();
@@ -133,7 +158,7 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [markDoneAndNext, onClose, presentPlay, rows.length]);
+  }, [goToBlock, index, markDoneAndNext, onClose, presentPlay]);
 
   function handleGymNotes(value: string) {
     void updatePracticeSession(session.id, { liveNotes: value });
@@ -234,7 +259,7 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                     key={rowItem.id}
                     type="button"
                     className={`practice-live-check-item${rowIndex === index ? " is-current" : ""}${completed.has(rowIndex) ? " is-done" : ""}`}
-                    onClick={() => setIndex(rowIndex)}
+                    onClick={() => goToBlock(rowIndex)}
                   >
                     <span className="practice-live-check-num">
                       {completed.has(rowIndex) ? "✓" : rowIndex + 1}
@@ -316,7 +341,7 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                   type="button"
                   id="practice-live-timer-reset"
                   className="practice-live-timer-btn practice-live-timer-btn-muted"
-                  onClick={() => resetBlockTimer(false)}
+                  onClick={() => restartBlockTimer(false)}
                 >
                   Reset
                 </button>
@@ -355,7 +380,7 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                 id="practice-live-prev"
                 className="practice-live-nav-btn"
                 disabled={index === 0}
-                onClick={() => setIndex((i) => i - 1)}
+                onClick={() => goToBlock(index - 1)}
               >
                 ← Previous
               </button>
@@ -392,7 +417,7 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                 id="practice-live-next"
                 className="practice-live-nav-btn"
                 disabled={index >= rows.length - 1}
-                onClick={() => setIndex((i) => i + 1)}
+                onClick={() => goToBlock(index + 1)}
               >
                 Next →
               </button>

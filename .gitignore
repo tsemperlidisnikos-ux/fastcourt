@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+health-check-report.json
+project-analysis.json
 
 # next.js
 /.next/
