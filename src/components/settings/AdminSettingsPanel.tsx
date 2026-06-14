@@ -36,6 +36,7 @@ import { BillingSection } from "@/components/settings/BillingSection";
 import { PdfBrandingSection } from "@/components/settings/PdfBrandingSection";
 import { TeamOrganizationsSection } from "@/components/settings/TeamOrganizationsSection";
 import { ToolsSection } from "@/components/settings/ToolsSection";
+import { AdminPurgeSection } from "@/components/settings/AdminPurgeSection";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { appConfirm, appNotice } from "@/stores/dialog-store";
@@ -960,6 +961,15 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
                   {navId === "tools" ? (
                     <div className="org-settings-tools-admin">
                       <ToolsSection />
+                      <AdminPurgeSection
+                        session={session}
+                        users={users.map((u) => drafts[u.id] ?? u)}
+                        onUsersChange={(next) => {
+                          setUsers(next);
+                          saveAdminUsers(next);
+                        }}
+                        onOrgsChange={setOrgs}
+                      />
                       <div className="org-settings-tools-admin-extra">
                         <button
                           type="button"

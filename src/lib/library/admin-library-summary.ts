@@ -25,7 +25,7 @@ export interface AdminLibrarySummary {
   coachesWithContent?: number;
 }
 
-function playMatchesCoach(play: StoredPlay, user: AdminUserRecord) {
+export function playMatchesCoach(play: StoredPlay, user: AdminUserRecord) {
   const org = (user.organization || "").trim().toLowerCase();
   const team = (play.team || "").trim().toLowerCase();
   if (!org) return true;

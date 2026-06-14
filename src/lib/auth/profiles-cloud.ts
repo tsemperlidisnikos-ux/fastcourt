@@ -71,3 +71,54 @@ export async function saveCloudAdminUsers(
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
+
+export async function purgeCloudUserDataExceptAdmin(
+  supabase: SupabaseClient,
+  adminId: string,
+): Promise<
+  | { ok: true; profilesRemoved: number; settingsRemoved: number }
+  | { ok: false; error: string }
+> {
+  const { data: settingsRows, error: settingsSelectError } = await supabase
+    .from("user_settings")
+    .select("user_id")
+    .neq("user_id", adminId);
+
+  if (settingsSelectError && !/does not exist/i.test(settingsSelectError.message)) {
+    return { ok: false, error: settingsSelectError.message };
+  }
+
+  if (!settingsSelectError) {
+    const { error: settingsDeleteError } = await supabase
+      .from("user_settings")
+      .delete()
+      .neq("user_id", adminId);
+    if (settingsDeleteError) {
+      return { ok: false, error: settingsDeleteError.message };
+    }
+  }
+
+  const { data: profileRows, error: profilesSelectError } = await supabase
+    .from("profiles")
+    .select("id")
+    .neq("id", adminId);
+
+  if (profilesSelectError) {
+    return { ok: false, error: profilesSelectError.message };
+  }
+
+  const { error: profilesDeleteError } = await supabase
+    .from("profiles")
+    .delete()
+    .neq("id", adminId);
+
+  if (profilesDeleteError) {
+    return { ok: false, error: profilesDeleteError.message };
+  }
+
+  return {
+    ok: true,
+    profilesRemoved: profileRows?.length ?? 0,
+    settingsRemoved: settingsRows?.length ?? 0,
+  };
+}

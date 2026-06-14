@@ -67,6 +67,16 @@ export async function deleteStoredPlay(id: string): Promise<void> {
   await db.delete("plays", id);
 }
 
+export async function replaceAllStoredPlays(plays: StoredPlay[]): Promise<void> {
+  const db = await getLibraryDb();
+  const tx = db.transaction("plays", "readwrite");
+  await tx.store.clear();
+  for (const play of plays) {
+    await tx.store.put(play);
+  }
+  await tx.done;
+}
+
 export async function getMetaFlag(key: string): Promise<boolean> {
   const db = await getLibraryDb();
   const row = await db.get("meta", key);
