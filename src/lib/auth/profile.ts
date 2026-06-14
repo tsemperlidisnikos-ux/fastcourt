@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AuthSession, SessionUser } from "@/types/auth";
 import type { Role } from "@/lib/config";
 import { applyAdminRegistryToSession } from "@/lib/auth/admin-users";
+import { applyOrganizationAccess } from "@/lib/auth/org-access";
 import { resolveSignupRole, isMasterAdminEmail } from "@/lib/auth/roles";
 
 export interface ProfileRow {
@@ -75,7 +76,7 @@ export function localDemoSession(
   };
 
   return {
-    user: applyAdminRegistryToSession(baseUser),
+    user: applyOrganizationAccess(applyAdminRegistryToSession(baseUser)),
     createdAt: new Date().toISOString(),
     cloud: false,
   };

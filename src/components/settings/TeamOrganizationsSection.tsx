@@ -312,7 +312,8 @@ export function TeamOrganizationsSection({
               </div>
 
               <div className="admin-org-card-sub">
-                Subscription until: {formatOrgExpiry(org.expiresAt)}
+                Club access: {formatOrgExpiry(org.expiresAt)} — active coaches
+                and invited members use this subscription.
               </div>
 
               <div className="admin-org-members">

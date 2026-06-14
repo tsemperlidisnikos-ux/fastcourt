@@ -1,6 +1,7 @@
 import type { BillingConfig } from "@/types/billing-config";
 import type { SessionUser } from "@/types/auth";
 import { hasFullAccess } from "@/lib/auth/roles";
+import { hasOrganizationSubscriptionAccess } from "@/lib/auth/org-access";
 import { getActivePaymentMethodsForConfig } from "@/lib/settings/payment-methods";
 import type { ActivePaymentMethod } from "@/types/payment-methods";
 
@@ -23,6 +24,9 @@ export function getDaysRemaining(expiresAt: string | null): number | null {
 
 export function formatTrialAccessMessage(user: SessionUser): string {
   if (hasFullAccess(user)) return "Unlimited access";
+  if (hasOrganizationSubscriptionAccess(user) && user.organizationName) {
+    return `Access provided by ${user.organizationName}.`;
+  }
   const days = getDaysRemaining(user.expiresAt);
   if (days === null) return "Trial active";
   if (days <= 0) return "Your trial has ended. Subscribe to keep using FastCourt.";
@@ -32,16 +36,19 @@ export function formatTrialAccessMessage(user: SessionUser): string {
 
 export function shouldShowTrialBanner(user: SessionUser): boolean {
   if (hasFullAccess(user)) return false;
+  if (hasOrganizationSubscriptionAccess(user)) return false;
   if (user.accessType === "subscription") return false;
   return true;
 }
 
 export function isTrialWarning(user: SessionUser): boolean {
+  if (hasOrganizationSubscriptionAccess(user)) return false;
   const days = getDaysRemaining(user.expiresAt);
   return days !== null && days > 0 && days <= 3;
 }
 
 export function isTrialExpired(user: SessionUser): boolean {
+  if (hasOrganizationSubscriptionAccess(user)) return false;
   const days = getDaysRemaining(user.expiresAt);
   return days !== null && days <= 0 && !hasFullAccess(user);
 }

@@ -1,5 +1,6 @@
 import { ROLES } from "@/lib/config";
 import type { SignupWizardValues } from "@/types/signup";
+import type { PendingTeamInvite } from "@/lib/auth/team-invite";
 
 export type SignupStep =
   | "basic"
@@ -84,13 +85,19 @@ export function signupSubmitLabel(
   return "Continue";
 }
 
-export function defaultSignupValues(): SignupWizardValues {
+export function defaultSignupValues(
+  invite?: PendingTeamInvite | null,
+): SignupWizardValues {
+  const teamName = invite?.organizationName?.trim() ?? "";
+  const signupRole =
+    invite?.memberRole === "team_admin" ? ("team" as const) : ("coach" as const);
+
   return {
     displayName: "",
     password: "",
     verifyCode: "",
-    signupRole: "coach",
-    teamName: "",
+    signupRole,
+    teamName,
     teamCountry: "GR",
     teamLevel: "amateur",
   };

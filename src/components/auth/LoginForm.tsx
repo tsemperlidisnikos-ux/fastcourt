@@ -14,11 +14,8 @@ import {
   localDemoSession,
   profileToAuthSession,
 } from "@/lib/auth/profile";
-import {
-  sessionToAdminUser,
-  upsertAdminUser,
-} from "@/lib/auth/admin-users";
 import { buildPostSignupLibraryUrl } from "@/lib/auth/onboarding";
+import { finalizeAuthSession } from "@/lib/auth/session-bootstrap";
 import { upsertProfileForUser } from "@/lib/auth/signup";
 import {
   getPendingInvite,
@@ -136,8 +133,8 @@ export function LoginForm() {
   const [loginStep, setLoginStep] = useState<LoginStep>("email");
   const [signupStep, setSignupStep] = useState<SignupStep>("basic");
   const [skipVerify, setSkipVerify] = useState(false);
-  const [signupValues, setSignupValues] = useState<SignupWizardValues>(
-    defaultSignupValues(),
+  const [signupValues, setSignupValues] = useState<SignupWizardValues>(() =>
+    defaultSignupValues(readClientInvite()),
   );
   const [resendSeconds, setResendSeconds] = useState(0);
   const [email, setEmail] = useState(() => readClientInvite()?.email ?? "");
@@ -191,10 +188,42 @@ export function LoginForm() {
     setLoginStep("email");
     setSignupStep("basic");
     setSkipVerify(false);
-    setSignupValues(defaultSignupValues());
+    setSignupValues(defaultSignupValues(teamInvite));
     setPassword("");
     setResendSeconds(0);
     setError(null);
+  }
+
+  function completeAuthSession(
+    session: ReturnType<typeof profileToAuthSession>,
+    options?: { organizationName?: string; redirectTo?: string },
+  ) {
+    const finalized = finalizeAuthSession(session, {
+      pendingInvite: teamInvite,
+      organizationName:
+        (options?.organizationName ??
+          teamInvite?.organizationName ??
+          signupValues.teamName.trim()) ||
+        undefined,
+    });
+
+    if (finalized.inviteError) {
+      appNotice("Team invitation", finalized.inviteError);
+    } else if (finalized.inviteAccepted && teamInvite) {
+      appNotice(
+        "Team joined",
+        `You joined ${teamInvite.organizationName} as ${memberRoleLabel(teamInvite.memberRole)}.`,
+      );
+    }
+
+    const accessError = getAccessError(finalized.session.user);
+    if (accessError) {
+      return accessError;
+    }
+
+    setSession(finalized.session);
+    router.replace(options?.redirectTo ?? next);
+    return null;
   }
 
   function switchMode(nextMode: AuthMode) {
@@ -229,11 +258,11 @@ export function LoginForm() {
       const session = localDemoSession(normalized, signupValues.displayName);
       const role = resolveSignupRoleChoice(normalized, signupValues.signupRole);
       session.user = { ...session.user, role };
-      setSession(session);
-      const record = sessionToAdminUser(session.user);
-      record.organization = signupValues.teamName.trim() || undefined;
-      upsertAdminUser(record);
-      router.replace(buildPostSignupLibraryUrl(next));
+      const accessError = completeAuthSession(session, {
+        organizationName: signupValues.teamName.trim() || teamInvite?.organizationName,
+        redirectTo: buildPostSignupLibraryUrl(next),
+      });
+      if (accessError) setError(accessError);
       return;
     }
 
@@ -285,15 +314,14 @@ export function LoginForm() {
       ...session.user,
       role: isMasterAdminEmail(normalized) ? ROLES.admin : role,
     };
-    const accessError = getAccessError(session.user);
+    const accessError = completeAuthSession(session, {
+      organizationName: signupValues.teamName.trim() || teamInvite?.organizationName,
+      redirectTo: buildPostSignupLibraryUrl(next),
+    });
     if (accessError) {
       await supabase.auth.signOut();
       setError(accessError);
-      return;
     }
-
-    setSession(session);
-    router.replace(buildPostSignupLibraryUrl(next));
   }
 
   async function submitSignupBasic(normalized: string) {
@@ -505,8 +533,8 @@ export function LoginForm() {
     try {
       if (!cloud) {
         const session = localDemoSession(normalized);
-        setSession(session);
-        router.replace(next);
+        const accessError = completeAuthSession(session);
+        if (accessError) setError(accessError);
         return;
       }
 
@@ -552,15 +580,12 @@ export function LoginForm() {
       }
 
       const session = profileToAuthSession(profile);
-      const accessError = getAccessError(session.user);
+      const accessError = completeAuthSession(session);
       if (accessError) {
         await supabase.auth.signOut();
         setError(accessError);
         return;
       }
-
-      setSession(session);
-      router.replace(next);
     } catch (err) {
       setError(friendlyAuthError(err instanceof Error ? err.message : "Authentication failed."));
     } finally {

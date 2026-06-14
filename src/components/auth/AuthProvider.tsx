@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAccessError } from "@/lib/auth/access";
 import { fetchProfile, profileToAuthSession } from "@/lib/auth/profile";
+import { finalizeAuthSession } from "@/lib/auth/session-bootstrap";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -30,14 +31,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       const session = profileToAuthSession(profile);
-      const accessError = getAccessError(session.user);
+      const finalized = finalizeAuthSession(session);
+      const accessError = getAccessError(finalized.session.user);
       if (accessError) {
         signOut();
         await supabase!.auth.signOut();
         router.replace(`/login?error=${encodeURIComponent(accessError)}`);
         return;
       }
-      setSession(session);
+      setSession(finalized.session);
     }
 
     async function bootstrap() {

@@ -98,6 +98,14 @@ export function getPendingInvite(): PendingTeamInvite | null {
   }
 }
 
+export function clearPendingInvite() {
+  try {
+    sessionStorage.removeItem(PENDING_INVITE_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function consumeInviteFromUrlHash(): PendingTeamInvite | null {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash || "";

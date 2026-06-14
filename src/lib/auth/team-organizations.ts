@@ -3,12 +3,12 @@ import type { OrgMember, TeamOrganization } from "@/types/team-org";
 
 const STORAGE_KEY = "fastcourt_team_orgs_v1";
 
-function isBrowser() {
-  return typeof window !== "undefined";
+function canPersistOrganizations() {
+  return typeof localStorage !== "undefined";
 }
 
 function readStore(): TeamOrganization[] {
-  if (!isBrowser()) return [];
+  if (!canPersistOrganizations()) return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -20,7 +20,7 @@ function readStore(): TeamOrganization[] {
 }
 
 function writeStore(orgs: TeamOrganization[]) {
-  if (!isBrowser()) return;
+  if (!canPersistOrganizations()) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orgs));
 }
 
