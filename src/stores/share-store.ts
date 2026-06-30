@@ -70,6 +70,7 @@ export interface GameDayShareSession {
   };
   entries: ShareGamePlanEntry[];
   activeCategoryId?: import("@/types/library-meta").GamePlanCategoryId;
+  syncToken?: string;
   stageRef: { width: number; height: number };
 }
 

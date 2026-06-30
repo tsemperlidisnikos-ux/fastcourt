@@ -93,6 +93,7 @@ export interface GamePlan {
   gameDay?: {
     activeCategoryId?: GamePlanCategoryId;
     updatedAt?: string;
+    syncToken?: string;
   };
   createdAt: string;
   updatedAt: string;

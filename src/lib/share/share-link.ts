@@ -119,6 +119,7 @@ export type SharePayload =
       };
       entries: ShareGamePlanEntry[];
       activeCategoryId?: GamePlanCategoryId;
+      syncToken?: string;
       stageRef: { width: number; height: number };
       gameDayView?: boolean;
     };
@@ -645,6 +646,7 @@ export function encodeGameDayPayload(
     },
     entries: buildGameDayShareEntries(plan, plays),
     activeCategoryId,
+    syncToken: plan.gameDay?.syncToken,
     stageRef,
     gameDayView: true,
   };

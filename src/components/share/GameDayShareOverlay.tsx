@@ -17,6 +17,7 @@ function GameDayBoard({
   scoutingNotes,
   categories,
   activeIndex,
+  liveSync,
   onClose,
 }: {
   title: string;
@@ -24,6 +25,7 @@ function GameDayBoard({
   scoutingNotes?: string;
   categories: ReturnType<typeof buildGameDayCategoriesFromShareEntries>;
   activeIndex: number;
+  liveSync?: boolean;
   onClose: () => void;
 }) {
   const active = categories[activeIndex] ?? categories[0];
@@ -61,7 +63,11 @@ function GameDayBoard({
             </button>
           ))}
         </div>
-        <p className="fc-game-day-staff-hint">Staff view — follows coach category</p>
+        <p className="fc-game-day-staff-hint">
+          {liveSync
+            ? "Staff live — syncs with coach every few seconds"
+            : "Staff view — follows coach category on this device"}
+        </p>
       </div>
 
       {active ? (
@@ -97,6 +103,7 @@ export function GameDayShareOverlay() {
     session?.planId || "",
     categories,
     session?.activeCategoryId,
+    session?.syncToken,
   );
 
   if (!session || !mounted || !categories.length) return null;
@@ -115,6 +122,7 @@ export function GameDayShareOverlay() {
       scoutingNotes={session.plan.scoutingNotes}
       categories={categories}
       activeIndex={activeIndex}
+      liveSync={!!session.syncToken}
       onClose={clearGameDayShareSession}
     />,
     document.body,

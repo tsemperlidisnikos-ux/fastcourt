@@ -11,6 +11,10 @@ import {
   writeGameDayState,
   type GameDayCategoryGroup,
 } from "@/lib/game-plan/game-day";
+import {
+  publishGameDayLiveCategory,
+  subscribeGameDayLivePoll,
+} from "@/lib/game-plan/game-day-live";
 import { formatGamePlanDate, formatGamePlanHomeAway } from "@/lib/game-plan/game-plan-items";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { GamePlan, GamePlanCategoryId } from "@/types/library-meta";
@@ -154,6 +158,10 @@ export function GameDayOverlay({ plan, plays, onClose }: Props) {
         activeCategoryId: category.categoryId,
         updatedAt,
       });
+      const syncToken = plan.gameDay?.syncToken;
+      if (syncToken) {
+        void publishGameDayLiveCategory(plan.id, syncToken, category.categoryId);
+      }
       void updateGamePlan(plan.id, {
         gameDay: {
           activeCategoryId: category.categoryId,
@@ -161,7 +169,7 @@ export function GameDayOverlay({ plan, plays, onClose }: Props) {
         },
       });
     },
-    [categories, plan.id, updateGamePlan],
+    [categories, plan.gameDay?.syncToken, plan.id, updateGamePlan],
   );
 
   useEffect(() => {
@@ -197,9 +205,11 @@ export function useSyncedGameDayIndex(
   planId: string,
   categories: GameDayCategoryGroup[],
   initialCategoryId?: GamePlanCategoryId,
+  syncToken?: string,
 ) {
   const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const plan = gamePlans.find((row) => row.id === planId);
+  const liveSyncToken = syncToken || plan?.gameDay?.syncToken;
 
   const resolveIndex = useCallback(
     (categoryId?: GamePlanCategoryId | null) =>
@@ -221,6 +231,13 @@ export function useSyncedGameDayIndex(
       setActiveIndex(resolveIndex(state.activeCategoryId));
     });
   }, [planId, resolveIndex]);
+
+  useEffect(() => {
+    if (!liveSyncToken) return;
+    return subscribeGameDayLivePoll(planId, liveSyncToken, (state) => {
+      setActiveIndex(resolveIndex(state.activeCategoryId));
+    });
+  }, [liveSyncToken, planId, resolveIndex]);
 
   useEffect(() => {
     const categoryId = plan?.gameDay?.activeCategoryId;

@@ -64,6 +64,7 @@ export function ShareBootstrap() {
         plan: payload.plan,
         entries: payload.entries,
         activeCategoryId: payload.activeCategoryId,
+        syncToken: payload.syncToken,
         stageRef: payload.stageRef,
       });
     } else if (payload.type === "homework_ack") {

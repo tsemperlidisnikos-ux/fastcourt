@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppLogoSrc } from "@/hooks/useAppLogoSrc";
+import { useCloudEnabled } from "@/hooks/useCloudEnabled";
 import { getAccessError } from "@/lib/auth/access";
 import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
 import { friendlyAuthError } from "@/lib/auth/errors";
@@ -20,9 +21,9 @@ import {
 } from "@/lib/auth/safe-next-path";
 import { finalizeAuthSession } from "@/lib/auth/session-bootstrap";
 import { upsertProfileForUser } from "@/lib/auth/signup";
-import { ensureLibraryReadyForUser, resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
+import { ensureLibraryReadyForUser, prepareLibrarySessionForUser, resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
 import { activateLibraryScope } from "@/lib/library/library-scope";
-import { createClient, isCloudEnabled } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { WelcomeOAuthButtons } from "@/components/auth/WelcomeOAuthButtons";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -126,7 +127,7 @@ export function LoginForm() {
     recoveryMode ? null : false,
   );
 
-  const cloud = isCloudEnabled();
+  const cloud = useCloudEnabled();
   const next = safeNextPath(searchParams.get("next"));
   const urlError = searchParams.get("error");
   const displayError =
@@ -229,7 +230,8 @@ export function LoginForm() {
     if (finalized.session.cloud) {
       const supabase = createClient();
       if (!supabase) return "Cloud sign-in is not configured.";
-      await ensureLibraryReadyForUser(finalized.session.user, supabase);
+      await prepareLibrarySessionForUser(finalized.session.user, supabase);
+      void ensureLibraryReadyForUser(finalized.session.user, supabase);
     } else {
       activateLibraryScope(
         finalized.session.user.id,

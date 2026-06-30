@@ -98,7 +98,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await client.auth.getUser();
       if (!active) return;
       if (user) {
-        await syncFromUser(user.id, true);
+        await syncFromUser(user.id, false);
+        void ensureLibraryReadyForUser(user, client).catch((err) => {
+          console.error("FastCourt library bootstrap sync failed:", err);
+        });
       } else {
         signOut();
       }

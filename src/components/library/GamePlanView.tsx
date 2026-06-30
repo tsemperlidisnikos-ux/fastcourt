@@ -24,6 +24,15 @@ import {
 } from "@/lib/game-plan/game-plan-items";
 import { findOpponentHistory } from "@/lib/game-plan/opponent-history";
 import {
+  buildGameDayCategories,
+  mergeGameDayCategoryId,
+} from "@/lib/game-plan/game-day";
+import {
+  buildGameDayPatch,
+  ensureGameDaySyncToken,
+  publishGameDayLiveCategory,
+} from "@/lib/game-plan/game-day-live";
+import {
   homeworkForGamePlan,
 } from "@/lib/game-plan/player-homework";
 import {
@@ -38,7 +47,7 @@ import {
   appNotice,
   appPrompt,
 } from "@/stores/dialog-store";
-import type { GamePlanCategoryId, GamePlanStatus } from "@/types/library-meta";
+import type { GamePlanCategoryId, GamePlanStatus, GamePlan } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
 
 const CourtFrameThumbnail = dynamic(
@@ -338,6 +347,26 @@ export function GamePlanView() {
     setSuggestCategory(null);
   }
 
+  async function prepareGameDaySync(plan: GamePlan): Promise<GamePlan> {
+    const syncToken = ensureGameDaySyncToken(plan);
+    const categories = buildGameDayCategories(plan, plays);
+    const activeCategoryId = mergeGameDayCategoryId(plan, categories);
+    const gameDay = buildGameDayPatch(plan, activeCategoryId, syncToken);
+    const needsUpdate =
+      syncToken !== plan.gameDay?.syncToken ||
+      gameDay.activeCategoryId !== plan.gameDay?.activeCategoryId;
+
+    if (needsUpdate) {
+      await updateGamePlan(plan.id, { gameDay });
+    }
+
+    if (gameDay.activeCategoryId) {
+      void publishGameDayLiveCategory(plan.id, syncToken, gameDay.activeCategoryId);
+    }
+
+    return { ...plan, gameDay };
+  }
+
   async function handleShareLink() {
     if (!selected || !canPrintBench) return;
     const result = buildSmartGamePlanUrl(selected, plays);
@@ -346,17 +375,19 @@ export function GamePlanView() {
 
   async function handleStaffLink() {
     if (!selected || !canPrintBench) return;
+    const syncedPlan = await prepareGameDaySync(selected);
     const result = buildSmartGameDayUrl(
-      selected,
+      syncedPlan,
       plays,
       DEFAULT_SHARE_STAGE,
-      selected.gameDay?.activeCategoryId,
+      syncedPlan.gameDay?.activeCategoryId,
     );
     await copyShareResult(result, "Staff live view");
   }
 
-  function handleOpenGameDay() {
+  async function handleOpenGameDay() {
     if (!selected || !canPrintBench) return;
+    await prepareGameDaySync(selected);
     setGameDayOpen(true);
   }
 
@@ -569,7 +600,7 @@ export function GamePlanView() {
                     type="button"
                     className="fc-game-plan-action-btn"
                     disabled={!canPrintBench}
-                    onClick={handleOpenGameDay}
+                    onClick={() => void handleOpenGameDay()}
                   >
                     Game day
                   </button>
