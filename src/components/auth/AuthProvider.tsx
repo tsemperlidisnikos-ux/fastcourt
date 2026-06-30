@@ -16,6 +16,27 @@ import { kickAuthRehydrate } from "@/lib/auth/hydration";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+const AUTH_BOOTSTRAP_MS = 12_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(new Error(`${label}_timeout`));
+    }, ms);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -44,77 +65,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
     let active = true;
 
-    async function syncFromUser(userId: string, syncLibrary = false) {
-      const profile = await fetchProfile(supabase!, userId);
-      if (!active) return;
+    async function establishSession(
+      client: SupabaseClient,
+      userId: string,
+    ): Promise<boolean> {
+      const profile = await fetchProfile(client, userId);
+      if (!active) return false;
       if (!profile) {
         signOut();
-        await supabase!.auth.signOut();
-        return;
+        await client.auth.signOut();
+        return false;
       }
-      const session = profileToAuthSession(profile);
-      const finalized = finalizeAuthSession(session);
-      const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
-      if (deviceError) {
-        signOut();
-        await supabase!.auth.signOut();
-        router.replace(`/login?error=${encodeURIComponent(deviceError)}`);
-        return;
-      }
+
+      const finalized = finalizeAuthSession(profileToAuthSession(profile));
       const accessError = getAccessError(finalized.session.user);
       if (accessError) {
         signOut();
-        await supabase!.auth.signOut();
+        await client.auth.signOut();
         router.replace(`/login?error=${encodeURIComponent(accessError)}`);
-        return;
+        return false;
       }
 
-      if (finalized.session.cloud) {
-        if (syncLibrary) {
-          setSession(finalized.session);
-          await ensureLibraryReadyForUser(finalized.session.user, supabase!);
-        } else {
-          await prepareLibrarySessionForUser(finalized.session.user, supabase!);
-          setSession(finalized.session);
-        }
-      } else {
+      setSession(finalized.session);
+      if (!finalized.session.cloud) {
         activateLibraryScope(
           finalized.session.user.id,
           finalized.session.user.id,
           finalized.session.user,
         );
-        setSession(finalized.session);
+      }
+      return true;
+    }
+
+    async function enrichSession(
+      client: SupabaseClient,
+      userId: string,
+      syncLibrary: boolean,
+    ) {
+      const session = useAuthStore.getState().session;
+      if (!active || !session?.user || session.user.id !== userId) return;
+
+      const deviceError = await enforceDeviceAccessAsync(session.user);
+      if (!active) return;
+      if (deviceError) {
+        signOut();
+        await client.auth.signOut();
+        router.replace(`/login?error=${encodeURIComponent(deviceError)}`);
+        return;
       }
 
-      await useSettingsStore.getState().hydrateForUser(finalized.session.user);
+      if (session.cloud) {
+        await prepareLibrarySessionForUser(session.user, client);
+        if (syncLibrary) {
+          await ensureLibraryReadyForUser(session.user, client);
+        } else {
+          void ensureLibraryReadyForUser(session.user, client).catch((err) => {
+            console.error("FastCourt library bootstrap sync failed:", err);
+          });
+        }
+      }
+
+      await useSettingsStore.getState().hydrateForUser(session.user);
+    }
+
+    async function syncFromUser(userId: string, syncLibrary = false) {
+      if (!supabase) return;
+      const ok = await establishSession(supabase, userId);
+      if (!ok || !active) return;
+      await enrichSession(supabase, userId, syncLibrary);
     }
 
     async function bootstrap() {
       const client = supabase;
       if (!client) return;
 
-      const {
-        data: { user },
-      } = await client.auth.getUser();
-      if (!active) return;
-      if (user) {
-        await syncFromUser(user.id, false);
-        void ensureLibraryReadyForUser(user, client).catch((err) => {
-          console.error("FastCourt library bootstrap sync failed:", err);
-        });
-      } else {
+      try {
+        const {
+          data: { user },
+        } = await withTimeout(client.auth.getUser(), AUTH_BOOTSTRAP_MS, "getUser");
+        if (!active) return;
+
+        if (user) {
+          const ok = await withTimeout(
+            establishSession(client, user.id),
+            AUTH_BOOTSTRAP_MS,
+            "establishSession",
+          );
+          if (ok && active) {
+            void enrichSession(client, user.id, false).catch((err) => {
+              console.error("FastCourt session enrichment failed:", err);
+            });
+          }
+        } else {
+          signOut();
+        }
+      } catch (err) {
+        console.error("FastCourt auth bootstrap failed:", err);
         signOut();
       }
     }
 
-    void bootstrap()
-      .catch((err) => {
-        console.error("FastCourt auth bootstrap failed:", err);
-        signOut();
-      })
-      .finally(() => {
-        if (active) setReady(true);
-      });
+    void bootstrap().finally(() => {
+      if (active) setReady(true);
+    });
 
     if (!supabase) {
       return () => {
