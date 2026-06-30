@@ -3,6 +3,9 @@ import type { DesignerObject } from "@/types/designer";
 /** ~72px at 680px court width */
 export const PLAYER_SNAP_NORM = 0.106;
 
+/** Tight radius for ball assign — must tap near player center, not nearby placement. */
+export const BALL_ASSIGN_SNAP_NORM = PLAYER_SNAP_NORM * 0.42;
+
 export function closestPlayer(
   x: number,
   y: number,

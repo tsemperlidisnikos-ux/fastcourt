@@ -10,28 +10,34 @@ import {
   LibraryLoadingState,
 } from "@/components/library/LibraryLoadError";
 import { OnboardingModal } from "@/components/library/OnboardingModal";
+import { GamePlanView } from "@/components/library/GamePlanView";
 import { PlaybooksView } from "@/components/library/PlaybooksView";
 import { PracticePlannerView } from "@/components/library/PracticePlannerView";
 import { PlayersView } from "@/components/library/PlayersView";
 import { TrialBanner } from "@/components/billing/TrialBanner";
 import { useClientMounted } from "@/hooks/useClientMounted";
-import { useDeviceClass } from "@/hooks/useDeviceClass";
 import {
   dismissOnboardingForever,
   isOnboardingDismissed,
   shouldShowOnboarding,
   stripWelcomeFromPath,
 } from "@/lib/auth/onboarding";
+import { waitForActiveLibrarySync } from "@/lib/cloud/library-sync";
+import {
+  activateLibraryScope,
+  isLibraryScopeReady,
+} from "@/lib/library/library-scope";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import { useSettingsStore } from "@/stores/settings-store";
 
-type LibraryTab = "draw" | "playbooks" | "fields" | "practice" | "players";
+type LibraryTab = "draw" | "playbooks" | "gameplan" | "fields" | "practice" | "players";
 
 function parseTab(raw: string | null): LibraryTab {
   if (
     raw === "playbooks" ||
+    raw === "gameplan" ||
     raw === "fields" ||
     raw === "practice" ||
     raw === "players"
@@ -40,14 +46,6 @@ function parseTab(raw: string | null): LibraryTab {
   }
   return "draw";
 }
-
-const SECTION_LABEL: Record<LibraryTab, string> = {
-  draw: "PLAYS",
-  playbooks: "PLAYBOOKS",
-  fields: "FIELDS",
-  practice: "PRACTICE",
-  players: "PLAYERS",
-};
 
 export function LibraryScreen() {
   const router = useRouter();
@@ -74,8 +72,6 @@ export function LibraryScreen() {
   const hydrateSettings = useSettingsStore((s) => s.hydrate);
   const session = useAuthStore((s) => s.session);
 
-  const deviceClass = useDeviceClass();
-
   useEffect(() => {
     if (!settingsHydrated) hydrateSettings();
   }, [settingsHydrated, hydrateSettings]);
@@ -85,12 +81,24 @@ export function LibraryScreen() {
   }, [applySettings, tab]);
 
   useEffect(() => {
-    if (!hydrated) void refresh();
-  }, [hydrated, refresh]);
+    void (async () => {
+      if (session?.cloud) {
+        await waitForActiveLibrarySync();
+      }
+      if (session?.user && !isLibraryScopeReady()) {
+        if (session.cloud) {
+          await waitForActiveLibrarySync();
+        } else {
+          activateLibraryScope(session.user.id, session.user.id, session.user);
+        }
+      }
+      await refresh();
+    })();
+  }, [session?.user?.id, session?.cloud, refresh]);
 
   useEffect(() => {
-    if (!metaHydrated) void loadMeta();
-  }, [metaHydrated, loadMeta]);
+    if (!metaHydrated && session?.user) void loadMeta();
+  }, [metaHydrated, loadMeta, session?.user?.id]);
 
   function closeOnboarding() {
     setOnboardingSuppressed(true);
@@ -110,27 +118,24 @@ export function LibraryScreen() {
   }
 
   const modeClass =
-    [
-      tab === "draw"
-        ? "library-draw-mode"
-        : tab === "fields"
-          ? "library-fields-mode"
-          : tab === "playbooks"
-            ? "library-playbooks-mode"
-            : tab === "players"
-              ? "library-players-mode"
-              : "library-practice-mode",
-      deviceClass === "tablet" ? "library-tablet-mode fc-fd-tablet-shell" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    tab === "draw"
+      ? "library-draw-mode"
+      : tab === "fields"
+        ? "library-fields-mode"
+        : tab === "playbooks"
+          ? "library-playbooks-mode"
+          : tab === "gameplan"
+            ? "library-gameplan-mode"
+          : tab === "players"
+            ? "library-players-mode"
+            : "library-practice-mode";
 
   return (
     <div
       className={`fd-ui screen-root active${modeClass ? ` ${modeClass}` : ""}`}
       id="screen-organizer"
     >
-      <FdAppHeader sectionLabel={SECTION_LABEL[tab]} activeTab={tab} />
+      <FdAppHeader activeTab={tab} />
       <div className="org-body">
         {session?.user ? <TrialBanner user={session.user} /> : null}
         {error ? (
@@ -153,6 +158,7 @@ export function LibraryScreen() {
             {tab === "draw" ? <DrawLibraryView /> : null}
             {tab === "fields" ? <FieldsView /> : null}
             {tab === "playbooks" ? <PlaybooksView /> : null}
+            {tab === "gameplan" ? <GamePlanView /> : null}
           </div>
         )}
       </div>

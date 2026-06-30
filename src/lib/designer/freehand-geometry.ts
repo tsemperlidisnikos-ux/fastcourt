@@ -77,6 +77,22 @@ export function dribbleMidFromFlat(flat: number[]) {
   return { midX: sym.mx, midY: sym.my };
 }
 
+export function adjustFreehandEndpoints(
+  flat: number[],
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+) {
+  if (flat.length < 4) return flat;
+  const out = flat.slice();
+  out[0] = x1;
+  out[1] = y1;
+  out[out.length - 2] = x2;
+  out[out.length - 1] = y2;
+  return out;
+}
+
 export function isFreehandStroke(flat: number[]) {
   return flat.length > 4;
 }

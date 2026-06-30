@@ -1,11 +1,20 @@
+import {
+  DEFAULT_APP_FONT,
+  DEFAULT_APP_FONT_STACK,
+  LEGACY_APP_FONT_STACK,
+  LEGACY_DEFAULT_APP_FONT,
+  PREVIOUS_DEFAULT_APP_FONT,
+  PREVIOUS_DEFAULT_APP_FONT_STACK,
+} from "@/lib/config";
 import { setRuntimeActionColors } from "@/lib/designer/action-geometry";
-import { resolveHeaderNavActiveTextColor } from "@/lib/settings/color-contrast";
+import { sanitizeHeaderNavTabFontSize } from "@/lib/settings/appearance-settings";
+import { darkenHex, mixHexColors, resolveHeaderNavActiveTextColor } from "@/lib/settings/color-contrast";
 import type { ActionType } from "@/types/designer";
 import type { AppearanceSettings } from "@/types/appearance-settings";
 import type { PdfBrandSettings } from "@/types/pdf-branding";
 
-const LIB_COL_WIDTH_KEYS = ["season", "team", "series", "tags"] as const;
-const LIB_COL_WIDTH_MIN = 40;
+const LIB_COL_WIDTH_KEYS = ["season", "type", "team", "series", "tags"] as const;
+const LIB_COL_WIDTH_MIN = 20;
 const LIB_COL_WIDTH_MAX = 400;
 
 function setVar(el: HTMLElement, name: string, value: string | number | null | undefined) {
@@ -111,6 +120,41 @@ function applyDesignerLayoutVars(
   applyDesignerSidebarFont(el, dc.tableFont);
 }
 
+function resolveAppFontStack(appFont: string): string {
+  if (appFont === DEFAULT_APP_FONT) {
+    return DEFAULT_APP_FONT_STACK;
+  }
+  if (appFont === PREVIOUS_DEFAULT_APP_FONT) {
+    return PREVIOUS_DEFAULT_APP_FONT_STACK;
+  }
+  if (
+    appFont === LEGACY_DEFAULT_APP_FONT ||
+    appFont === "Arial Rounded MT Regular"
+  ) {
+    return LEGACY_APP_FONT_STACK;
+  }
+  if (appFont === "system-ui") {
+    return 'system-ui, "Segoe UI", sans-serif';
+  }
+  return `"${appFont}", system-ui, "Segoe UI", sans-serif`;
+}
+
+function applyAccentPalette(el: HTMLElement, accent: string) {
+  const hover = darkenHex(accent, 0.14);
+  const soft = mixHexColors(accent, "#ffffff", 0.9);
+  const border = mixHexColors(accent, "#ffffff", 0.72);
+  setVar(el, "--fd-red", accent);
+  setVar(el, "--fd-red-dark", hover);
+  setVar(el, "--od-accent", accent);
+  setVar(el, "--od-accent-hover", hover);
+  setVar(el, "--fc-modern-accent", accent);
+  setVar(el, "--fc-modern-accent-hover", hover);
+  setVar(el, "--fc-modern-accent-soft", soft);
+  setVar(el, "--fc-modern-accent-border", border);
+  setVar(el, "--fd-header-nav-active-color", accent);
+  setVar(el, "--fd-header-nav-active-text-color", resolveHeaderNavActiveTextColor(accent));
+}
+
 export function applyAppearanceToDocument(settings: AppearanceSettings) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -126,36 +170,28 @@ export function applyAppearanceToDocument(settings: AppearanceSettings) {
     settings.highContrastCourt ? "1" : "0",
   );
 
-  const fontStack =
-    settings.appFont === "system-ui"
-      ? 'system-ui, "Segoe UI", sans-serif'
-      : `"${settings.appFont}", system-ui, "Segoe UI", sans-serif`;
+  const fontStack = resolveAppFontStack(settings.appFont);
 
   setVar(root, "--fc-app-font", fontStack);
   setVar(root, "--fc-ui-font", fontStack);
-  setVar(root, "--fd-red", settings.panelAccent);
-  setVar(root, "--od-accent", settings.panelAccent);
+  applyAccentPalette(root, settings.headerNavActiveColor);
   applyHeaderColorToDocument(settings.headerColor);
   applyHeaderBrandRowColorToDocument(
     settings.headerBrandRowColor || settings.headerColor,
   );
-  setVar(root, "--fd-header-nav-active-color", settings.headerNavActiveColor);
-  setVar(
-    root,
-    "--fd-header-nav-active-text-color",
-    resolveHeaderNavActiveTextColor(settings.headerNavActiveColor),
+  const navTabFontPx = sanitizeHeaderNavTabFontSize(
+    settings.headerNavTabFontSize,
   );
+  setVar(root, "--fd-header-nav-tab-font-size", `${navTabFontPx}px`);
   const organizer = document.getElementById("screen-organizer");
   if (organizer instanceof HTMLElement) {
-    setVar(organizer, "--fd-header-nav-active-color", settings.headerNavActiveColor);
-    setVar(
-      organizer,
-      "--fd-header-nav-active-text-color",
-      resolveHeaderNavActiveTextColor(settings.headerNavActiveColor),
-    );
+    applyAccentPalette(organizer, settings.headerNavActiveColor);
+    setVar(organizer, "--fd-header-nav-tab-font-size", `${navTabFontPx}px`);
   }
-  setVar(root, "--fd-utility-bar-gradient", settings.utilityBar);
-
+  const designer = document.getElementById("screen-designer");
+  if (designer instanceof HTMLElement) {
+    applyAccentPalette(designer, settings.headerNavActiveColor);
+  }
   const lc = settings.libraryColumns;
   setVar(root, "--fd-lib-table-font-size", `${lc.tableFont}px`);
   setVar(root, "--fc-lib-list-split-pct", `${lc.listSplitPct}%`);
@@ -176,7 +212,6 @@ export function applyAppearanceToDocument(settings: AppearanceSettings) {
 
   const dc = settings.designerColumns;
   applyDesignerLayoutVars(root, dc);
-  const designer = document.getElementById("screen-designer");
   if (designer instanceof HTMLElement) {
     applyDesignerLayoutVars(designer, dc);
   }

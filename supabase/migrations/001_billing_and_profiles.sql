@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   display_name text NOT NULL DEFAULT '',
   role text NOT NULL DEFAULT 'coach' CHECK (role IN ('admin', 'coach', 'team_admin')),
   access_type text NOT NULL DEFAULT 'trial' CHECK (access_type IN ('trial', 'subscription', 'unlimited')),
-  trial_days integer NOT NULL DEFAULT 14,
+  trial_days integer NOT NULL DEFAULT 7,
   expires_at timestamptz,
   organization text,
   stripe_customer_id text,

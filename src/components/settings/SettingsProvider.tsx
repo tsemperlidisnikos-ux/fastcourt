@@ -14,7 +14,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const user = useAuthStore.getState().session?.user;
     if (user) {
-      void hydrateForUser(user);
+      void hydrateForUser(user).catch((err) => {
+        console.error("FastCourt settings hydrate failed:", err);
+      });
       return;
     }
     hydrate();

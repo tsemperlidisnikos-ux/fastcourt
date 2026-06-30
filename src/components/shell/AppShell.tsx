@@ -38,8 +38,16 @@ function AppGate({ children }: { children: React.ReactNode }) {
   const session = useAuthStore((s) => s.session);
   const playerShareSession = useShareStore((s) => s.playerShareSession);
   const practiceShareSession = useShareStore((s) => s.practiceShareSession);
+  const gamePlanShareSession = useShareStore((s) => s.gamePlanShareSession);
+  const homeworkShareSession = useShareStore((s) => s.homeworkShareSession);
+  const gameDayShareSession = useShareStore((s) => s.gameDayShareSession);
   const cloud = isCloudEnabled();
-  const playerShareActive = !!playerShareSession || !!practiceShareSession;
+  const playerShareActive =
+    !!playerShareSession ||
+    !!practiceShareSession ||
+    !!gamePlanShareSession ||
+    !!homeworkShareSession ||
+    !!gameDayShareSession;
 
   const hydrated = useSyncExternalStore(
     subscribeAuthHydration,

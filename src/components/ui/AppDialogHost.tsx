@@ -49,6 +49,7 @@ export function AppDialogHost() {
           placeholder={input.placeholder}
           submitLabel={input.submitLabel}
           allowEmpty={input.allowEmpty}
+          multiline={input.multiline}
           onClose={() => resolveInput(null)}
           onSubmit={async (value) => resolveInput(value)}
         />

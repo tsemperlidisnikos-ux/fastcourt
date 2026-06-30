@@ -71,6 +71,7 @@ describe("team org access", () => {
     const coach = org.coaches[0]!;
     const result = acceptTeamInvite(
       {
+        token: coach.inviteToken!,
         email: coach.email,
         memberRole: "coach",
         organizationId: org.id,
@@ -91,6 +92,7 @@ describe("team org access", () => {
     const org = loadTeamOrganizations()[0]!;
     acceptTeamInvite(
       {
+        token: org.coaches[0]!.inviteToken!,
         email: "coach@athensbc.gr",
         memberRole: "coach",
         organizationId: org.id,
@@ -114,6 +116,7 @@ describe("team org access", () => {
     const coach = org.coaches[0]!;
     const result = acceptTeamInvite(
       {
+        token: coach.inviteToken!,
         email: coach.email,
         memberRole: "coach",
         organizationId: org.id,
@@ -125,5 +128,24 @@ describe("team org access", () => {
     assert.equal(result.ok, false);
     if (result.ok) return;
     assert.match(result.reason, /different email/i);
+  });
+
+  it("rejects invite when token does not match", () => {
+    const org = loadTeamOrganizations()[0]!;
+    const coach = org.coaches[0]!;
+    const result = acceptTeamInvite(
+      {
+        token: "deadbeef",
+        email: coach.email,
+        memberRole: "coach",
+        organizationId: org.id,
+        memberId: coach.id,
+      },
+      coach.email,
+    );
+
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.match(result.reason, /expired/i);
   });
 });

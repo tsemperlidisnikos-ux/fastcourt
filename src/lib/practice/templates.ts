@@ -109,6 +109,34 @@ export async function saveCustomPracticeTemplate(
   await saveCustomPracticeTemplates([template, ...list]);
 }
 
+export async function updateCustomPracticeTemplate(
+  template: PracticeTemplate,
+): Promise<boolean> {
+  if (template.builtin) return false;
+  const list = await loadCustomPracticeTemplates();
+  const index = list.findIndex((t) => t.id === template.id);
+  if (index < 0) return false;
+  const next = [...list];
+  next[index] = template;
+  await saveCustomPracticeTemplates(next);
+  return true;
+}
+
+export async function renameCustomPracticeTemplate(
+  id: string,
+  name: string,
+): Promise<boolean> {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  const list = await loadCustomPracticeTemplates();
+  const index = list.findIndex((t) => t.id === id);
+  if (index < 0) return false;
+  const next = [...list];
+  next[index] = { ...next[index], name: trimmed };
+  await saveCustomPracticeTemplates(next);
+  return true;
+}
+
 export async function getAllPracticeTemplates(): Promise<PracticeTemplate[]> {
   const custom = await loadCustomPracticeTemplates();
   return [...BUILTIN_PRACTICE_TEMPLATES, ...custom];
@@ -132,9 +160,10 @@ export function sessionFromTemplate(
 export function templateFromSession(
   session: PracticeSession,
   name: string,
+  existing?: Pick<PracticeTemplate, "id" | "createdAt">,
 ): PracticeTemplate {
   return {
-    id: `tpl_${Date.now()}`,
+    id: existing?.id ?? `tpl_${Date.now()}`,
     name: name.trim(),
     title: session.title,
     notes: session.notes,
@@ -154,6 +183,6 @@ export function templateFromSession(
         notes: item.notes || "",
       };
     }),
-    createdAt: new Date().toISOString(),
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
   };
 }

@@ -1,3 +1,4 @@
+import { DEFAULT_TRIAL_DAYS } from "@/lib/config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProfileRow } from "@/lib/auth/profile";
 import { PROFILE_SELECT_COLUMNS } from "@/lib/auth/profile";
@@ -30,7 +31,7 @@ export function adminUserToProfileUpdate(record: AdminUserRecord) {
     role: record.role,
     access_type: record.accessType,
     expires_at: record.expiresAt,
-    trial_days: record.trialDays ?? 14,
+    trial_days: record.trialDays ?? DEFAULT_TRIAL_DAYS,
     organization: record.organization?.trim() || null,
     updated_at: new Date().toISOString(),
   };
@@ -69,6 +70,27 @@ export async function saveCloudAdminUsers(
   const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
 
   if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function deleteCloudAdminUser(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error: settingsError } = await supabase
+    .from("user_settings")
+    .delete()
+    .eq("user_id", userId);
+  if (settingsError && !/does not exist/i.test(settingsError.message)) {
+    return { ok: false, error: settingsError.message };
+  }
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", userId);
+
+  if (profileError) return { ok: false, error: profileError.message };
   return { ok: true };
 }
 

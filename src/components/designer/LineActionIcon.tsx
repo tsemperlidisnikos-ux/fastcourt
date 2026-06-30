@@ -6,11 +6,7 @@ interface Props {
   className?: string;
 }
 
-/** Bottom-left → top-right guide (photo 2 style). */
-const X1 = 6;
-const Y1 = 18;
-const X2 = 25;
-const Y2 = 7;
+const HY = 12;
 
 function ArrowHead({
   x,
@@ -40,12 +36,11 @@ function ArrowHead({
   return <polygon points={`${tip} ${a} ${b}`} fill={color} />;
 }
 
+/** Hoops Geek toolbar: horizontal left → right action glyphs. */
 export function LineActionIcon({ type, color = "currentColor", className }: Props) {
   const stroke = color;
   const w = 1.85;
   const cap = { strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
-  const endDx = X2 - X1;
-  const endDy = Y2 - Y1;
 
   return (
     <svg
@@ -57,46 +52,41 @@ export function LineActionIcon({ type, color = "currentColor", className }: Prop
     >
       {type === "cut" && (
         <>
-          <path
-            d={`M ${X1} ${Y1} L ${X2} ${Y2}`}
-            stroke={stroke}
-            strokeWidth={w}
-            {...cap}
-          />
-          <ArrowHead x={X2} y={Y2} dx={endDx} dy={endDy} color={stroke} />
+          <path d="M 4 12 H 22" stroke={stroke} strokeWidth={w} {...cap} />
+          <ArrowHead x={26} y={HY} dx={1} dy={0} color={stroke} />
         </>
       )}
 
       {type === "pass" && (
         <>
           <path
-            d={`M ${X1} ${Y1} L ${X2 - 1.5} ${Y2 + 0.8}`}
+            d="M 4 12 H 21"
             stroke={stroke}
             strokeWidth={w}
             strokeDasharray="3.5 3"
             {...cap}
           />
-          <ArrowHead x={X2} y={Y2} dx={endDx} dy={endDy} color={stroke} />
+          <ArrowHead x={26} y={HY} dx={1} dy={0} color={stroke} />
         </>
       )}
 
       {type === "dribble" && (
         <>
-          <path
-            d="M 3 12 C 6 6 9 6 12 12 C 15 18 18 18 21 12 C 24 6 27 6 29 12"
+          <polyline
+            points="3,12 6,8 9,12 12,8 15,12 18,8 21,12 24,8 27,12 30,12"
             stroke={stroke}
             strokeWidth={w}
             fill="none"
             {...cap}
           />
-          <ArrowHead x={29} y={12} dx={1} dy={0} color={stroke} />
+          <ArrowHead x={30} y={HY} dx={1} dy={0} color={stroke} />
         </>
       )}
 
       {type === "screen" && (
         <>
-          <path d="M 4 12 H21" stroke={stroke} strokeWidth={w} {...cap} />
-          <path d="M 21 7 V17" stroke={stroke} strokeWidth={w} {...cap} />
+          <path d="M 4 12 H 18" stroke={stroke} strokeWidth={w} {...cap} />
+          <path d="M 18 8 V 16" stroke={stroke} strokeWidth={w} {...cap} />
         </>
       )}
 
@@ -114,30 +104,32 @@ export function LineActionIcon({ type, color = "currentColor", className }: Prop
       )}
 
       {type === "handoff" && (
-        <g transform="translate(16 14.5) scale(1.2) translate(-16 -12)">
-          <path d="M 3 12 H 29" stroke={stroke} strokeWidth={w} {...cap} />
-          <path d="M 12 7 V 17" stroke={stroke} strokeWidth={w} {...cap} />
-          <path d="M 20 7 V 17" stroke={stroke} strokeWidth={w} {...cap} />
-        </g>
+        <>
+          <path d="M 4 12 H 30" stroke={stroke} strokeWidth={w} {...cap} />
+          <path d="M 20 8 V 16" stroke={stroke} strokeWidth={w} {...cap} />
+          <path d="M 24 8 V 16" stroke={stroke} strokeWidth={w} {...cap} />
+        </>
       )}
 
       {type === "shoot" && (
         <>
           <path
-            d={`M ${X1} ${Y1} L ${X2 - 3} ${Y2 + 1}`}
+            d="M 4 12 H 20"
             stroke={stroke}
             strokeWidth={w}
             strokeDasharray="3 2.5"
             {...cap}
           />
           <circle
-            cx={X2 + 0.5}
-            cy={Y2 + 0.5}
-            r={2.8}
+            cx={26}
+            cy={HY}
+            r={3}
             stroke={stroke}
             strokeWidth={w}
             fill="none"
           />
+          <path d="M 26 9 V 15" stroke={stroke} strokeWidth={1.2} {...cap} />
+          <path d="M 23 12 H 29" stroke={stroke} strokeWidth={1.2} {...cap} />
         </>
       )}
     </svg>

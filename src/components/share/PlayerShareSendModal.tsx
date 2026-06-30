@@ -84,6 +84,10 @@ function PlayerShareSendModalBody({
     );
   }
 
+  function playerShareUrl(player: PlayerRosterEntry) {
+    return context.resolvePlayerUrl?.(player) || context.url;
+  }
+
   async function copyLink() {
     if (!context?.url) return;
     try {
@@ -103,7 +107,12 @@ function PlayerShareSendModalBody({
       appNotice("Select players", "Select at least one player.");
       return;
     }
-    const block = buildCopyMessagesBlock(withContact, message, context.url);
+    const block = buildCopyMessagesBlock(
+      withContact,
+      message,
+      context.url,
+      context.resolvePlayerUrl ? (player) => playerShareUrl(player) : undefined,
+    );
     try {
       await navigator.clipboard.writeText(block);
       appNotice("Messages copied", `Copied ${withContact.length} message(s).`);
@@ -149,13 +158,13 @@ function PlayerShareSendModalBody({
       player,
       subject,
       message,
-      context.url,
+      playerShareUrl(player),
     );
   }
 
   function whatsAppPlayer(player: PlayerRosterEntry) {
     if (!context?.url) return;
-    const link = buildWhatsAppShareLink(player, message, context.url);
+    const link = buildWhatsAppShareLink(player, message, playerShareUrl(player));
     if (!link) return;
     window.open(link, "_blank", "noopener,noreferrer");
   }

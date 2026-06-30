@@ -9,6 +9,8 @@ import {
 } from "@/lib/designer/shadow-geometry";
 import { getZoneDimensions } from "@/lib/designer/zone-geometry";
 import { useDesignerStore } from "@/stores/designer-store";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { konvaHandleHitWidth, konvaHandleRadius } from "@/lib/viewport/touch-targets";
 import type { CourtRect, CourtType, DesignerObject } from "@/types/designer";
 
 type Corner = "nw" | "ne" | "sw" | "se";
@@ -46,6 +48,9 @@ function cornerOffsets(corner: Corner, halfW: number, halfH: number) {
 
 export function ShadowEditHandles({ object, court, courtType }: Props) {
   const resizeObjectScales = useDesignerStore((s) => s.resizeObjectScales);
+  const coarse = useCoarsePointer();
+  const handleRadius = konvaHandleRadius(coarse, true);
+  const handleHit = konvaHandleHitWidth(coarse);
 
   const scaleX = object.scaleX ?? 1;
   const scaleY = object.scaleY ?? 1;
@@ -87,11 +92,11 @@ export function ShadowEditHandles({ object, court, courtType }: Props) {
             key={corner}
             x={center.x + dx}
             y={center.y + dy}
-            radius={6}
+            radius={handleRadius}
             fill="#fff"
             stroke="#2f4563"
             strokeWidth={2}
-            hitStrokeWidth={16}
+            hitStrokeWidth={handleHit}
             draggable
             name="shadowResizeHandle"
             onPointerDown={(e) => {

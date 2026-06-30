@@ -6,6 +6,7 @@ export type SignupStep =
   | "basic"
   | "verify"
   | "role"
+  | "country"
   | "team"
   | "payment"
   | "done";
@@ -27,12 +28,21 @@ export const CLOUD_SIGNUP_STEPS: SignupStep[] = [
   "done",
 ];
 
-export function signupSteps(cloud: boolean, skipVerify: boolean): SignupStep[] {
-  if (!cloud) return LOCAL_SIGNUP_STEPS;
-  if (skipVerify) {
-    return CLOUD_SIGNUP_STEPS.filter((s) => s !== "verify");
+export function signupSteps(
+  cloud: boolean,
+  skipVerify: boolean,
+  signupRole: SignupWizardValues["signupRole"] = "coach",
+): SignupStep[] {
+  const base = !cloud
+    ? LOCAL_SIGNUP_STEPS
+    : skipVerify
+      ? CLOUD_SIGNUP_STEPS.filter((s) => s !== "verify")
+      : CLOUD_SIGNUP_STEPS;
+
+  if (signupRole === "coach") {
+    return base.map((s) => (s === "team" ? "country" : s));
   }
-  return CLOUD_SIGNUP_STEPS;
+  return base;
 }
 
 export function nextSignupStep(
@@ -52,6 +62,8 @@ export function signupSubtitle(step: SignupStep): string {
       return "Step 2 — verify your email with the 6-digit code.";
     case "role":
       return "Choose how you'll use FastCourt.";
+    case "country":
+      return "Select your country.";
     case "team":
       return "Tell us about your team or organization.";
     case "payment":

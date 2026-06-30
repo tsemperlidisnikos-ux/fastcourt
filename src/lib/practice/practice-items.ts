@@ -66,6 +66,11 @@ export function isPracticeBlockRunnable(row: ResolvedPracticeRow) {
   return !!(row.play || (row.item.cueLabel || "").trim());
 }
 
+/** Session item references a library play that no longer exists. */
+export function isPracticeItemMissing(row: ResolvedPracticeRow) {
+  return !!row.item.playId && !row.play;
+}
+
 export function getPracticeItemVideoUrl(
   item: PracticeSessionItem,
   play: StoredPlay | null,

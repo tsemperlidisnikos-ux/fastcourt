@@ -136,20 +136,9 @@
 #player-roster-modal .modal-create,
 #player-share-send-modal .modal-create {
   padding: 9px 18px;
-  border: none;
-  border-radius: 10px;
-  background: #2563eb;
-  color: #fff;
   font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
   font-family: inherit;
   transition: background 0.15s;
-}
-
-#player-roster-modal .modal-create:hover,
-#player-share-send-modal .modal-create:hover {
-  background: #1d4ed8;
 }
 
 /* ── Roster modal ── */

@@ -11,25 +11,12 @@
   overflow: hidden;
 }
 
-#screen-organizer .fc-players-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
-  padding: 0 20px;
-  min-height: 52px;
-  box-sizing: border-box;
-  background: #fff;
-  border-bottom: 1px solid #d1d5db;
-  flex-shrink: 0;
-}
-
 #screen-organizer .fc-players-toolbar-left {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
+  height: 100%;
 }
 
 #screen-organizer .fc-players-team-field {
@@ -45,13 +32,15 @@
 
 #screen-organizer .fc-players-team-field select {
   min-width: 140px;
-  padding: 7px 10px;
+  height: 34px;
+  padding: 0 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 0;
   background: #fff;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  box-sizing: border-box;
 }
 
 #screen-organizer .fc-players-count-badge {
@@ -67,20 +56,7 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-}
-
-#screen-organizer .fc-players-create-btn {
-  border: none !important;
-  border-radius: 0 !important;
-  background: #111 !important;
-  color: #fff !important;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  cursor: pointer;
-  white-space: nowrap;
+  height: 100%;
 }
 
 #screen-organizer .fc-players-paste-card {
@@ -226,16 +202,8 @@
 }
 
 #screen-organizer .fc-players-submit {
-  border: none;
-  border-radius: 6px;
-  background: #111;
-  color: #fff;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 9px 14px;
-  cursor: pointer;
+  padding: 9px 16px;
 }
 
 #screen-organizer .fc-players-cancel {

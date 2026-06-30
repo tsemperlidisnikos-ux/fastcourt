@@ -1,12 +1,28 @@
-import { ROLES } from "@/lib/config";
+import { DEFAULT_TRIAL_DAYS, ROLES } from "@/lib/config";
 import type { SessionUser } from "@/types/auth";
 import type { AdminUserRecord } from "@/types/admin-user";
 
 const STORAGE_KEY = "fastcourt_admin_users_v1";
-const DEFAULT_TRIAL_DAYS = 14;
+const REMOVED_DEMO_USER_IDS = new Set(["demo-stefania", "demo-nikos"]);
+const HIDDEN_ADMIN_EMAILS = new Set(["platform.admin@fastcourt.eu"]);
+
+export function isHiddenAdminEmail(email: string) {
+  return HIDDEN_ADMIN_EMAILS.has(email.trim().toLowerCase());
+}
+
+export function filterVisibleAdminUsers(users: AdminUserRecord[]) {
+  return users.filter(
+    (user) =>
+      !REMOVED_DEMO_USER_IDS.has(user.id) && !isHiddenAdminEmail(user.email),
+  );
+}
 
 function isBrowser() {
   return typeof window !== "undefined";
+}
+
+function stripRemovedUsers(users: AdminUserRecord[]) {
+  return filterVisibleAdminUsers(users);
 }
 
 function readStore(): AdminUserRecord[] {
@@ -15,7 +31,11 @@ function readStore(): AdminUserRecord[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as AdminUserRecord[];
-    return Array.isArray(parsed) ? parsed : [];
+    const users = Array.isArray(parsed) ? stripRemovedUsers(parsed) : [];
+    if (users.length !== (Array.isArray(parsed) ? parsed.length : 0)) {
+      writeStore(users);
+    }
+    return users;
   } catch {
     return [];
   }
@@ -40,40 +60,13 @@ export function sessionToAdminUser(user: SessionUser): AdminUserRecord {
   };
 }
 
-function demoCoaches(): AdminUserRecord[] {
-  const now = new Date().toISOString();
-  const trialEnd = new Date();
-  trialEnd.setDate(trialEnd.getDate() + 14);
-
-  return [
-    {
-      id: "demo-stefania",
-      email: "stefania.tomara@example.com",
-      displayName: "STEFANIA TOMARA",
-      role: ROLES.coach,
-      accessType: "trial",
-      expiresAt: trialEnd.toISOString(),
-      createdAt: now,
-      organization: "Promitheas Patras BC",
-      signupComplete: true,
-      trialDays: 14,
-    },
-    {
-      id: "demo-nikos",
-      email: "nikos.coach@example.com",
-      displayName: "NIKOS PAPADOPOULOS",
-      role: ROLES.coach,
-      accessType: "unlimited",
-      expiresAt: null,
-      createdAt: now,
-      organization: "Athens BC U18",
-      signupComplete: true,
-      trialDays: 0,
-    },
-  ];
-}
-
 export function ensureAdminUserRegistry(sessionUser: SessionUser): AdminUserRecord[] {
+  if (isHiddenAdminEmail(sessionUser.email)) {
+    const users = filterVisibleAdminUsers(readStore());
+    writeStore(users);
+    return users;
+  }
+
   const existing = readStore();
   const adminRow = sessionToAdminUser({
     ...sessionUser,
@@ -102,14 +95,6 @@ export function ensureAdminUserRegistry(sessionUser: SessionUser): AdminUserReco
 
   let users = Array.from(byId.values());
 
-  if (users.filter((u) => u.role !== ROLES.admin).length === 0) {
-    for (const demo of demoCoaches()) {
-      if (!byEmail.has(demo.email.toLowerCase())) {
-        users.push(demo);
-      }
-    }
-  }
-
   users = users.sort((a, b) => {
     if (a.role === ROLES.admin) return -1;
     if (b.role === ROLES.admin) return 1;
@@ -117,20 +102,29 @@ export function ensureAdminUserRegistry(sessionUser: SessionUser): AdminUserReco
   });
 
   writeStore(users);
-  return users;
+  return filterVisibleAdminUsers(users);
 }
 
 export function saveAdminUsers(users: AdminUserRecord[]) {
-  writeStore(users);
+  writeStore(filterVisibleAdminUsers(users));
 }
 
 export function upsertAdminUser(user: AdminUserRecord): AdminUserRecord[] {
+  if (isHiddenAdminEmail(user.email)) return readStore();
   const users = readStore();
   const idx = users.findIndex((u) => u.id === user.id);
   if (idx >= 0) users[idx] = user;
   else users.push(user);
   writeStore(users);
-  return users;
+  return filterVisibleAdminUsers(users);
+}
+
+export function loadAdminUsers(): AdminUserRecord[] {
+  return readStore();
+}
+
+export function findAdminUserById(id: string): AdminUserRecord | null {
+  return readStore().find((user) => user.id === id) ?? null;
 }
 
 export function findAdminUserByEmail(email: string): AdminUserRecord | null {

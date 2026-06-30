@@ -7,6 +7,8 @@ import {
 import {
   courtNormToStage,
   getPlayableCourtRect,
+  stageToCourtNorm,
+  type CourtCoordSpace,
 } from "@/lib/designer/court-view-layout";
 import type { ActionType, CourtRect, CourtType, DesignerAction } from "@/types/designer";
 
@@ -239,6 +241,111 @@ function sampleSymmetricCurlPoints(
   return sampleCubicBezier(sx, sy, c1x, c1y, c2x, c2y, ex, ey, steps);
 }
 
+/** Quadratic control so the curve passes through peak at t = 0.5. */
+export function quadraticControlFromMidPassThrough(
+  sx: number,
+  sy: number,
+  peakX: number,
+  peakY: number,
+  ex: number,
+  ey: number,
+) {
+  return {
+    mx: 2 * peakX - 0.5 * sx - 0.5 * ex,
+    my: 2 * peakY - 0.5 * sy - 0.5 * ey,
+  };
+}
+
+function sampleCurveFromFreePeak(
+  sx: number,
+  sy: number,
+  peakX: number,
+  peakY: number,
+  ex: number,
+  ey: number,
+  actionType: ActionType,
+) {
+  const chordLen = Math.hypot(ex - sx, ey - sy);
+  const steps = Math.max(
+    28,
+    Math.ceil(chordLen * (actionType === "curl" ? 120 : 100)),
+  );
+
+  if (actionType === "curl") {
+    const mx = (sx + ex) / 2;
+    const my = (sy + ey) / 2;
+    const vx = (peakX - mx) * 2;
+    const vy = (peakY - my) * 2;
+    const dx = ex - sx;
+    const dy = ey - sy;
+    const c1x = sx + dx * 0.33 + vx;
+    const c1y = sy + dy * 0.33 + vy;
+    const c2x = sx + dx * 0.66 - vx;
+    const c2y = sy + dy * 0.66 - vy;
+    return sampleCubicBezier(sx, sy, c1x, c1y, c2x, c2y, ex, ey, steps);
+  }
+
+  const { mx, my } = quadraticControlFromMidPassThrough(
+    sx,
+    sy,
+    peakX,
+    peakY,
+    ex,
+    ey,
+  );
+  return sampleQuadraticBezier(sx, sy, mx, my, ex, ey, steps);
+}
+
+export function hasFreeCurvePeak(
+  action: Pick<DesignerAction, "type" | "midX" | "midY">,
+) {
+  return (
+    action.midX != null &&
+    action.midY != null &&
+    usesSymmetricCurveControls(action.type)
+  );
+}
+
+export function buildActionCurveRenderPoints(
+  action: Pick<
+    DesignerAction,
+    "type" | "x1" | "y1" | "x2" | "y2" | "midX" | "midY" | "c1x" | "c1y" | "c2x" | "c2y"
+  >,
+): number[] {
+  const sx = action.x1;
+  const sy = action.y1;
+  const ex = action.x2;
+  const ey = action.y2;
+
+  if (hasFreeCurvePeak(action)) {
+    return sampleCurveFromFreePeak(
+      sx,
+      sy,
+      action.midX!,
+      action.midY!,
+      ex,
+      ey,
+      action.type,
+    );
+  }
+
+  return buildSampledCurveRender(resolveActionControls8(action), action.type)
+    .renderPts;
+}
+
+/** Draggable peak on the curve (normalized coords). */
+export function actionCurvePeakNorm(
+  action: Pick<DesignerAction, "type" | "x1" | "y1" | "x2" | "y2" | "midX" | "midY">,
+): { x: number; y: number } {
+  if (action.midX != null && action.midY != null) {
+    return { x: action.midX, y: action.midY };
+  }
+  return {
+    x: (action.x1 + action.x2) / 2,
+    y: (action.y1 + action.y2) / 2,
+  };
+}
+
 export function usesSymmetricCurveControls(type: ActionType) {
   return type === "cut" || type === "curl" || type === "screen";
 }
@@ -300,19 +407,7 @@ export function resolveActionControls8(
     action.midY != null &&
     usesSymmetricCurveControls(action.type)
   ) {
-    const bulge = pointBulgeFromChord(action.midX, action.midY, sx, sy, ex, ey);
-    const { c1x, c1y, c2x, c2y } = buildSymmetricCurveControls(
-      sx,
-      sy,
-      ex,
-      ey,
-      bulge,
-      curveType,
-    );
-    return symmetrizeControlPoints8(
-      [sx, sy, c1x, c1y, c2x, c2y, ex, ey],
-      action.type,
-    );
+    return [sx, sy, action.c1x ?? sx, action.c1y ?? sy, action.c2x ?? ex, action.c2y ?? ey, ex, ey];
   }
 
   const { c1x, c1y, c2x, c2y } = buildSymmetricCurveControls(
@@ -362,7 +457,11 @@ export function patchFromControlDrag(
       return { x1: nx, y1: ny };
     }
     if (usesSymmetricCurveControls(action.type)) {
-      return controls8ToActionPatch([nx, ny, c1x, c1y, c2x, c2y, ex, ey]);
+      const patch = controls8ToActionPatch([nx, ny, c1x, c1y, c2x, c2y, ex, ey]);
+      if (hasFreeCurvePeak(action)) {
+        return { ...patch, midX: action.midX, midY: action.midY };
+      }
+      return patch;
     }
     return { x1: nx, y1: ny };
   }
@@ -372,7 +471,11 @@ export function patchFromControlDrag(
       return { x2: nx, y2: ny };
     }
     if (usesSymmetricCurveControls(action.type)) {
-      return controls8ToActionPatch([sx, sy, c1x, c1y, c2x, c2y, nx, ny]);
+      const patch = controls8ToActionPatch([sx, sy, c1x, c1y, c2x, c2y, nx, ny]);
+      if (hasFreeCurvePeak(action)) {
+        return { ...patch, midX: action.midX, midY: action.midY };
+      }
+      return patch;
     }
     return { x2: nx, y2: ny };
   }
@@ -387,14 +490,11 @@ export function patchFromControlDrag(
     return controls8ToActionPatch([sx, sy, sym.c1x, sym.c1y, sym.c2x, sym.c2y, ex, ey]);
   }
 
-  if (kind === "peak") {
-    const bulge = pointBulgeFromChord(nx, ny, sx, sy, ex, ey);
-    const sym = buildSymmetricCurveControls(sx, sy, ex, ey, bulge, curveType);
-    return controls8ToActionPatch([sx, sy, sym.c1x, sym.c1y, sym.c2x, sym.c2y, ex, ey]);
+  if (kind === "peak" || kind === "mid") {
+    return { midX: nx, midY: ny };
   }
 
-  const mid = symmetrizeDribbleMid(sx, sy, ex, ey, nx, ny);
-  return { midX: mid.mx, midY: mid.my };
+  return {};
 }
 
 export function translateDesignerAction(
@@ -430,8 +530,9 @@ export function stageDeltaToCourtNorm(
   courtType: CourtType,
   stageDx: number,
   stageDy: number,
+  coords: CourtCoordSpace = "raster",
 ) {
-  const playable = getPlayableCourtRect(court, courtType);
+  const playable = getPlayableCourtRect(court, courtType, coords);
   return {
     dx: stageDx / playable.width,
     dy: stageDy / playable.height,
@@ -480,6 +581,7 @@ export function buildDribblePoints(
 ) {
   const amplitude = DRIBBLE_WAVE_AMPLITUDE * waveScale;
   const wavelength = Math.max(2, DRIBBLE_WAVE_LENGTH * waveScale);
+  const halfWave = wavelength / 2;
   const spineSteps = Math.max(40, Math.ceil(Math.hypot(ex - sx, ey - sy) / 2));
   const spine: Array<{ x: number; y: number; t: number; len: number }> = [];
   let totalLen = 0;
@@ -494,10 +596,12 @@ export function buildDribblePoints(
   }
   if (totalLen < 1) return [sx, sy, ex, ey];
 
-  const out: number[] = [];
-  const count = Math.max(16, Math.ceil(totalLen / 2));
-  for (let i = 0; i < count; i++) {
-    const targetLen = (i / count) * totalLen;
+  const fadeLen = Math.max(6 * waveScale, totalLen * 0.22);
+  const peakCount = Math.max(2, Math.round(totalLen / halfWave));
+  const out: number[] = [sx, sy];
+
+  for (let i = 1; i < peakCount; i++) {
+    const targetLen = (i / peakCount) * totalLen;
     let idx = 0;
     while (idx < spine.length - 1 && spine[idx + 1].len < targetLen) idx++;
     const a = spine[idx];
@@ -511,38 +615,55 @@ export function buildDribblePoints(
     const tlen = Math.hypot(tan.x, tan.y) || 1;
     const pnx = -tan.y / tlen;
     const pny = tan.x / tlen;
-
-    let wave = 0;
-    if (i > 0 && i < count - 1) {
-      const phase = (targetLen / wavelength) * Math.PI * 2;
-      const waveRaw = Math.sin(phase);
-      const softened = Math.sign(waveRaw) * Math.pow(Math.abs(waveRaw), 0.72);
-      const fadeLen = Math.max(6 * waveScale, totalLen * 0.22);
-      const distToEnd = totalLen - targetLen;
-      const edgeFade = Math.min(1, targetLen / fadeLen, distToEnd / fadeLen);
-      wave = amplitude * softened * edgeFade;
-    }
+    const side = i % 2 === 0 ? 1 : -1;
+    const distToEnd = totalLen - targetLen;
+    const edgeFade = Math.min(1, targetLen / fadeLen, distToEnd / fadeLen);
+    const wave = amplitude * side * edgeFade;
     out.push(x + pnx * wave, y + pny * wave);
   }
 
-  out[0] = sx;
-  out[1] = sy;
   const endTan = quadBezierTangent(sx, sy, midX, midY, ex, ey, 1);
   const tanLen = Math.hypot(endTan.x, endTan.y) || 1;
   const tailLen = Math.min(
     Math.max(DRIBBLE_WAVE_LENGTH * 0.85 * waveScale, 10 * waveScale),
     totalLen * 0.35,
   );
-  out.push(ex - (endTan.x / tanLen) * tailLen, ey - (endTan.y / tanLen) * tailLen);
-  out.push(ex, ey);
+  out.push(
+    ex - (endTan.x / tanLen) * tailLen,
+    ey - (endTan.y / tanLen) * tailLen,
+    ex,
+    ey,
+  );
   return out;
 }
 
-const HANDOFF_SYMBOL_GAP = 4;
-const HANDOFF_SYMBOL_DASH = 3;
+const HANDOFF_POST_ARROW_GAP_BASE = 12;
 const HANDOFF_SYMBOL_CROSS_HALF = 8;
 const HANDOFF_SYMBOL_BAR_HALF = 9;
 const HANDOFF_SYMBOL_STEP = 4;
+
+type HandoffRenderOptions = { compact?: boolean; compactScale?: number };
+
+function resolveHandoffSymbolScale(
+  court: CourtRect,
+  courtType: CourtType,
+  options: HandoffRenderOptions = {},
+) {
+  if (options.compact) {
+    return options.compactScale ?? getThumbnailVisualScale(court.width, courtType);
+  }
+  return getDesignerActionStrokeScale(court, courtType);
+}
+
+export function getHandoffPostArrowGap(
+  court: CourtRect,
+  courtType: CourtType,
+  options: HandoffRenderOptions = {},
+) {
+  const scale = resolveHandoffSymbolScale(court, courtType, options);
+  const minGap = options.compact ? 3 : 8;
+  return Math.max(minGap, HANDOFF_POST_ARROW_GAP_BASE * scale);
+}
 
 function dribbleEndTangentUnitStage(
   sx: number,
@@ -561,27 +682,34 @@ export function handoffSymbolStageLines(
   action: Pick<DesignerAction, "x1" | "y1" | "x2" | "y2" | "midX" | "midY">,
   court: CourtRect,
   courtType: CourtType,
+  options: HandoffRenderOptions = {},
+  coords: CourtCoordSpace = "raster",
 ): number[][] {
-  const { sx, sy, ex, ey } = normEndpointsToStage(action, court, courtType);
+  const { sx, sy, ex, ey } = normEndpointsToStage(action, court, courtType, coords);
   let midX = (sx + ex) / 2;
   let midY = (sy + ey) / 2;
   if (action.midX != null && action.midY != null) {
-    const mid = courtNormToStage(court, courtType, action.midX, action.midY);
+    const mid = courtNormToStage(court, courtType, action.midX, action.midY, coords);
     const sym = symmetrizeDribbleMid(sx, sy, ex, ey, mid.x, mid.y);
     midX = sym.mx;
     midY = sym.my;
   }
 
+  const scale = resolveHandoffSymbolScale(court, courtType, options);
+  const crossHalf = HANDOFF_SYMBOL_CROSS_HALF * scale;
+  const barHalf = HANDOFF_SYMBOL_BAR_HALF * scale;
+  const step = HANDOFF_SYMBOL_STEP * scale;
+
   const { tx, ty } = dribbleEndTangentUnitStage(sx, sy, ex, ey, midX, midY);
   const nx = -ty;
   const ny = tx;
-  const ox = ex + tx * HANDOFF_SYMBOL_GAP;
-  const oy = ey + ty * HANDOFF_SYMBOL_GAP;
+  const gap = getHandoffPostArrowGap(court, courtType, options);
+  const ox = ex + tx * gap;
+  const oy = ey + ty * gap;
 
-  const pLeftBar = HANDOFF_SYMBOL_DASH + HANDOFF_SYMBOL_STEP;
-  const pCross = pLeftBar + HANDOFF_SYMBOL_STEP;
-  const pRightBar = pCross + HANDOFF_SYMBOL_CROSS_HALF * 2;
-  const pRightDash = pRightBar + HANDOFF_SYMBOL_STEP;
+  const pLeftBar = step;
+  const pCross = pLeftBar + step;
+  const pRightBar = pCross + crossHalf * 2;
 
   const lbx = ox + tx * pLeftBar;
   const lby = oy + ty * pLeftBar;
@@ -593,30 +721,23 @@ export function handoffSymbolStageLines(
   const rby = oy + ty * pRightBar;
 
   return [
-    [ox, oy, ox + tx * HANDOFF_SYMBOL_DASH, oy + ty * HANDOFF_SYMBOL_DASH],
     [
-      lbx - nx * HANDOFF_SYMBOL_BAR_HALF,
-      lby - ny * HANDOFF_SYMBOL_BAR_HALF,
-      lbx + nx * HANDOFF_SYMBOL_BAR_HALF,
-      lby + ny * HANDOFF_SYMBOL_BAR_HALF,
+      lbx - nx * barHalf,
+      lby - ny * barHalf,
+      lbx + nx * barHalf,
+      lby + ny * barHalf,
     ],
     [
-      c0x - tx * HANDOFF_SYMBOL_CROSS_HALF,
-      c0y - ty * HANDOFF_SYMBOL_CROSS_HALF,
-      c1x + tx * HANDOFF_SYMBOL_CROSS_HALF,
-      c1y + ty * HANDOFF_SYMBOL_CROSS_HALF,
+      c0x - tx * crossHalf,
+      c0y - ty * crossHalf,
+      c1x + tx * crossHalf,
+      c1y + ty * crossHalf,
     ],
     [
-      rbx - nx * HANDOFF_SYMBOL_BAR_HALF,
-      rby - ny * HANDOFF_SYMBOL_BAR_HALF,
-      rbx + nx * HANDOFF_SYMBOL_BAR_HALF,
-      rby + ny * HANDOFF_SYMBOL_BAR_HALF,
-    ],
-    [
-      ox + tx * pRightDash,
-      oy + ty * pRightDash,
-      ox + tx * (pRightDash + HANDOFF_SYMBOL_DASH),
-      oy + ty * (pRightDash + HANDOFF_SYMBOL_DASH),
+      rbx - nx * barHalf,
+      rby - ny * barHalf,
+      rbx + nx * barHalf,
+      rby + ny * barHalf,
     ],
   ];
 }
@@ -639,56 +760,6 @@ export function buildCurvePoints8(
   return [sx, sy, c1x, c1y, c2x, c2y, ex, ey];
 }
 
-function polylineArcLength(points: number[]) {
-  let total = 0;
-  for (let i = 2; i < points.length; i += 2) {
-    total += Math.hypot(
-      points[i] - points[i - 2],
-      points[i + 1] - points[i - 1],
-    );
-  }
-  return total;
-}
-
-/** Tangent at polyline end using arc-length sampling (legacy getPointAtLength style). */
-function polylineEndTangentUnit(points: number[]) {
-  if (points.length < 4) return { tx: 1, ty: 0 };
-
-  const ex = points[points.length - 2];
-  const ey = points[points.length - 1];
-  const total = polylineArcLength(points);
-  const delta = Math.min(14, Math.max(4, total * 0.08));
-
-  let remaining = delta;
-  let px = points[points.length - 4];
-  let py = points[points.length - 3];
-
-  for (let i = points.length - 4; i >= 0; i -= 2) {
-    const qx = points[i];
-    const qy = points[i + 1];
-    const segLen = Math.hypot(px - qx, py - qy);
-    if (segLen <= remaining) {
-      remaining -= segLen;
-      px = qx;
-      py = qy;
-      continue;
-    }
-    const t = (segLen - remaining) / segLen;
-    px = qx + (px - qx) * t;
-    py = qy + (py - qy) * t;
-    remaining = 0;
-    break;
-  }
-
-  const dx = ex - px;
-  const dy = ey - py;
-  const len = Math.hypot(dx, dy);
-  if (len > 1e-6) return { tx: dx / len, ty: dy / len };
-
-  const chord = chordPerpendicularUnit(points[0], points[1], ex, ey);
-  return { tx: chord.dx / (Math.hypot(chord.dx, chord.dy) || 1), ty: chord.dy / (Math.hypot(chord.dx, chord.dy) || 1) };
-}
-
 function clampPointToRect(
   x: number,
   y: number,
@@ -702,10 +773,51 @@ function clampPointToRect(
 
 function screenBarHalfLength(court?: CourtRect) {
   if (!court) return 12;
-  return Math.max(8, Math.min(18, court.width * 0.02));
+  const scale = court.width / COURT_ELEMENT_REF_WIDTH_HALF;
+  return Math.max(5, Math.min(14, 26 * scale * 0.42));
 }
 
-/** Screen end bar perpendicular to curve tangent; clipped to court bounds. */
+function polylineMidpointFlatIndex(points: number[]) {
+  const midFlatIdx = Math.floor((points.length - 2) / 2);
+  return midFlatIdx % 2 === 0 ? midFlatIdx : midFlatIdx - 1;
+}
+
+/** Unit tangent at the screening spot (walk back if the last segment is degenerate). */
+function polylineEndTangentUnit(points: number[]) {
+  const n = points.length;
+  const ex = points[n - 2];
+  const ey = points[n - 1];
+
+  for (let i = n - 4; i >= 0; i -= 2) {
+    const dx = ex - points[i];
+    const dy = ey - points[i + 1];
+    const len = Math.hypot(dx, dy);
+    if (len >= 1e-3) {
+      return { tx: dx / len, ty: dy / len };
+    }
+  }
+
+  const dx = ex - points[0];
+  const dy = ey - points[1];
+  const chordLen = Math.hypot(dx, dy);
+  if (chordLen < 1e-6) return { tx: 1, ty: 0 };
+  return { tx: dx / chordLen, ty: dy / chordLen };
+}
+
+function chordPerpendicularUnitFromPoints(
+  sx: number,
+  sy: number,
+  ex: number,
+  ey: number,
+) {
+  const dx = ex - sx;
+  const dy = ey - sy;
+  const chordLen = Math.hypot(dx, dy);
+  if (chordLen < 1e-6) return { nx: 0, ny: 1 };
+  return { nx: -dy / chordLen, ny: dx / chordLen };
+}
+
+/** Screen end bar perpendicular to the stem at the screening spot. */
 export function screenBarPointsFromPolyline(
   points: number[],
   court?: CourtRect,
@@ -713,11 +825,35 @@ export function screenBarPointsFromPolyline(
 ) {
   if (points.length < 4) return [0, 0, 0, 0];
 
+  const sx = points[0];
+  const sy = points[1];
   const ex = points[points.length - 2];
   const ey = points[points.length - 1];
+
   const { tx, ty } = polylineEndTangentUnit(points);
-  const nx = -ty;
-  const ny = tx;
+  let nx = -ty;
+  let ny = tx;
+
+  if (points.length > 4) {
+    const mi = polylineMidpointFlatIndex(points);
+    const mx = points[mi];
+    const my = points[mi + 1];
+    const cross = tx * (my - ey) - ty * (mx - ex);
+    if (Math.abs(cross) > 1e-3) {
+      if (cross < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+    } else {
+      const chord = chordPerpendicularUnitFromPoints(sx, sy, ex, ey);
+      nx = chord.nx;
+      ny = chord.ny;
+    }
+  } else {
+    const chord = chordPerpendicularUnitFromPoints(sx, sy, ex, ey);
+    nx = chord.nx;
+    ny = chord.ny;
+  }
 
   let bx1 = ex - nx * half;
   let by1 = ey - ny * half;
@@ -740,9 +876,10 @@ function normEndpointsToStage(
   action: Pick<DesignerAction, "x1" | "y1" | "x2" | "y2">,
   court: CourtRect,
   courtType: CourtType,
+  coords: CourtCoordSpace = "raster",
 ) {
-  const start = courtNormToStage(court, courtType, action.x1, action.y1);
-  const end = courtNormToStage(court, courtType, action.x2, action.y2);
+  const start = courtNormToStage(court, courtType, action.x1, action.y1, coords);
+  const end = courtNormToStage(court, courtType, action.x2, action.y2, coords);
   return { sx: start.x, sy: start.y, ex: end.x, ey: end.y };
 }
 
@@ -750,10 +887,11 @@ function normPolylineToStage(
   polyline: number[],
   court: CourtRect,
   courtType: CourtType,
+  coords: CourtCoordSpace = "raster",
 ) {
   const out: number[] = [];
   for (let i = 0; i < polyline.length; i += 2) {
-    const p = courtNormToStage(court, courtType, polyline[i], polyline[i + 1]);
+    const p = courtNormToStage(court, courtType, polyline[i], polyline[i + 1], coords);
     out.push(p.x, p.y);
   }
   return out;
@@ -769,12 +907,75 @@ export function getDribbleWaveScale(court: CourtRect, courtType: CourtType) {
   return Math.max(0.18, court.width / ref);
 }
 
-export function actionToStagePoints(
+function getReferenceCourtRect(courtType: CourtType): CourtRect {
+  const width =
+    courtType === "full"
+      ? COURT_ELEMENT_REF_WIDTH_FULL
+      : COURT_ELEMENT_REF_WIDTH_HALF;
+  const height =
+    courtType === "full" ? Math.round(width * 0.52) : Math.round(width * 0.92);
+  return getPlayableCourtRect(
+    { x: 0, y: 0, width, height },
+    courtType,
+    "raster",
+  );
+}
+
+/** FastDraw-style dribble polyline in stage pixels (zig-zag along curved spine). */
+export function buildDribbleStagePoints(
   action: DesignerAction | ActionDraft,
   court: CourtRect,
   courtType: CourtType,
+  coords: CourtCoordSpace = "raster",
 ): number[] {
-  const { sx, sy, ex, ey } = normEndpointsToStage(action, court, courtType);
+  const { sx, sy, ex, ey } = normEndpointsToStage(action, court, courtType, coords);
+  let midX = (sx + ex) / 2;
+  let midY = (sy + ey) / 2;
+  if (action.midX != null && action.midY != null) {
+    const mid = courtNormToStage(court, courtType, action.midX, action.midY, coords);
+    const sym = symmetrizeDribbleMid(sx, sy, ex, ey, mid.x, mid.y);
+    midX = sym.mx;
+    midY = sym.my;
+  }
+  return buildDribblePoints(
+    sx,
+    sy,
+    ex,
+    ey,
+    midX,
+    midY,
+    getDribbleWaveScale(court, courtType),
+  );
+}
+
+function stagePolylineToNorm(
+  stagePoints: number[],
+  court: CourtRect,
+  courtType: CourtType,
+  coords: CourtCoordSpace = "raster",
+) {
+  const out: number[] = [];
+  for (let i = 0; i < stagePoints.length; i += 2) {
+    const norm = stageToCourtNorm(
+      court,
+      courtType,
+      stagePoints[i]!,
+      stagePoints[i + 1]!,
+      coords,
+    );
+    out.push(norm.x, norm.y);
+  }
+  return out;
+}
+
+export function actionToNormPoints(
+  action: DesignerAction | ActionDraft,
+  courtType: CourtType = "half",
+): number[] {
+  const sx = action.x1;
+  const sy = action.y1;
+  const ex = action.x2;
+  const ey = action.y2;
 
   switch (action.type) {
     case "pass":
@@ -782,42 +983,127 @@ export function actionToStagePoints(
       return [sx, sy, ex, ey];
     case "dribble":
     case "handoff": {
-      let midX = (sx + ex) / 2;
-      let midY = (sy + ey) / 2;
-      if (action.midX != null && action.midY != null) {
-        const mid = courtNormToStage(court, courtType, action.midX, action.midY);
-        const sym = symmetrizeDribbleMid(sx, sy, ex, ey, mid.x, mid.y);
-        midX = sym.mx;
-        midY = sym.my;
-      }
-      return buildDribblePoints(
-        sx,
-        sy,
-        ex,
-        ey,
-        midX,
-        midY,
-        getDribbleWaveScale(court, courtType),
+      const refCourt = getReferenceCourtRect(courtType);
+      return stagePolylineToNorm(
+        buildDribbleStagePoints(action, refCourt, courtType),
+        refCourt,
+        courtType,
       );
     }
     case "cut":
     case "curl":
-    case "screen": {
-      const controls = resolveActionControls8(action);
-      const normControls = controls;
-      const { renderPts } = buildSampledCurveRender(normControls, action.type);
-      const stagePts: number[] = [];
-      for (let i = 0; i < renderPts.length; i += 2) {
-        const p = courtNormToStage(court, courtType, renderPts[i], renderPts[i + 1]);
-        stagePts.push(p.x, p.y);
-      }
-      return stagePts;
+    case "screen":
+      return buildActionCurveRenderPoints(action);
+    default: {
+      const polyline = "points" in action ? action.points : undefined;
+      if (polyline?.length && polyline.length >= 4) return [...polyline];
+      return [sx, sy, ex, ey];
     }
+  }
+}
+
+/** Point at arc-length progress 0–1 along a normalized polyline. */
+export function pointAlongNormPolyline(
+  points: number[],
+  progress: number,
+): { x: number; y: number } {
+  if (points.length < 2) return { x: 0, y: 0 };
+  if (progress <= 0) return { x: points[0]!, y: points[1]! };
+  if (progress >= 1) {
+    return {
+      x: points[points.length - 2]!,
+      y: points[points.length - 1]!,
+    };
+  }
+
+  let total = 0;
+  const segments: Array<{ len: number; i: number }> = [];
+  for (let i = 0; i < points.length - 2; i += 2) {
+    const len = Math.hypot(
+      points[i + 2]! - points[i]!,
+      points[i + 3]! - points[i + 1]!,
+    );
+    segments.push({ len, i });
+    total += len;
+  }
+  if (total <= 0) return { x: points[0]!, y: points[1]! };
+
+  const target = total * progress;
+  let acc = 0;
+  for (const seg of segments) {
+    if (acc + seg.len >= target) {
+      const local = (target - acc) / seg.len;
+      const x1 = points[seg.i]!;
+      const y1 = points[seg.i + 1]!;
+      const x2 = points[seg.i + 2]!;
+      const y2 = points[seg.i + 3]!;
+      return { x: x1 + (x2 - x1) * local, y: y1 + (y2 - y1) * local };
+    }
+    acc += seg.len;
+  }
+  return {
+    x: points[points.length - 2]!,
+    y: points[points.length - 1]!,
+  };
+}
+
+export function actionPathPointAt(
+  action: DesignerAction | ActionDraft,
+  progress: number,
+  courtType: CourtType = "half",
+): { x: number; y: number } {
+  return pointAlongNormPolyline(actionToNormPoints(action, courtType), progress);
+}
+
+/** Control handle position on the rendered path (normalized coords). */
+export function actionHandlePointOnPath(
+  action: DesignerAction,
+  courtType: CourtType = "half",
+): { x: number; y: number } {
+  if (usesSymmetricCurveControls(action.type) || action.type === "dribble" || action.type === "handoff") {
+    return actionCurvePeakNorm(action);
+  }
+  return actionPathPointAt(action, 0.5, courtType);
+}
+
+export function actionToStagePoints(
+  action: DesignerAction | ActionDraft,
+  court: CourtRect,
+  courtType: CourtType,
+  coords: CourtCoordSpace = "raster",
+): number[] {
+  switch (action.type) {
+    case "pass":
+    case "shoot":
+      return normPolylineToStage(
+        actionToNormPoints(action, courtType),
+        court,
+        courtType,
+        coords,
+      );
+    case "dribble":
+    case "handoff":
+      return buildDribbleStagePoints(action, court, courtType, coords);
+    case "cut":
+    case "curl":
+    case "screen":
+      return normPolylineToStage(
+        actionToNormPoints(action, courtType),
+        court,
+        courtType,
+        coords,
+      );
     default: {
       const polyline = "points" in action ? action.points : undefined;
       if (polyline?.length && polyline.length >= 4) {
-        return normPolylineToStage(polyline, court, courtType);
+        return normPolylineToStage(polyline, court, courtType, coords);
       }
+      const { sx, sy, ex, ey } = normEndpointsToStage(
+        action,
+        court,
+        courtType,
+        coords,
+      );
       return [sx, sy, ex, ey];
     }
   }
@@ -827,13 +1113,42 @@ export function actionToStagePoints(
 export const COURT_ELEMENT_REF_WIDTH_HALF = 680;
 export const COURT_ELEMENT_REF_WIDTH_FULL = 960;
 
-/** Frame strip / small Konva previews (not main canvas). */
-export function getDesignerStripThumbnailScale(courtWidth: number) {
-  return Math.max(0.2, Math.min(0.32, courtWidth / 780));
+/** Proportional scale vs FastDraw reference court width (editor = 1). */
+export function getFastDrawCourtElementScale(
+  courtWidth: number,
+  courtType: CourtType,
+) {
+  const ref =
+    courtType === "full"
+      ? COURT_ELEMENT_REF_WIDTH_FULL
+      : COURT_ELEMENT_REF_WIDTH_HALF;
+  return courtWidth > 0 ? courtWidth / ref : 1;
 }
 
-export function getThumbnailVisualScale(courtWidth: number) {
-  return Math.max(0.38, Math.min(0.52, courtWidth / 620));
+/** Frame strip thumbnails — same proportion as main canvas elements. */
+export function getDesignerStripThumbnailScale(
+  courtWidth: number,
+  courtType: CourtType = "half",
+) {
+  return Math.max(0.16, Math.min(1, getFastDrawCourtElementScale(courtWidth, courtType)));
+}
+
+export function getThumbnailVisualScale(
+  courtWidth: number,
+  courtType: CourtType = "half",
+) {
+  return Math.max(0.28, Math.min(1, getFastDrawCourtElementScale(courtWidth, courtType)));
+}
+
+/** Designer frame-strip player numbers (proportional, no library min clamp). */
+export function getDesignerStripPlayerFontSize(
+  courtWidth: number,
+  courtType: CourtType,
+  kind: "offense" | "defense" = "offense",
+) {
+  const base = kind === "defense" ? 24 : 26;
+  const scale = getFastDrawCourtElementScale(courtWidth, courtType);
+  return Math.max(7, Math.round(base * scale));
 }
 
 /** Main designer canvas — jersey numbers (50% larger than prior editor sizing). */
@@ -882,7 +1197,8 @@ export function resolveActionStrokeWidth(
 ) {
   const base = baseStroke ?? DEFAULT_ARROW_STROKE;
   const scale = options.compact
-    ? (options.compactScale ?? getThumbnailVisualScale(court.width))
+    ? (options.compactScale ??
+        getThumbnailVisualScale(court.width, courtType))
     : getDesignerActionStrokeScale(court, courtType);
   const scaled = base * scale;
   if (options.compact) {
@@ -897,7 +1213,8 @@ export function resolveActionPointerSize(
   options: { compact?: boolean; compactScale?: number } = {},
 ) {
   const scale = options.compact
-    ? (options.compactScale ?? getThumbnailVisualScale(court.width))
+    ? (options.compactScale ??
+        getThumbnailVisualScale(court.width, courtType))
     : getDesignerActionStrokeScale(court, courtType);
   if (options.compact) {
     return Math.max(2, Math.round(6 * scale));
@@ -911,6 +1228,13 @@ export function getActionColor(type: ActionType) {
     if (colors?.[type]) return colors[type];
   }
   return ACTION_COLORS[type] ?? "#000000";
+}
+
+export function resolveActionColor(
+  action: Pick<DesignerAction, "type" | "color">,
+) {
+  if (action.color) return action.color;
+  return getActionColor(action.type);
 }
 
 let runtimeActionColors: Partial<Record<ActionType, string>> | null = null;

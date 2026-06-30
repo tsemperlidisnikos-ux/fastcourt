@@ -20,7 +20,7 @@ export function DesignerDefaultsSection({
     >
       <div className="org-settings-group-title">Designer defaults</div>
       <p className="org-settings-brand-help">
-        Default court zoom and snap behavior when you open the designer.
+        Default court zoom when you open the designer.
       </p>
 
       <label className="org-settings-brand-field">
@@ -33,15 +33,6 @@ export function DesignerDefaultsSection({
           value={prefs.defaultCourtZoom}
           onChange={(e) => patch("defaultCourtZoom", Number(e.target.value))}
         />
-      </label>
-
-      <label className="org-settings-toggle-row">
-        <input
-          type="checkbox"
-          checked={prefs.snapToGrid}
-          onChange={(e) => patch("snapToGrid", e.target.checked)}
-        />
-        <span>Snap players and lines to grid</span>
       </label>
     </section>
   );

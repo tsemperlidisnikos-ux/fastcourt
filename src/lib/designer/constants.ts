@@ -28,4 +28,13 @@ export const WHITEBOARD_INK_COLORS = [
   "#eab308",
 ] as const;
 
+/** Hoops Geek–style line palette for draw tools and action sequence. */
+export const LINE_DRAW_COLORS = [
+  "#000000",
+  "#dc2626",
+  "#2563eb",
+  "#16a34a",
+  "#eab308",
+] as const;
+
 export const WHITEBOARD_INK_WIDTH = 3;

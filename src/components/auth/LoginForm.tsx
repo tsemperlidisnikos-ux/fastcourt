@@ -3,53 +3,34 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ADMIN_EMAIL, ROLES } from "@/lib/config";
 import { useAppLogoSrc } from "@/hooks/useAppLogoSrc";
 import { getAccessError } from "@/lib/auth/access";
 import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
 import { friendlyAuthError } from "@/lib/auth/errors";
 import { appNotice } from "@/stores/dialog-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { isMasterAdminEmail } from "@/lib/auth/roles";
 import {
   fetchProfile,
   localDemoSession,
-  PROFILE_SELECT_COLUMNS,
   profileToAuthSession,
 } from "@/lib/auth/profile";
-import { buildPostSignupLibraryUrl } from "@/lib/auth/onboarding";
+import {
+  isPasswordRecoveryLogin,
+  safeNextPath,
+} from "@/lib/auth/safe-next-path";
 import { finalizeAuthSession } from "@/lib/auth/session-bootstrap";
 import { upsertProfileForUser } from "@/lib/auth/signup";
-import {
-  getPendingInvite,
-  memberRoleLabel,
-  type PendingTeamInvite,
-} from "@/lib/auth/team-invite";
+import { ensureLibraryReadyForUser, resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
+import { activateLibraryScope } from "@/lib/library/library-scope";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { WelcomeOAuthButtons } from "@/components/auth/WelcomeOAuthButtons";
-import {
-  SignupWizard,
-  type SignupWizardValues,
-} from "@/components/auth/SignupWizard";
-import {
-  defaultSignupValues,
-  nextSignupStep,
-  resolveSignupRoleChoice,
-  signupSteps,
-  signupSubmitLabel,
-  signupSubtitle,
-  validateSignupTeamStep,
-  type SignupStep,
-} from "@/components/auth/signup-flow";
 import { useAuthStore } from "@/stores/auth-store";
 
 type AuthMode = "login" | "signup";
-type LoginStep = "email" | "password";
 
-const TRIAL_DAYS = 14;
 const DEVICE_FOOTNOTE = "Includes 1 tablet per account.";
 
-function validateSignupPassword(password: string): string | null {
+function validatePassword(password: string): string | null {
   if (password.length < 8) {
     return "Password must be at least 8 characters.";
   }
@@ -119,9 +100,12 @@ function PasswordField({
   );
 }
 
-function readClientInvite(): PendingTeamInvite | null {
-  if (typeof window === "undefined") return null;
-  return getPendingInvite();
+function decodeUrlErrorParam(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 export function LoginForm() {
@@ -130,121 +114,137 @@ export function LoginForm() {
   const setSession = useAuthStore((s) => s.setSession);
   const appLogoSrc = useAppLogoSrc();
 
-  const [mode, setMode] = useState<AuthMode>(() =>
-    readClientInvite()?.email ? "signup" : "login",
-  );
-  const [loginStep, setLoginStep] = useState<LoginStep>("email");
-  const [signupStep, setSignupStep] = useState<SignupStep>("basic");
-  const [skipVerify, setSkipVerify] = useState(false);
-  const [signupValues, setSignupValues] = useState<SignupWizardValues>(() =>
-    defaultSignupValues(readClientInvite()),
-  );
-  const [resendSeconds, setResendSeconds] = useState(0);
-  const [email, setEmail] = useState(() => readClientInvite()?.email ?? "");
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [signupEmailSent, setSignupEmailSent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [teamInvite] = useState<PendingTeamInvite | null>(readClientInvite);
-  const [emailInviteLocked] = useState(() =>
-    Boolean(readClientInvite()?.email),
+  const recoveryMode = isPasswordRecoveryLogin("/login", searchParams.get("recovery"));
+  const [recoveryVerified, setRecoveryVerified] = useState<boolean | null>(() =>
+    recoveryMode ? null : false,
   );
 
   const cloud = isCloudEnabled();
-  const next = searchParams.get("next") || "/library";
+  const next = safeNextPath(searchParams.get("next"));
   const urlError = searchParams.get("error");
   const displayError =
     error ??
-    (urlError ? friendlyAuthError(decodeURIComponent(urlError)) : null);
-
-  const steps = useMemo(
-    () => signupSteps(cloud, skipVerify),
-    [cloud, skipVerify],
-  );
+    (urlError ? friendlyAuthError(decodeUrlErrorParam(urlError)) : null);
 
   const subtitle = useMemo(() => {
+    if (recoveryMode) {
+      if (recoveryVerified === null) return "Checking your reset link…";
+      if (recoveryVerified === false) {
+        return "Request a new password reset link to continue.";
+      }
+      return email.trim()
+        ? `Choose a new password for ${email.trim()}.`
+        : "Choose a new password for your account.";
+    }
     if (mode === "login") {
       return "Welcome back — enter your email and password.";
     }
-    return signupSubtitle(signupStep);
-  }, [mode, signupStep]);
-
-  const footnote = useMemo(() => {
-    if (mode === "login") {
-      return DEVICE_FOOTNOTE;
+    if (signupEmailSent) {
+      return `Check your inbox at ${signupEmailSent} and confirm your email to finish creating your account.`;
     }
-    if (signupStep === "done") return "";
-    const trialNote = cloud
-      ? `${TRIAL_DAYS}-day free trial after sign up.`
-      : `${TRIAL_DAYS}-day free trial on this device.`;
-    return `${trialNote} ${DEVICE_FOOTNOTE}`;
-  }, [mode, cloud, signupStep]);
+    return "Start your free trial — enter your email and choose a password.";
+  }, [recoveryMode, recoveryVerified, email, mode, signupEmailSent]);
 
   useEffect(() => {
-    if (resendSeconds <= 0) return;
-    const timer = window.setTimeout(() => {
-      setResendSeconds((s) => Math.max(0, s - 1));
-    }, 1000);
-    return () => window.clearTimeout(timer);
-  }, [resendSeconds]);
+    if (recoveryMode) return;
+    if (searchParams.get("signup") === "1") {
+      setMode("signup");
+      setSignupEmailSent(null);
+    }
+  }, [recoveryMode, searchParams]);
 
-  function resetForm() {
-    setLoginStep("email");
-    setSignupStep("basic");
-    setSkipVerify(false);
-    setSignupValues(defaultSignupValues(teamInvite));
-    setPassword("");
-    setResendSeconds(0);
-    setError(null);
-  }
+  useEffect(() => {
+    if (!recoveryMode || !cloud) {
+      if (recoveryMode && !cloud) {
+        setRecoveryVerified(false);
+        setError("Password reset requires cloud sign-in.");
+      }
+      return;
+    }
+
+    const client = createClient();
+    if (!client) {
+      setRecoveryVerified(false);
+      setError("Cloud sign-in is not configured.");
+      return;
+    }
+    const authClient = client;
+
+    let active = true;
+
+    async function verifyRecoverySession() {
+      const {
+        data: { user },
+      } = await authClient.auth.getUser();
+      if (!active) return;
+      if (user?.email) {
+        setEmail(user.email);
+        setRecoveryVerified(true);
+        setError(null);
+        return;
+      }
+      setRecoveryVerified(false);
+      setError("This password reset link has expired or is invalid. Request a new one.");
+    }
+
+    void verifyRecoverySession();
+
+    const {
+      data: { subscription },
+    } = authClient.auth.onAuthStateChange((event, authSession) => {
+      if (!active) return;
+      if (event === "PASSWORD_RECOVERY" && authSession?.user?.email) {
+        setEmail(authSession.user.email);
+        setRecoveryVerified(true);
+        setError(null);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [recoveryMode, cloud]);
 
   async function completeAuthSession(
     session: ReturnType<typeof profileToAuthSession>,
-    options?: { organizationName?: string; redirectTo?: string },
+    redirectTo?: string,
   ): Promise<string | null> {
-    const finalized = finalizeAuthSession(session, {
-      pendingInvite: teamInvite,
-      organizationName:
-        (options?.organizationName ??
-          teamInvite?.organizationName ??
-          signupValues.teamName.trim()) ||
-        undefined,
-    });
+    const finalized = finalizeAuthSession(session);
+    const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
+    if (deviceError) return deviceError;
 
-    if (finalized.inviteError) {
-      appNotice("Team invitation", finalized.inviteError);
-    } else if (finalized.inviteAccepted && teamInvite) {
-      appNotice(
-        "Team joined",
-        `You joined ${teamInvite.organizationName} as ${memberRoleLabel(teamInvite.memberRole)}.`,
+    const accessError = getAccessError(finalized.session.user);
+    if (accessError) return accessError;
+
+    setSession(finalized.session);
+
+    if (finalized.session.cloud) {
+      const supabase = createClient();
+      if (!supabase) return "Cloud sign-in is not configured.";
+      await ensureLibraryReadyForUser(finalized.session.user, supabase);
+    } else {
+      activateLibraryScope(
+        finalized.session.user.id,
+        finalized.session.user.id,
+        finalized.session.user,
       );
     }
 
-    const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
-    if (deviceError) {
-      return deviceError;
+    try {
+      await useSettingsStore.getState().hydrateForUser(finalized.session.user);
+    } catch (err) {
+      console.error("FastCourt settings hydrate failed:", err);
     }
-
-    const accessError = getAccessError(finalized.session.user);
-    if (accessError) {
-      return accessError;
-    }
-
-    setSession(finalized.session);
-    await useSettingsStore.getState().hydrateForUser(finalized.session.user);
-    router.replace(options?.redirectTo ?? next);
+    router.replace(redirectTo ?? next);
     return null;
-  }
-
-  function switchMode(nextMode: AuthMode) {
-    setMode(nextMode);
-    resetForm();
-  }
-
-  function updateSignupValue<K extends keyof SignupWizardValues>(
-    key: K,
-    value: SignupWizardValues[K],
-  ) {
-    setSignupValues((prev) => ({ ...prev, [key]: value }));
   }
 
   function validateEmail(): string | null {
@@ -257,255 +257,10 @@ export function LoginForm() {
     return normalized;
   }
 
-  function advanceSignupStep() {
-    const nextStep = nextSignupStep(steps, signupStep);
-    if (nextStep) setSignupStep(nextStep);
-  }
-
-  async function openAppAfterSignup(normalized: string) {
-    if (!cloud) {
-      const session = localDemoSession(normalized, signupValues.displayName);
-      const role = resolveSignupRoleChoice(normalized, signupValues.signupRole);
-      session.user = { ...session.user, role };
-      const accessError = await completeAuthSession(session, {
-        organizationName: signupValues.teamName.trim() || teamInvite?.organizationName,
-        redirectTo: buildPostSignupLibraryUrl(next),
-      });
-      if (accessError) setError(accessError);
-      return;
-    }
-
-    const supabase = createClient();
-    if (!supabase) {
-      setError("Cloud sign-in is not configured.");
-      return;
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setError("Session expired. Please sign in.");
-      switchMode("login");
-      return;
-    }
-
-    const role = resolveSignupRoleChoice(normalized, signupValues.signupRole);
-    await supabase.auth.updateUser({
-      data: {
-        display_name: signupValues.displayName.trim(),
-        signup_status: "active",
-        signup_role: signupValues.signupRole,
-        organization: signupValues.teamName.trim(),
-        team_country: signupValues.teamCountry,
-        team_level: signupValues.teamLevel,
-        signup_payment_method: "trial",
-      },
-    });
-
-    const orgName = signupValues.teamName.trim() || teamInvite?.organizationName || "";
-
-    let profile = await fetchProfile(supabase, user.id);
-    if (!profile) {
-      profile = await upsertProfileForUser(
-        supabase,
-        user,
-        signupValues.displayName,
-        orgName,
-      );
-    } else if (orgName && !profile.organization) {
-      const { data } = await supabase
-        .from("profiles")
-        .update({ organization: orgName, updated_at: new Date().toISOString() })
-        .eq("id", user.id)
-        .select(PROFILE_SELECT_COLUMNS)
-        .maybeSingle();
-      if (data) profile = data as typeof profile;
-    }
-
-    if (!profile) {
-      setError("Account created but profile setup failed.");
-      return;
-    }
-
-    const session = profileToAuthSession(profile);
-    session.user = {
-      ...session.user,
-      role: isMasterAdminEmail(normalized) ? ROLES.admin : role,
-    };
-    const accessError = await completeAuthSession(session, {
-      organizationName: signupValues.teamName.trim() || teamInvite?.organizationName,
-      redirectTo: buildPostSignupLibraryUrl(next),
-    });
-    if (accessError) {
-      await supabase.auth.signOut();
-      setError(accessError);
-    }
-  }
-
-  async function submitSignupBasic(normalized: string) {
-    if (!signupValues.displayName.trim()) {
-      setError("Enter your full name.");
-      return;
-    }
-    const passwordError = validateSignupPassword(signupValues.password);
-    if (passwordError) {
-      setError(passwordError);
-      return;
-    }
-
-    if (!cloud) {
-      advanceSignupStep();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      if (!supabase) {
-        setError("Cloud sign-in is not configured.");
-        return;
-      }
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: normalized,
-        password: signupValues.password,
-        options: {
-          data: {
-            display_name: signupValues.displayName.trim(),
-            signup_status: "pending_verification",
-          },
-        },
-      });
-
-      if (signUpError) {
-        setError(friendlyAuthError(signUpError.message));
-        return;
-      }
-
-      if (!data.user) {
-        setError("Sign up failed.");
-        return;
-      }
-
-      if (data.session) {
-        setSkipVerify(true);
-        setSignupStep("role");
-        return;
-      }
-
-      setSkipVerify(false);
-      setResendSeconds(30);
-      setSignupStep("verify");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function submitSignupVerify(normalized: string) {
-    const code = signupValues.verifyCode.trim();
-    if (!/^\d{6}$/.test(code)) {
-      setError("Enter the 6-digit verification code.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      if (!supabase) {
-        setError("Cloud sign-in is not configured.");
-        return;
-      }
-
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: normalized,
-        token: code,
-        type: "signup",
-      });
-
-      if (verifyError) {
-        setError(friendlyAuthError(verifyError.message));
-        return;
-      }
-
-      setError(null);
-      advanceSignupStep();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function resendSignupCode(normalized: string) {
-    if (resendSeconds > 0) return;
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-      const { error: resendError } = await supabase.auth.resend({
-        type: "signup",
-        email: normalized,
-      });
-      if (resendError) {
-        setError(friendlyAuthError(resendError.message));
-        return;
-      }
-      setResendSeconds(30);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not resend code.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function submitSignupPayment() {
-    setLoading(true);
-    try {
-      if (!cloud) {
-        setSignupStep("done");
-        return;
-      }
-
-      const supabase = createClient();
-      if (!supabase) {
-        setError("Cloud sign-in is not configured.");
-        return;
-      }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setError("Session expired. Please start sign up again.");
-        setSignupStep("basic");
-        return;
-      }
-
-      await supabase.auth.updateUser({
-        data: {
-          signup_payment_method: "trial",
-          signup_payment_interval: "trial",
-        },
-      });
-
-      setSignupStep("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not finish signup.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleForgotPassword() {
     const normalized = email.trim().toLowerCase();
     if (!normalized || !normalized.includes("@")) {
-      setError("Enter your email on the previous step first.");
-      setLoginStep("email");
+      setError("Enter your email address first.");
       return;
     }
     if (!cloud) {
@@ -523,7 +278,7 @@ export function LoginForm() {
         setError("Cloud sign-in is not configured.");
         return;
       }
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/login")}`;
+      const redirectTo = `${window.location.origin}/auth/callback?recovery=1`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         normalized,
         { redirectTo },
@@ -538,6 +293,67 @@ export function LoginForm() {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send reset email.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitPasswordRecovery() {
+    if (recoveryVerified !== true) {
+      setError("This password reset link has expired or is invalid. Request a new one.");
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      if (!supabase) {
+        setError("Cloud sign-in is not configured.");
+        return;
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) {
+        setError(friendlyAuthError(updateError.message));
+        return;
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Session expired. Request a new reset link.");
+        return;
+      }
+
+      let profile = await fetchProfile(supabase, user.id);
+      if (!profile) {
+        profile = await upsertProfileForUser(supabase, user);
+      }
+      if (!profile) {
+        setError("Account profile not found.");
+        return;
+      }
+
+      const session = profileToAuthSession(profile);
+      const accessError = await completeAuthSession(session);
+      if (accessError) {
+        await supabase.auth.signOut();
+        setError(accessError);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update password.");
     } finally {
       setLoading(false);
     }
@@ -564,6 +380,11 @@ export function LoginForm() {
         return;
       }
 
+      const previousUserId = useAuthStore.getState().session?.user?.id;
+      if (previousUserId) {
+        await resetLibraryOnSignOut();
+      }
+
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: normalized,
         password,
@@ -576,16 +397,6 @@ export function LoginForm() {
 
       if (!data.user) {
         setError("Login failed.");
-        return;
-      }
-
-      const meta = data.user.user_metadata ?? {};
-      const pendingVerification =
-        meta.signup_status === "pending_verification" ||
-        meta.email_verified === false;
-      if (pendingVerification) {
-        await supabase.auth.signOut();
-        setError("Please verify your email before logging in.");
         return;
       }
 
@@ -604,7 +415,6 @@ export function LoginForm() {
       if (accessError) {
         await supabase.auth.signOut();
         setError(accessError);
-        return;
       }
     } catch (err) {
       setError(friendlyAuthError(err instanceof Error ? err.message : "Authentication failed."));
@@ -613,76 +423,107 @@ export function LoginForm() {
     }
   }
 
-  async function onContinue(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
+  async function submitSignup(normalized: string) {
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
 
-    if (mode === "login") {
-      const normalized = validateEmail();
-      if (!normalized) return;
-
-      if (loginStep === "email") {
-        setLoginStep("password");
+    setLoading(true);
+    try {
+      if (!cloud) {
+        const session = localDemoSession(normalized);
+        const accessError = await completeAuthSession(session);
+        if (accessError) setError(accessError);
         return;
       }
 
-      await submitLogin(normalized);
+      const supabase = createClient();
+      if (!supabase) {
+        setError("Cloud sign-in is not configured.");
+        return;
+      }
+
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: normalized,
+        password,
+        options: { emailRedirectTo: redirectTo },
+      });
+
+      if (authError) {
+        setError(friendlyAuthError(authError.message));
+        return;
+      }
+
+      if (data.session && data.user) {
+        let profile = await fetchProfile(supabase, data.user.id);
+        if (!profile) {
+          profile = await upsertProfileForUser(supabase, data.user);
+        }
+        if (!profile) {
+          await supabase.auth.signOut();
+          setError("Account profile not found.");
+          return;
+        }
+
+        const session = profileToAuthSession(profile);
+        const accessError = await completeAuthSession(session);
+        if (accessError) {
+          await supabase.auth.signOut();
+          setError(accessError);
+        }
+        return;
+      }
+
+      setSignupEmailSent(normalized);
+      setPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(
+        friendlyAuthError(err instanceof Error ? err.message : "Sign up failed."),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (recoveryMode) {
+      await submitPasswordRecovery();
+      return;
+    }
+
+    if (mode === "signup") {
+      if (signupEmailSent) return;
+      const normalized = validateEmail();
+      if (!normalized) return;
+      await submitSignup(normalized);
       return;
     }
 
     const normalized = validateEmail();
     if (!normalized) return;
-
-    if (signupStep === "done") {
-      setLoading(true);
-      try {
-        await openAppAfterSignup(normalized);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not open app.");
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    if (signupStep === "basic") {
-      await submitSignupBasic(normalized);
-      return;
-    }
-
-    if (signupStep === "verify") {
-      await submitSignupVerify(normalized);
-      return;
-    }
-
-    if (signupStep === "role") {
-      advanceSignupStep();
-      return;
-    }
-
-    if (signupStep === "team") {
-      const teamError = validateSignupTeamStep(signupValues.teamName);
-      if (teamError) {
-        setError(teamError);
-        return;
-      }
-      advanceSignupStep();
-      return;
-    }
-
-    if (signupStep === "payment") {
-      await submitSignupPayment();
-    }
+    await submitLogin(normalized);
   }
 
-  const showOAuth =
-    (mode === "login" && loginStep === "email") ||
-    (mode === "signup" && signupStep === "basic");
-
-  const showEmailField =
-    mode === "login"
-      ? loginStep !== "password"
-      : signupStep === "basic";
+  const submitLabel = loading
+    ? "Please wait…"
+    : recoveryMode
+      ? "Save password"
+      : mode === "login"
+        ? "Log in"
+        : signupEmailSent
+          ? "Email sent"
+          : "Create account";
 
   return (
     <div className="welcome-screen" id="screen-welcome">
@@ -704,13 +545,12 @@ export function LoginForm() {
           <div className="welcome-auth-head">
             <div className="welcome-auth-heading">
               <h2 className="welcome-form-title" id="auth-modal-title">
-                {mode === "login" ? "Log In" : "Create Account"}
+                {recoveryMode
+                  ? "Set New Password"
+                  : mode === "login"
+                    ? "Log In"
+                    : "Create Account"}
               </h2>
-              {mode === "signup" && signupStep !== "done" ? (
-                <span className="auth-trial-badge" id="auth-trial-badge">
-                  {TRIAL_DAYS}-day trial
-                </span>
-              ) : null}
             </div>
             <p className="welcome-form-subtitle" id="auth-modal-subtitle">
               {subtitle}
@@ -718,177 +558,270 @@ export function LoginForm() {
           </div>
 
           <div className="welcome-auth-body">
-          {teamInvite ? (
-            <div
-              className="welcome-team-invite-banner"
-              id="welcome-team-invite-banner"
+            <form
+              className="welcome-auth-form"
+              onSubmit={(e) => {
+                void onSubmit(e).catch((err) => {
+                  setError(
+                    err instanceof Error ? err.message : "Something went wrong.",
+                  );
+                });
+              }}
             >
-              <p className="welcome-team-invite-title" id="welcome-team-invite-title">
-                Invitation — {teamInvite.organizationName || "Team"}
-              </p>
-              <p className="welcome-team-invite-text" id="welcome-team-invite-text">
-                You&apos;ve been invited as {memberRoleLabel(teamInvite.memberRole)} for{" "}
-                {teamInvite.organizationName || "your team"}.{" "}
-                {mode === "login" ? "Log in" : "Sign up or log in"} with{" "}
-                {teamInvite.email}.
-              </p>
-            </div>
-          ) : null}
-          <form className="welcome-auth-form" onSubmit={onContinue}>
-            {showOAuth ? (
-              <WelcomeOAuthButtons next={next} mode={mode} />
-            ) : null}
+              {recoveryMode ? (
+                recoveryVerified === null ? (
+                  <p className="welcome-form-subtitle" style={{ margin: 0 }}>
+                    Checking your reset link…
+                  </p>
+                ) : (
+                  <>
+                    {recoveryVerified ? (
+                      <div className="welcome-field welcome-field-email-lock">
+                        <label>Email</label>
+                        <div className="welcome-email-lock-row">
+                          <span className="welcome-email-lock-value">{email.trim()}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="welcome-field">
+                        <label htmlFor="auth-email">
+                          Email <span className="welcome-required" aria-hidden="true">*</span>
+                        </label>
+                        <input
+                          id="auth-email"
+                          type="email"
+                          className="welcome-input"
+                          autoComplete="email"
+                          placeholder="admin@fastcourt.eu"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="welcome-link-btn welcome-resend-btn"
+                          onClick={() => void handleForgotPassword()}
+                          disabled={loading}
+                        >
+                          Send reset link
+                        </button>
+                      </div>
+                    )}
 
-            {mode === "login" && loginStep === "password" ? (
-              <div className="welcome-field welcome-field-email-lock">
-                <label>Email</label>
-                <div className="welcome-email-lock-row">
-                  <span className="welcome-email-lock-value">{email.trim()}</span>
+                    {recoveryVerified ? (
+                      <>
+                        <div className="welcome-field">
+                          <label htmlFor="auth-password">
+                            New password{" "}
+                            <span className="welcome-required" aria-hidden="true">*</span>
+                          </label>
+                          <PasswordField
+                            id="auth-password"
+                            value={password}
+                            onChange={setPassword}
+                            placeholder="New password"
+                            autoComplete="new-password"
+                            minLength={8}
+                          />
+                        </div>
+                        <div className="welcome-field">
+                          <label htmlFor="auth-confirm-password">
+                            Confirm password{" "}
+                            <span className="welcome-required" aria-hidden="true">*</span>
+                          </label>
+                          <PasswordField
+                            id="auth-confirm-password"
+                            value={confirmPassword}
+                            onChange={setConfirmPassword}
+                            placeholder="Confirm new password"
+                            autoComplete="new-password"
+                            minLength={8}
+                          />
+                        </div>
+                      </>
+                    ) : null}
+                  </>
+                )
+              ) : mode === "login" ? (
+                <>
+                  {cloud ? <WelcomeOAuthButtons next={next} mode="login" /> : null}
+                  <div className="welcome-field">
+                    <label htmlFor="auth-email">
+                      Email <span className="welcome-required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      id="auth-email"
+                      type="email"
+                      className="welcome-input"
+                      autoComplete="email"
+                      placeholder="admin@fastcourt.eu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="welcome-field">
+                    <label htmlFor="auth-password">
+                      Password <span className="welcome-required" aria-hidden="true">*</span>
+                    </label>
+                    <PasswordField
+                      id="auth-password"
+                      value={password}
+                      onChange={setPassword}
+                      placeholder="Your password"
+                      autoComplete="current-password"
+                      minLength={4}
+                    />
+                  </div>
+                  {cloud ? (
+                    <button
+                      type="button"
+                      className="welcome-link-btn welcome-forgot-btn"
+                      onClick={() => void handleForgotPassword()}
+                      disabled={loading}
+                    >
+                      Forgot password?
+                    </button>
+                  ) : null}
+                </>
+              ) : signupEmailSent ? (
+                <div className="welcome-signup-step-panel" id="welcome-signup-verify-email">
+                  <p className="welcome-signup-lead">Confirm your email</p>
+                  <p className="welcome-signup-hint">
+                    We sent a confirmation link to <strong>{signupEmailSent}</strong>. Open it
+                    to activate your account, then log in here.
+                  </p>
                   <button
                     type="button"
-                    className="welcome-link-btn welcome-email-edit-btn"
+                    className="welcome-link-btn"
                     onClick={() => {
-                      setLoginStep("email");
-                      setPassword("");
+                      setSignupEmailSent(null);
+                      setMode("login");
                       setError(null);
                     }}
                   >
-                    Edit
+                    Back to log in
                   </button>
                 </div>
-              </div>
-            ) : showEmailField ? (
-              <div className="welcome-field">
-                <label htmlFor="auth-email">
-                  Email <span className="welcome-required" aria-hidden="true">*</span>
-                </label>
-                <input
-                  id="auth-email"
-                  type="email"
-                  className="welcome-input"
-                  autoComplete="email"
-                  placeholder="admin@fastcourt.eu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  readOnly={emailInviteLocked}
-                  required
-                />
-              </div>
-            ) : null}
+              ) : (
+                <>
+                  {cloud ? <WelcomeOAuthButtons next={next} mode="signup" /> : null}
+                  <div className="welcome-field">
+                    <label htmlFor="auth-email">
+                      Email <span className="welcome-required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      id="auth-email"
+                      type="email"
+                      className="welcome-input"
+                      autoComplete="email"
+                      placeholder="coach@club.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="welcome-field">
+                    <label htmlFor="auth-password">
+                      Password <span className="welcome-required" aria-hidden="true">*</span>
+                    </label>
+                    <PasswordField
+                      id="auth-password"
+                      value={password}
+                      onChange={setPassword}
+                      placeholder="Create a password"
+                      autoComplete="new-password"
+                      minLength={8}
+                    />
+                    <p className="welcome-signup-password-note">
+                      At least 8 characters with a number, uppercase letter, and symbol.
+                    </p>
+                  </div>
+                  <div className="welcome-field">
+                    <label htmlFor="auth-confirm-password">
+                      Confirm password{" "}
+                      <span className="welcome-required" aria-hidden="true">*</span>
+                    </label>
+                    <PasswordField
+                      id="auth-confirm-password"
+                      value={confirmPassword}
+                      onChange={setConfirmPassword}
+                      placeholder="Confirm password"
+                      autoComplete="new-password"
+                      minLength={8}
+                    />
+                  </div>
+                </>
+              )}
 
-            {mode === "signup" ? (
-              <SignupWizard
-                step={signupStep}
-                email={email}
-                values={signupValues}
-                onChange={updateSignupValue}
-                resendSeconds={resendSeconds}
-                onResendCode={
-                  signupStep === "verify"
-                    ? () => {
-                        const normalized = email.trim().toLowerCase();
-                        if (normalized) void resendSignupCode(normalized);
-                      }
-                    : undefined
-                }
-                PasswordField={PasswordField}
-              />
-            ) : null}
-
-            {mode === "login" && loginStep === "password" ? (
-              <div className="welcome-field">
-                <label htmlFor="auth-password">
-                  Password <span className="welcome-required" aria-hidden="true">*</span>
-                </label>
-                <PasswordField
-                  id="auth-password"
-                  value={password}
-                  onChange={setPassword}
-                  placeholder="Your password"
-                  autoComplete="current-password"
-                  minLength={4}
-                />
-              </div>
-            ) : null}
-
-            {displayError ? (
-              <div className="welcome-auth-error" id="auth-error" role="alert">
-                {displayError}
-              </div>
-            ) : null}
-
-            {mode === "login" && loginStep === "password" ? (
-              <button
-                type="button"
-                className="welcome-link-btn welcome-forgot-link"
-                id="btn-welcome-forgot-password"
-                onClick={() => void handleForgotPassword()}
-              >
-                Forgot password?
-              </button>
-            ) : null}
-
-            <button
-              type="submit"
-              className="welcome-continue-btn"
-              id="confirm-auth"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="welcome-continue-spinner" aria-hidden="true" />
+              {displayError ? (
+                <p className="welcome-auth-error" role="alert">
+                  {displayError}
+                </p>
               ) : null}
-              <span id="welcome-auth-submit-label">
-                {mode === "login"
-                  ? loading
-                    ? "Signing in…"
-                    : "Continue"
-                  : signupSubmitLabel(signupStep, loading)}
-              </span>
-            </button>
 
-            <p className="welcome-switch-line">
-              <span id="auth-switch-label">
-                {mode === "login"
-                  ? "Don't have an account?"
-                  : "Already have an account?"}
-              </span>
-              <button
-                type="button"
-                className="welcome-link-btn"
-                id="auth-switch-mode"
-                onClick={() => switchMode(mode === "login" ? "signup" : "login")}
-              >
-                {mode === "login" ? "Create Account" : "Sign in"}
-              </button>
-            </p>
-          </form>
+              {mode === "login" || recoveryMode || (mode === "signup" && !signupEmailSent) ? (
+                <button
+                  type="submit"
+                  className="welcome-submit-btn"
+                  id="btn-auth-continue"
+                  disabled={loading || (recoveryMode && recoveryVerified === null)}
+                >
+                  {submitLabel}
+                </button>
+              ) : null}
+            </form>
+
+            {!recoveryMode ? (
+              <p className="welcome-switch-mode">
+                {mode === "login" ? (
+                  <>
+                    Don&apos;t have an account?{" "}
+                    <button
+                      type="button"
+                      className="welcome-link-btn"
+                      onClick={() => {
+                        setError(null);
+                        setSignupEmailSent(null);
+                        setMode("signup");
+                      }}
+                    >
+                      Create Account
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      className="welcome-link-btn"
+                      onClick={() => {
+                        setError(null);
+                        setSignupEmailSent(null);
+                        setMode("login");
+                      }}
+                    >
+                      Log in
+                    </button>
+                  </>
+                )}
+              </p>
+            ) : null}
+
+            {!recoveryMode && mode === "login" ? (
+              <p className="welcome-footnote">{DEVICE_FOOTNOTE}</p>
+            ) : null}
+            {!recoveryMode && mode === "signup" && !signupEmailSent ? (
+              <p className="welcome-footnote">{DEVICE_FOOTNOTE}</p>
+            ) : null}
           </div>
 
-          <p className="welcome-footnote" id="auth-footnote">
-            {footnote}
-          </p>
-
-          <p className="welcome-support" id="welcome-support">
-            <a
-              href={`mailto:${ADMIN_EMAIL}`}
-              className="welcome-support-link"
-              id="welcome-support-link"
-            >
-              {ADMIN_EMAIL}
-            </a>
+          <p className="welcome-legal">
+            <Link href="/privacy">Privacy</Link>
+            <span aria-hidden="true"> · </span>
+            <Link href="/terms">Terms</Link>
           </p>
         </div>
-
-        <p className="welcome-legal">
-          By continuing, you agree to our{" "}
-          <Link href="/privacy" className="welcome-link-btn" id="btn-welcome-privacy">
-            Privacy Policy
-          </Link>{" "}
-          and{" "}
-          <Link href="/terms" className="welcome-link-btn" id="btn-welcome-terms">
-            Terms of Service
-          </Link>
-        </p>
       </div>
     </div>
   );

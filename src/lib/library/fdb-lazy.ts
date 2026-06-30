@@ -3,6 +3,20 @@ import { legacyPlayToStored } from "@/lib/library/convert";
 import { putStoredPlays } from "@/lib/library/idb";
 import type { FdbImportResult, StoredPlay } from "@/types/library";
 
+const FDB_SOURCE_CACHE_MAX_BYTES = 5_000_000;
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const slice = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+    for (let j = 0; j < slice.length; j++) {
+      binary += String.fromCharCode(slice[j]!);
+    }
+  }
+  return btoa(binary);
+}
+
 export interface FdbLazyMeta {
   sourceId: string;
   candidateOrdinal: number;
@@ -50,8 +64,8 @@ export async function importFdbLazy(
     if (typeof window !== "undefined") {
       try {
         const cacheKey = `fastcourt_fdb_source_${sourceId}`;
-        const b64 = btoa(String.fromCharCode(...bytes.slice(0, Math.min(bytes.length, 5_000_000))));
-        sessionStorage.setItem(cacheKey, b64);
+        const slice = bytes.subarray(0, Math.min(bytes.length, FDB_SOURCE_CACHE_MAX_BYTES));
+        sessionStorage.setItem(cacheKey, bytesToBase64(slice));
         sessionStorage.setItem(`${cacheKey}_name`, file.name);
       } catch {
         // large files may exceed sessionStorage quota

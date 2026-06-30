@@ -24,26 +24,26 @@ const PracticeSheetTeamLogoOverlay = memo(function PracticeSheetTeamLogoOverlay(
   const logo = teamLogo?.trim() ?? "";
   const name = teamName?.trim() ?? "";
 
-  if (logo) {
-    return (
-      <img
-        src={logo}
-        alt={name || "Team logo"}
-        className="fc-practice-sheet-team-logo"
-      />
-    );
-  }
+  if (!logo) return null;
 
-  if (name) {
-    return <div className="fc-practice-sheet-team-name">{name}</div>;
-  }
-
-  return null;
+  return (
+    <>
+      <div className="fc-practice-sheet-brand-block">
+        <img
+          src={logo}
+          alt={name || "Team logo"}
+          className="fc-practice-sheet-team-logo"
+        />
+      </div>
+      <div className="fc-practice-sheet-pdf-name-cover" aria-hidden="true" />
+    </>
+  );
 });
 
 interface Props {
   teamLogo?: string;
   teamName?: string;
+  footerText?: string;
   strokes: InkStroke[];
   onStrokesChange: (strokes: InkStroke[]) => void;
   inkColor: string;
@@ -58,6 +58,7 @@ const SIZE_EPSILON = 2;
 export function PracticeSheetDocument({
   teamLogo,
   teamName,
+  footerText,
   strokes,
   onStrokesChange,
   inkColor,
@@ -202,6 +203,9 @@ export function PracticeSheetDocument({
             aria-hidden={loading && !pageSize}
           />
           <PracticeSheetTeamLogoOverlay teamLogo={teamLogo} teamName={teamName} />
+          {footerText?.trim() ? (
+            <div className="fc-practice-sheet-footer-line">{footerText.trim()}</div>
+          ) : null}
           {pageSize ? (
             <PracticeSheetInkLayer
               width={pageSize.width}

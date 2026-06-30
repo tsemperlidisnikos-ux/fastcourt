@@ -1,3 +1,7 @@
+import {
+  DEFAULT_NEW_PLAY_COURT_VIEW,
+} from "@/lib/designer/court-view-settings";
+import { DEFAULT_PLAYBACK_SPEED } from "@/lib/designer/animation-timing";
 import type { DesignerFrame, PlayDocument } from "@/types/designer";
 
 function newId(prefix: string) {
@@ -19,8 +23,9 @@ export function createBlankPlay(title = "Untitled play"): PlayDocument {
     id: newId("play"),
     title,
     courtType: "half",
+    courtView: { ...DEFAULT_NEW_PLAY_COURT_VIEW },
     frames: [createFrame("Frame 1", 1)],
-    animSpeed: 1,
+    animSpeed: DEFAULT_PLAYBACK_SPEED,
     animPauseMs: 800,
   };
 }

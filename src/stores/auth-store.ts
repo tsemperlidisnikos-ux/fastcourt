@@ -10,7 +10,9 @@ interface AuthState {
   signOut: () => void;
 }
 
-const authStorage = createJSONStorage<AuthState>(() => {
+type AuthPersistedState = Pick<AuthState, "session">;
+
+const authStorage = createJSONStorage<AuthPersistedState>(() => {
   if (typeof window === "undefined") {
     return {
       getItem: () => null,
@@ -22,15 +24,31 @@ const authStorage = createJSONStorage<AuthState>(() => {
 });
 
 export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
+  persist<AuthState, [], [], AuthPersistedState>(
+    (set, get) => ({
       session: null,
-      setSession: (session) => set({ session }),
+      setSession: (session) => {
+        const prevUserId = get().session?.user?.id;
+        const nextUserId = session?.user?.id;
+        if (prevUserId && nextUserId && prevUserId !== nextUserId) {
+          void import("@/stores/library-store").then(({ useLibraryStore }) => {
+            useLibraryStore.setState({
+              items: [],
+              loading: true,
+              hydrated: false,
+              error: null,
+            });
+          });
+        }
+        set({ session });
+      },
       signOut: () => set({ session: null }),
     }),
     {
       name: "fastcourt_session_v2",
       storage: authStorage,
+      partialize: (state) => ({ session: state.session }),
+      skipHydration: true,
     },
   ),
 );

@@ -1,10 +1,32 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Fragment } from "react";
-import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
-import { getPracticeSessionTotalMinutes } from "@/lib/practice/practice-items";
+import { getPracticeSessionTotalMinutes, isPracticeItemMissing } from "@/lib/practice/practice-items";
+import { stripNotesForPrint } from "@/lib/library/playbook-print";
+import {
+  resolvePdfCoverSubtitle,
+  resolvePdfCoverTeam,
+  resolvePdfFooterText,
+} from "@/lib/settings/pdf-brand-export";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { ResolvedPracticeRow } from "@/lib/practice/practice-items";
 import type { PracticeSession } from "@/types/library-meta";
+
+const CourtFrameThumbnail = dynamic(
+  () =>
+    import("@/components/designer/CourtFrameThumbnail").then(
+      (mod) => mod.CourtFrameThumbnail,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fc-practice-frame-court-loading" aria-hidden>
+        …
+      </div>
+    ),
+  },
+);
 
 function formatPracticeDate(date: string) {
   if (!date) return "";
@@ -25,9 +47,11 @@ export function PracticePrintDocument({
   session: PracticeSession;
   rows: ResolvedPracticeRow[];
 }) {
+  const pdfBrand = useSettingsStore((s) => s.pdfBrand);
   const totalMin = getPracticeSessionTotalMinutes(session);
-  const team =
-    session.team && session.team !== "No Team" ? session.team : "";
+  const coverTeam = resolvePdfCoverTeam(pdfBrand, session.team);
+  const tagline = resolvePdfCoverSubtitle(pdfBrand);
+  const footerText = resolvePdfFooterText(pdfBrand);
   const rowEndTimes = rows.reduce<number[]>((times, { item }) => {
     const prev = times.length ? times[times.length - 1]! : 0;
     times.push(prev + (Number(item.durationMin) || 0));
@@ -37,7 +61,10 @@ export function PracticePrintDocument({
   return (
     <div className="fc-practice-print-doc">
       <div className="fc-practice-print-cover">
-        {team ? <div className="fc-practice-print-team">{team}</div> : null}
+        {coverTeam ? <div className="fc-practice-print-team">{coverTeam}</div> : null}
+        {tagline ? (
+          <p className="fc-practice-print-tagline">{tagline}</p>
+        ) : null}
         <h1 className="fc-practice-print-title">{session.title || "Practice Session"}</h1>
         {session.date ? (
           <p className="fc-practice-print-date">{formatPracticeDate(session.date)}</p>
@@ -72,10 +99,17 @@ export function PracticePrintDocument({
         <tbody>
           {rows.map(({ item, play, index }, rowIndex) => {
             const running = rowEndTimes[rowIndex] ?? 0;
-            const blockName = play?.title || item.cueLabel || "Block";
+            const blockName =
+              play?.title ||
+              item.cueLabel ||
+              (isPracticeItemMissing({ item, play, index, label: null })
+                ? "Missing from library"
+                : "Block");
             const kind = play ? (play.type === "drill" ? "Drill" : "Play") : "Block";
             const blockNotes = (item.notes || "").trim();
             const frames = play?.frames ?? [];
+            const hasLinkedPlay = !!play;
+            const hasCourtFrames = hasLinkedPlay && frames.length > 0;
 
             return (
               <Fragment key={item.id}>
@@ -91,42 +125,59 @@ export function PracticePrintDocument({
                     {blockNotes ? (
                       <div className="fc-practice-plan-block-notes">{blockNotes}</div>
                     ) : null}
+                    {!hasLinkedPlay && isPracticeItemMissing({ item, play, index, label: null }) ? (
+                      <div className="fc-practice-plan-no-court">
+                        Missing from library — replace in Practice planner before printing.
+                      </div>
+                    ) : null}
+                    {!hasLinkedPlay && !isPracticeItemMissing({ item, play, index, label: null }) ? (
+                      <div className="fc-practice-plan-no-court">
+                        Text block — link a library play to include court frames.
+                      </div>
+                    ) : null}
+                    {hasLinkedPlay && !hasCourtFrames ? (
+                      <div className="fc-practice-plan-no-court">
+                        Linked play has no frames yet.
+                      </div>
+                    ) : null}
                   </td>
                   <td className="fc-practice-plan-dur">
                     {Number(item.durationMin) || 0} min
                   </td>
                   <td className="fc-practice-plan-thumb" aria-hidden="true">
-                    {play ? "🏀" : "📋"}
+                    {hasCourtFrames ? "🏀" : "📋"}
                   </td>
                 </tr>
-                {play && frames.length > 0 ? (
+                {hasCourtFrames ? (
                   <tr className="fc-practice-plan-frames-row">
                     <td colSpan={5} className="fc-practice-plan-frames-cell">
                       <div className="fc-print-frames-grid fc-practice-block-frames-grid">
                         {frames.map((frame, frameIndex) => {
                           const frameLabel =
                             frame.name || `Frame ${frameIndex + 1}`;
+                          const frameNotes = stripNotesForPrint(frame.notes ?? "");
                           return (
                             <section
                               key={frame.id}
                               className="fc-print-frame-card fc-practice-frame-card"
                             >
-                              {frames.length > 1 ? (
+                              <div className="fc-practice-frame-stack">
                                 <h3 className="fc-practice-frame-label">{frameLabel}</h3>
-                              ) : null}
-                              <div className="fc-print-frame-court fc-practice-frame-court">
-                                <CourtFrameThumbnail
-                                  courtType={play.courtType}
-                                  frame={frame}
-                                  size="print"
-                                  alt={frameLabel}
-                                />
+                                <div className="fc-print-frame-court fc-practice-frame-court">
+                                  <CourtFrameThumbnail
+                                    courtType={play.courtType}
+                                    frame={frame}
+                                    courtView={play.courtView}
+                                    size="print"
+                                    alt={frameLabel}
+                                  />
+                                </div>
+                                {frameNotes ? (
+                                  <p className="fc-practice-frame-notes fc-frame-notes-bounded">
+                                    {frameNotes}
+                                  </p>
+                                ) : null}
                               </div>
-                              {(frame.notes ?? "").trim() ? (
-                                <p className="fc-practice-frame-notes">
-                                  {(frame.notes ?? "").trim()}
-                                </p>
-                              ) : null}
                             </section>
                           );
                         })}
@@ -139,6 +190,9 @@ export function PracticePrintDocument({
           })}
         </tbody>
       </table>
+      {footerText ? (
+        <footer className="fc-practice-print-footer">{footerText}</footer>
+      ) : null}
     </div>
   );
 }

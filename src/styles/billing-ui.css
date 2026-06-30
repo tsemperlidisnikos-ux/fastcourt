@@ -2,9 +2,9 @@
 
 .fc-trial-banner,
 .org-trial-banner {
-  margin: 0 0 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
@@ -18,27 +18,45 @@
 .fc-trial-banner-inner {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px 12px;
+}
+
+.fc-trial-banner-headline {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #334155;
 }
 
 .fc-trial-banner-title {
-  margin: 0 0 4px;
-  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
 }
 
+.fc-trial-banner-sep {
+  margin: 0 0.35em;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
 .fc-trial-banner-message {
-  margin: 0;
-  font-size: 14px;
   color: #334155;
-  line-height: 1.45;
+}
+
+.fc-trial-banner-support-inline a {
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fc-trial-banner-support-inline a:hover {
+  text-decoration: underline;
 }
 
 .fc-trial-banner-support {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 13px;
   color: #64748b;
 }
@@ -55,9 +73,11 @@
 
 .fc-trial-banner-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: min(100%, 280px);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .fc-trial-interval-toggle {
@@ -131,9 +151,9 @@
 .fc-billing-empty,
 .fc-billing-status {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
-  line-height: 1.45;
+  line-height: 1.3;
 }
 
 .fc-billing-plan-picker {

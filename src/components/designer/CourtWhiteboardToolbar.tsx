@@ -5,11 +5,10 @@ import { useDesignerStore } from "@/stores/designer-store";
 import { appConfirm } from "@/stores/dialog-store";
 
 interface Props {
-  onAnimate: () => void;
   inline?: boolean;
 }
 
-export function CourtWhiteboardToolbar({ onAnimate, inline }: Props) {
+export function CourtWhiteboardToolbar({ inline }: Props) {
   const tool = useDesignerStore((s) => s.tool);
   const setTool = useDesignerStore((s) => s.setTool);
   const inkColor = useDesignerStore((s) => s.whiteboardInkColor);
@@ -22,10 +21,6 @@ export function CourtWhiteboardToolbar({ onAnimate, inline }: Props) {
 
   function toggleWhiteboard() {
     setTool(whiteboardActive ? "select" : "whiteboard");
-  }
-
-  function exitWhiteboard() {
-    if (whiteboardActive) setTool("select");
   }
 
   const content = (
@@ -128,21 +123,6 @@ export function CourtWhiteboardToolbar({ onAnimate, inline }: Props) {
       >
         ✕
       </button>
-      <button
-        type="button"
-        className="ds-fd-tb-btn ds-fd-tb-accent"
-        id="btn-play-animation"
-        title="Animate play"
-        onClick={() => {
-          exitWhiteboard();
-          onAnimate();
-        }}
-      >
-        <span className="ds-fd-tb-icon fc-glyph-play" aria-hidden="true">
-          ▶
-        </span>
-        <span>Animate</span>
-      </button>
     </>
   );
 
@@ -150,7 +130,7 @@ export function CourtWhiteboardToolbar({ onAnimate, inline }: Props) {
     return (
       <div
         className={whiteboardActive ? "ds-fd-whiteboard-inline is-whiteboard-active" : "ds-fd-whiteboard-inline"}
-        aria-label="Whiteboard and animation"
+        aria-label="Whiteboard"
       >
         {content}
       </div>
@@ -160,7 +140,7 @@ export function CourtWhiteboardToolbar({ onAnimate, inline }: Props) {
   return (
     <div
       className={`ds-fd-court-toolbar ds-fd-court-toolbar-secondary${whiteboardActive ? " is-whiteboard-active" : ""}`}
-      aria-label="Whiteboard and animation"
+      aria-label="Whiteboard"
     >
       {content}
     </div>

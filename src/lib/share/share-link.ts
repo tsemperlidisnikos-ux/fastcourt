@@ -1,5 +1,5 @@
 import LZString from "lz-string";
-import type { PlaybookSection, PracticeSession } from "@/types/library-meta";
+import type { PlaybookSection, PracticeSession, GamePlan, GamePlanCategoryId, PlayerHomeworkAssignment } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
 import { appCopyLink, appNotice } from "@/stores/dialog-store";
 
@@ -17,6 +17,14 @@ export type SharePracticeItem = {
   notes?: string;
   videoUrl?: string;
   cueLabel?: string;
+  play?: ShareMinifiedPlay;
+};
+
+export type ShareGamePlanEntry = {
+  categoryId: GamePlanCategoryId;
+  categoryLabel?: string;
+  callName?: string;
+  notes?: string;
   play?: ShareMinifiedPlay;
 };
 
@@ -48,6 +56,71 @@ export type SharePayload =
       items: SharePracticeItem[];
       stageRef: { width: number; height: number };
       practiceView?: boolean;
+    }
+  | {
+      v: number;
+      type: "gameplan";
+      plan: {
+        title: string;
+        opponent: string;
+        gameDate: string;
+        team: string;
+        location?: string;
+        homeAway?: string;
+        scoutingNotes?: string;
+        postGameNotes?: string;
+      };
+      entries: ShareGamePlanEntry[];
+      stageRef: { width: number; height: number };
+      gamePlanView?: boolean;
+    }
+  | {
+      v: number;
+      type: "homework";
+      homeworkId?: string;
+      player?: {
+        id: string;
+        name: string;
+        token: string;
+      };
+      assignment: {
+        title: string;
+        opponent: string;
+        gameDate: string;
+        dueDate: string;
+        team: string;
+        notes?: string;
+      };
+      entries: ShareGamePlanEntry[];
+      stageRef: { width: number; height: number };
+      homeworkView?: boolean;
+    }
+  | {
+      v: number;
+      type: "homework_ack";
+      homeworkId: string;
+      playerId: string;
+      token: string;
+      ackType: "open" | "studied";
+      playerName?: string;
+    }
+  | {
+      v: number;
+      type: "gameday";
+      planId: string;
+      plan: {
+        title: string;
+        opponent: string;
+        gameDate: string;
+        team: string;
+        location?: string;
+        homeAway?: string;
+        scoutingNotes?: string;
+      };
+      entries: ShareGamePlanEntry[];
+      activeCategoryId?: GamePlanCategoryId;
+      stageRef: { width: number; height: number };
+      gameDayView?: boolean;
     };
 
 export type ShareMinifiedPlay = Omit<
@@ -144,6 +217,18 @@ function decompressJson(data: string) {
   } catch {
     return null;
   }
+}
+
+export function buildHomeworkAckUrl(
+  homeworkId: string,
+  playerId: string,
+  token: string,
+  ackType: "open" | "studied",
+  playerName?: string,
+) {
+  return buildUrlFromPayload(
+    encodeHomeworkAckPayload(homeworkId, playerId, token, ackType, playerName),
+  );
 }
 
 function buildUrlFromPayload(payload: SharePayload) {
@@ -324,6 +409,274 @@ export function buildSmartPracticeUrl(
   return { ok: false, error: "too_long", length: inlineLen };
 }
 
+export function encodeGamePlanPayload(
+  plan: GamePlan,
+  plays: StoredPlay[],
+  stageRef = DEFAULT_SHARE_STAGE,
+): SharePayload {
+  const playById = new Map(plays.map((play) => [play.id, play]));
+  const entries: ShareGamePlanEntry[] = [];
+  for (const entry of plan.entries) {
+    if (!entry.playId) continue;
+    const play = playById.get(entry.playId);
+    if (!play) continue;
+    const row: ShareGamePlanEntry = {
+      categoryId: entry.categoryId,
+      categoryLabel: entry.label,
+      notes: truncateShareNotes(entry.notes || "", 400) || undefined,
+    };
+    if (entry.callName?.trim()) row.callName = entry.callName.trim().slice(0, 120);
+    row.play = minifyStoredPlay(play);
+    entries.push(row);
+  }
+
+  return {
+    v: 6,
+    type: "gameplan",
+    plan: {
+      title: String(plan.title || `vs ${plan.opponent}`).slice(0, 120),
+      opponent: String(plan.opponent || "").slice(0, 120),
+      gameDate: String(plan.gameDate || "").slice(0, 16),
+      team: String(plan.team || "").slice(0, 80),
+      location: plan.location?.trim().slice(0, 120) || undefined,
+      homeAway: plan.homeAway || undefined,
+      scoutingNotes: truncateShareNotes(plan.scoutingNotes || "", 800) || undefined,
+      postGameNotes: truncateShareNotes(plan.postGameNotes || "", 800) || undefined,
+    },
+    entries,
+    stageRef,
+    gamePlanView: true,
+  };
+}
+
+export function buildSmartGamePlanUrl(
+  plan: GamePlan,
+  plays: StoredPlay[],
+  stageRef = DEFAULT_SHARE_STAGE,
+): SmartShareResult {
+  const payload = encodeGamePlanPayload(plan, plays, stageRef);
+  if (payload.type !== "gameplan" || !payload.entries.length) {
+    return { ok: false, error: "empty" };
+  }
+  const inlineUrl = buildUrlFromPayload(payload);
+  const inlineLen = inlineUrl.length;
+  if (inlineLen <= BROWSER_SAFE_URL_LENGTH) {
+    return { ok: true, url: inlineUrl, mode: "compact", length: inlineLen };
+  }
+  if (inlineLen <= MAX_URL_LENGTH) {
+    return {
+      ok: true,
+      url: inlineUrl,
+      mode: "compact-long",
+      length: inlineLen,
+      warning: mergeWarnings("Link is long — paste directly in browser."),
+    };
+  }
+  return { ok: false, error: "too_long", length: inlineLen };
+}
+
+function buildHomeworkShareEntries(
+  plan: GamePlan,
+  playIds: string[],
+  plays: StoredPlay[],
+): ShareGamePlanEntry[] {
+  const wanted = new Set(playIds);
+  const playById = new Map(plays.map((play) => [play.id, play]));
+  const entries: ShareGamePlanEntry[] = [];
+
+  for (const entry of plan.entries) {
+    if (!entry.playId || !wanted.has(entry.playId)) continue;
+    const play = playById.get(entry.playId);
+    if (!play) continue;
+    const row: ShareGamePlanEntry = {
+      categoryId: entry.categoryId,
+      categoryLabel: entry.label,
+      notes: truncateShareNotes(entry.notes || "", 400) || undefined,
+      play: minifyStoredPlay(play),
+    };
+    if (entry.callName?.trim()) row.callName = entry.callName.trim().slice(0, 120);
+    entries.push(row);
+    wanted.delete(entry.playId);
+  }
+
+  for (const playId of playIds) {
+    if (!wanted.has(playId)) continue;
+    const play = playById.get(playId);
+    if (!play) continue;
+    entries.push({
+      categoryId: "custom" as GamePlanCategoryId,
+      callName: play.title?.slice(0, 120),
+      play: minifyStoredPlay(play),
+    });
+  }
+
+  return entries;
+}
+
+export function encodeHomeworkPayload(
+  assignment: PlayerHomeworkAssignment,
+  plan: GamePlan,
+  plays: StoredPlay[],
+  stageRef = DEFAULT_SHARE_STAGE,
+  options: {
+    playerId?: string;
+    playerName?: string;
+    playerToken?: string;
+  } = {},
+): SharePayload {
+  const player =
+    options.playerId && options.playerToken
+      ? {
+          id: options.playerId,
+          name: options.playerName?.trim() || "Player",
+          token: options.playerToken,
+        }
+      : undefined;
+
+  return {
+    v: 6,
+    type: "homework",
+    homeworkId: assignment.id,
+    player,
+    assignment: {
+      title: String(assignment.title || "Homework").slice(0, 120),
+      opponent: String(assignment.opponent || "").slice(0, 120),
+      gameDate: String(assignment.gameDate || "").slice(0, 16),
+      dueDate: String(assignment.dueDate || "").slice(0, 16),
+      team: String(assignment.team || "").slice(0, 80),
+      notes: truncateShareNotes(assignment.notes || "", 800) || undefined,
+    },
+    entries: buildHomeworkShareEntries(plan, assignment.playIds, plays),
+    stageRef,
+    homeworkView: true,
+  };
+}
+
+export function encodeHomeworkAckPayload(
+  homeworkId: string,
+  playerId: string,
+  token: string,
+  ackType: "open" | "studied",
+  playerName?: string,
+): SharePayload {
+  return {
+    v: 6,
+    type: "homework_ack",
+    homeworkId,
+    playerId,
+    token,
+    ackType,
+    playerName: playerName?.trim().slice(0, 80) || undefined,
+  };
+}
+
+export function buildSmartHomeworkUrl(
+  assignment: PlayerHomeworkAssignment,
+  plan: GamePlan,
+  plays: StoredPlay[],
+  stageRef = DEFAULT_SHARE_STAGE,
+  options: {
+    playerId?: string;
+    playerName?: string;
+    playerToken?: string;
+  } = {},
+): SmartShareResult {
+  const payload = encodeHomeworkPayload(assignment, plan, plays, stageRef, options);
+  if (payload.type !== "homework" || !payload.entries.length) {
+    return { ok: false, error: "empty" };
+  }
+  const inlineUrl = buildUrlFromPayload(payload);
+  const inlineLen = inlineUrl.length;
+  if (inlineLen <= BROWSER_SAFE_URL_LENGTH) {
+    return { ok: true, url: inlineUrl, mode: "compact", length: inlineLen };
+  }
+  if (inlineLen <= MAX_URL_LENGTH) {
+    return {
+      ok: true,
+      url: inlineUrl,
+      mode: "compact-long",
+      length: inlineLen,
+      warning: mergeWarnings("Link is long — paste directly in browser."),
+    };
+  }
+  return { ok: false, error: "too_long", length: inlineLen };
+}
+
+function buildGameDayShareEntries(
+  plan: GamePlan,
+  plays: StoredPlay[],
+): ShareGamePlanEntry[] {
+  const playById = new Map(plays.map((play) => [play.id, play]));
+  const entries: ShareGamePlanEntry[] = [];
+  for (const entry of plan.entries) {
+    if (!entry.playId) continue;
+    const play = playById.get(entry.playId);
+    if (!play) continue;
+    const row: ShareGamePlanEntry = {
+      categoryId: entry.categoryId,
+      categoryLabel: entry.label,
+      notes: truncateShareNotes(entry.notes || "", 400) || undefined,
+    };
+    if (entry.callName?.trim()) row.callName = entry.callName.trim().slice(0, 120);
+    row.play = minifyStoredPlay(play);
+    entries.push(row);
+  }
+  return entries;
+}
+
+export function encodeGameDayPayload(
+  plan: GamePlan,
+  plays: StoredPlay[],
+  stageRef = DEFAULT_SHARE_STAGE,
+  activeCategoryId?: GamePlanCategoryId,
+): SharePayload {
+  return {
+    v: 6,
+    type: "gameday",
+    planId: plan.id,
+    plan: {
+      title: String(plan.title || `vs ${plan.opponent}`).slice(0, 120),
+      opponent: String(plan.opponent || "").slice(0, 120),
+      gameDate: String(plan.gameDate || "").slice(0, 16),
+      team: String(plan.team || "").slice(0, 80),
+      location: plan.location?.trim().slice(0, 120) || undefined,
+      homeAway: plan.homeAway || undefined,
+      scoutingNotes: truncateShareNotes(plan.scoutingNotes || "", 800) || undefined,
+    },
+    entries: buildGameDayShareEntries(plan, plays),
+    activeCategoryId,
+    stageRef,
+    gameDayView: true,
+  };
+}
+
+export function buildSmartGameDayUrl(
+  plan: GamePlan,
+  plays: StoredPlay[],
+  stageRef = DEFAULT_SHARE_STAGE,
+  activeCategoryId?: GamePlanCategoryId,
+): SmartShareResult {
+  const payload = encodeGameDayPayload(plan, plays, stageRef, activeCategoryId);
+  if (payload.type !== "gameday" || !payload.entries.length) {
+    return { ok: false, error: "empty" };
+  }
+  const inlineUrl = buildUrlFromPayload(payload);
+  const inlineLen = inlineUrl.length;
+  if (inlineLen <= BROWSER_SAFE_URL_LENGTH) {
+    return { ok: true, url: inlineUrl, mode: "compact", length: inlineLen };
+  }
+  if (inlineLen <= MAX_URL_LENGTH) {
+    return {
+      ok: true,
+      url: inlineUrl,
+      mode: "compact-long",
+      length: inlineLen,
+      warning: mergeWarnings("Link is long — paste directly in browser."),
+    };
+  }
+  return { ok: false, error: "too_long", length: inlineLen };
+}
+
 function newShareId(prefix: string) {
   return `${prefix}_${crypto.randomUUID()}`;
 }
@@ -376,6 +729,18 @@ export function decodeFromHash(hash: string): SharePayload | null {
     if (payload.type === "practice" && payload.session && payload.items?.length) {
       return payload;
     }
+    if (payload.type === "gameplan" && payload.plan && payload.entries?.length) {
+      return payload;
+    }
+    if (payload.type === "homework" && payload.assignment && payload.entries?.length) {
+      return payload;
+    }
+    if (payload.type === "homework_ack" && payload.homeworkId && payload.playerId) {
+      return payload;
+    }
+    if (payload.type === "gameday" && payload.plan && payload.entries?.length) {
+      return payload;
+    }
     return null;
   } catch {
     return null;
@@ -388,7 +753,9 @@ export async function copyShareResult(result: SmartShareResult, label: string) {
       "Share link failed",
       result.error === "too_long"
         ? "This content is too large for a share link. Try exporting JSON instead."
-        : "Could not create share link.",
+        : result.error === "empty"
+          ? "Add at least one play before sharing."
+          : "Could not create share link.",
     );
     return false;
   }

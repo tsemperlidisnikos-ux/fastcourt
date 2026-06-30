@@ -2,11 +2,20 @@
 
 import { useRef, useState } from "react";
 import { DEFAULT_PLAYBOOK_PRINT_CONFIG } from "@/lib/library/playbook-print-config";
+import {
+  PLAYBOOK_GRID_COUNT_OPTIONS,
+  PLAYBOOK_PAGE_NUMBER_OPTIONS,
+  PLAYBOOK_PRINT_FIELD_OPTIONS,
+} from "@/lib/library/playbook-print-format";
 import { usePlaybookPrintConfigStore } from "@/stores/playbook-print-config-store";
 import type {
   CoverVerticalAlign,
   PlaybookCoverConfig,
+  PlaybookFormatOptions,
+  PlaybookGridCount,
+  PlaybookPageNumberPosition,
   PlaybookPrintConfig,
+  PlaybookPrintFieldSource,
   PlaybookPrintFontSizes,
 } from "@/types/playbook-print-config";
 
@@ -14,6 +23,9 @@ type TabId = "print" | "cover";
 
 interface Props {
   onClose: () => void;
+  className?: string;
+  /** When false, Save keeps the panel open (e.g. print overlay side pane). */
+  closeOnSave?: boolean;
 }
 
 function patchConfig(
@@ -37,6 +49,16 @@ function patchFonts(
   return {
     ...config,
     fontSizes: { ...config.fontSizes, ...patch },
+  };
+}
+
+function patchFormat(
+  config: PlaybookPrintConfig,
+  patch: Partial<PlaybookFormatOptions>,
+): PlaybookPrintConfig {
+  return {
+    ...config,
+    format: { ...config.format, ...patch },
   };
 }
 
@@ -76,7 +98,43 @@ function NumberField({
   );
 }
 
-export function PlaybookPrintSettingsPanel({ onClose }: Props) {
+function SelectField<T extends string | number>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (val: T) => void;
+}) {
+  return (
+    <label className="fc-pb-print-select">
+      <span className="fc-pb-print-select-label">{label}</span>
+      <select
+        className="fc-pb-print-select-input"
+        value={String(value)}
+        onChange={(e) => {
+          const next = options.find((opt) => String(opt.value) === e.target.value);
+          if (next) onChange(next.value);
+        }}
+      >
+        {options.map((opt) => (
+          <option key={String(opt.value)} value={String(opt.value)}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function PlaybookPrintSettingsPanel({
+  onClose,
+  className,
+  closeOnSave = true,
+}: Props) {
   const stored = usePlaybookPrintConfigStore((s) => s.config);
   const setStored = usePlaybookPrintConfigStore((s) => s.setConfig);
   const resetToDefaults = usePlaybookPrintConfigStore((s) => s.resetToDefaults);
@@ -93,7 +151,7 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
 
   function handleSave() {
     setStored(draft, true);
-    onClose();
+    if (closeOnSave) onClose();
   }
 
   function handleRestore() {
@@ -121,7 +179,7 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
 
   return (
     <section
-      className="fc-playbooks-print-settings-pane"
+      className={`fc-playbooks-print-settings-pane${className ? ` ${className}` : ""}`}
       id="fc-playbooks-print-settings-pane"
       aria-label="Playbook print settings"
     >
@@ -202,20 +260,20 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
               <div className="fc-pb-print-field-row">
                 <NumberField
                   label="Vertical"
-                  value={draft.paddingVerticalIn}
-                  unit="in"
+                  value={draft.paddingVerticalCm}
+                  unit="cm"
                   step={0.1}
                   onChange={(v) =>
-                    setDraft((p) => patchConfig(p, { paddingVerticalIn: v }))
+                    setDraft((p) => patchConfig(p, { paddingVerticalCm: v }))
                   }
                 />
                 <NumberField
                   label="Horizontal"
-                  value={draft.paddingHorizontalIn}
-                  unit="in"
+                  value={draft.paddingHorizontalCm}
+                  unit="cm"
                   step={0.1}
                   onChange={(v) =>
-                    setDraft((p) => patchConfig(p, { paddingHorizontalIn: v }))
+                    setDraft((p) => patchConfig(p, { paddingHorizontalCm: v }))
                   }
                 />
               </div>
@@ -234,7 +292,101 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
             </div>
 
             <div className="fc-pb-print-section">
-              <h3 className="fc-pb-print-section-title">Display Options</h3>
+              <h3 className="fc-pb-print-section-title">Page Options</h3>
+              <div className="fc-pb-print-select-row">
+                <SelectField<PlaybookPrintFieldSource>
+                  label="Page Title"
+                  value={draft.format.pageTitle}
+                  options={PLAYBOOK_PRINT_FIELD_OPTIONS.filter(
+                    (opt) => opt.value !== "none",
+                  )}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { pageTitle: v }))
+                  }
+                />
+                <SelectField<PlaybookPrintFieldSource>
+                  label="Subtitle"
+                  value={draft.format.pageSubtitle}
+                  options={PLAYBOOK_PRINT_FIELD_OPTIONS.filter(
+                    (opt) => opt.value !== "none",
+                  )}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { pageSubtitle: v }))
+                  }
+                />
+                <SelectField<PlaybookPageNumberPosition>
+                  label="Page #"
+                  value={draft.format.pageNumberPosition}
+                  options={PLAYBOOK_PAGE_NUMBER_OPTIONS}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { pageNumberPosition: v }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="fc-pb-print-section">
+              <h3 className="fc-pb-print-section-title">Play Options</h3>
+              <div className="fc-pb-print-select-row">
+                <SelectField<PlaybookGridCount>
+                  label="Frames Per Row"
+                  value={draft.format.framesPerRow}
+                  options={PLAYBOOK_GRID_COUNT_OPTIONS.map((n) => ({
+                    value: n,
+                    label: String(n),
+                  }))}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { framesPerRow: v }))
+                  }
+                />
+                <SelectField<PlaybookGridCount>
+                  label="Rows Per Page"
+                  value={draft.format.rowsPerPage}
+                  options={PLAYBOOK_GRID_COUNT_OPTIONS.map((n) => ({
+                    value: n,
+                    label: String(n),
+                  }))}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { rowsPerPage: v }))
+                  }
+                />
+                <SelectField<PlaybookPrintFieldSource>
+                  label="Title"
+                  value={draft.format.playTitle}
+                  options={PLAYBOOK_PRINT_FIELD_OPTIONS.filter(
+                    (opt) => opt.value !== "none",
+                  )}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { playTitle: v }))
+                  }
+                />
+                <SelectField<PlaybookPrintFieldSource>
+                  label="Subtitle"
+                  value={draft.format.playSubtitle}
+                  options={PLAYBOOK_PRINT_FIELD_OPTIONS.filter(
+                    (opt) => opt.value !== "none",
+                  )}
+                  onChange={(v) =>
+                    setDraft((p) => patchFormat(p, { playSubtitle: v }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="fc-pb-print-section">
+              <h3 className="fc-pb-print-section-title">Layout Options</h3>
+              <label className="fc-pb-print-check">
+                <input
+                  type="checkbox"
+                  checked={draft.format.eachPlayNewLine}
+                  onChange={(e) =>
+                    setDraft((p) =>
+                      patchFormat(p, { eachPlayNewLine: e.target.checked }),
+                    )
+                  }
+                />
+                Start each play on a new line
+              </label>
               <label className="fc-pb-print-check">
                 <input
                   type="checkbox"
@@ -245,8 +397,12 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
                     )
                   }
                 />
-                Each Play on a Separate Page
+                Start each play on a new page
               </label>
+            </div>
+
+            <div className="fc-pb-print-section">
+              <h3 className="fc-pb-print-section-title">Display Options</h3>
               <label className="fc-pb-print-check">
                 <input
                   type="checkbox"
@@ -426,6 +582,32 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
             </div>
 
             <div className="fc-pb-print-section">
+              <h3 className="fc-pb-print-section-title">Team Name</h3>
+              <div className="fc-pb-print-team-name-row">
+                <label className="fc-pb-print-subtitle-input-wrap">
+                  <span className="fc-pb-print-field-label">Team Name</span>
+                  <input
+                    type="text"
+                    className="fc-pb-print-subtitle-input"
+                    placeholder="Playbook / PDF branding if empty"
+                    value={draft.cover.teamName}
+                    onChange={(e) =>
+                      setDraft((p) => patchCover(p, { teamName: e.target.value }))
+                    }
+                  />
+                </label>
+                <NumberField
+                  label="Font Size"
+                  value={draft.cover.teamNameFontSize}
+                  unit="px"
+                  onChange={(v) =>
+                    setDraft((p) => patchCover(p, { teamNameFontSize: v }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="fc-pb-print-section">
               <div className="fc-pb-print-section-head">
                 <h3 className="fc-pb-print-section-title">Cover Image</h3>
                 <label className="fc-pb-print-toggle-row compact">
@@ -489,28 +671,6 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
             </div>
 
             <div className="fc-pb-print-section">
-              <h3 className="fc-pb-print-section-title">Title</h3>
-              <div className="fc-pb-print-field-row">
-                <NumberField
-                  label="Font Size"
-                  value={draft.cover.titleFontSize}
-                  unit="px"
-                  onChange={(v) =>
-                    setDraft((p) => patchCover(p, { titleFontSize: v }))
-                  }
-                />
-                <NumberField
-                  label="Margin Top"
-                  value={draft.cover.titleMarginTop}
-                  unit="px"
-                  onChange={(v) =>
-                    setDraft((p) => patchCover(p, { titleMarginTop: v }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="fc-pb-print-section">
               <h3 className="fc-pb-print-section-title">Subtitle</h3>
               <div className="fc-pb-print-subtitle-row">
                 <label className="fc-pb-print-subtitle-input-wrap">
@@ -539,6 +699,28 @@ export function PlaybookPrintSettingsPanel({ onClose }: Props) {
                   unit="px"
                   onChange={(v) =>
                     setDraft((p) => patchCover(p, { subtitleMarginTop: v }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="fc-pb-print-section">
+              <h3 className="fc-pb-print-section-title">Playbook Title</h3>
+              <div className="fc-pb-print-field-row">
+                <NumberField
+                  label="Font Size"
+                  value={draft.cover.titleFontSize}
+                  unit="px"
+                  onChange={(v) =>
+                    setDraft((p) => patchCover(p, { titleFontSize: v }))
+                  }
+                />
+                <NumberField
+                  label="Margin Top"
+                  value={draft.cover.titleMarginTop}
+                  unit="px"
+                  onChange={(v) =>
+                    setDraft((p) => patchCover(p, { titleMarginTop: v }))
                   }
                 />
               </div>

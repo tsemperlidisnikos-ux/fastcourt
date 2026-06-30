@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/reports/
+/playwright-report/
+/test-results/
 health-check-report.json
 project-analysis.json
 lint-report.json
@@ -22,8 +25,10 @@ lint-report.json
 
 # production
 /build
+/dist-electron
 
 # misc
+scripts/tmp-*
 .DS_Store
 *.pem
 

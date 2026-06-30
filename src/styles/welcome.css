@@ -13,7 +13,7 @@ body:has(.welcome-screen) {
   align-items: stretch;
   justify-content: center;
   background: #000000;
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: var(--fc-app-font, "Puck Bold", "Puck", Calibri, "Segoe UI", system-ui, sans-serif);
 }
 
 .welcome-page {
@@ -223,6 +223,14 @@ body:has(.welcome-screen) {
   margin-left: 2px;
 }
 
+.welcome-screen input.welcome-input,
+.welcome-screen textarea.welcome-input,
+.welcome-screen select.welcome-select {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+}
+
 .welcome-input {
   width: 100%;
   box-sizing: border-box;
@@ -230,20 +238,35 @@ body:has(.welcome-screen) {
   border: 1px solid #3d4a5c;
   border-radius: 10px;
   background: #080b10;
-  color: #f8fafc;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   font-family: inherit;
   font-size: 15px;
   line-height: 1.4;
+  caret-color: #ffffff;
 }
 
 .welcome-input::placeholder {
   color: #64748b;
+  -webkit-text-fill-color: #64748b;
+  opacity: 1;
+}
+
+.welcome-input:-webkit-autofill,
+.welcome-input:-webkit-autofill:hover,
+.welcome-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  box-shadow: 0 0 0 1000px #080b10 inset;
+  -webkit-box-shadow: 0 0 0 1000px #080b10 inset;
 }
 
 .welcome-input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 .welcome-email-lock-row {
@@ -320,6 +343,27 @@ body:has(.welcome-screen) {
   margin: 0 0 4px;
   font-weight: 600;
   color: #93c5fd;
+}
+
+.welcome-cloud-config-banner {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(180, 83, 9, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.welcome-cloud-config-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: #fcd34d;
+}
+
+.welcome-cloud-config-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #fde68a;
 }
 
 .welcome-team-invite-text {
@@ -609,6 +653,43 @@ body:has(.welcome-screen) {
 
 .welcome-legal .welcome-link-btn:hover {
   color: #3b82f6;
+}
+
+.welcome-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 12px 18px;
+  border: 1px solid #ef6b2e;
+  border-radius: 999px;
+  background: #ef6b2e;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.welcome-submit-btn:hover:not(:disabled) {
+  background: #ff8a3d;
+  border-color: #ff8a3d;
+}
+
+.welcome-submit-btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.welcome-switch-mode {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #94a3b8;
 }
 
 .welcome-footnote {

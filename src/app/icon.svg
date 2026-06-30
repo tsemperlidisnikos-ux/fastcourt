@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="FastCourt">
+  <defs>
+    <linearGradient id="fc-draw-grad" x1="18%" y1="12%" x2="88%" y2="92%">
+      <stop offset="0%" stop-color="#7EC3F7"/>
+      <stop offset="100%" stop-color="#2F4563"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="58" fill="url(#fc-draw-grad)"/>
+  <path
+    d="M44 88V40c0-4 3-7 7-7h8"
+    stroke="#FFFFFF"
+    stroke-width="7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M52 33h34l14 12-14 12H58"
+    stroke="#FFFFFF"
+    stroke-width="7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <path
+    d="M59 47c10 2 18 10 20 20"
+    stroke="#FFFFFF"
+    stroke-width="7"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <path
+    d="M79 47l16-10"
+    stroke="#FFFFFF"
+    stroke-width="7"
+    stroke-linecap="round"
+  />
+</svg>

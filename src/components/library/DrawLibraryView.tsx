@@ -14,7 +14,6 @@ import {
   findDuplicateGroups,
 } from "@/components/library/DuplicateMergeModal";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
-import { useDeviceClass } from "@/hooks/useDeviceClass";
 import { useLibrarySplitResizer } from "@/hooks/useLibrarySplitResizer";
 import {
   matchesLibraryCleanFilter,
@@ -37,9 +36,14 @@ import {
 } from "@/components/library/LibraryPlayContextMenu";
 import { compareLibraryItems } from "@/lib/library/library-sort";
 import {
+  canShowLibraryCreatedByColumn,
+  loadCreatorNameIndex,
+} from "@/lib/library/play-creator-label";
+import {
   PlayDetailsModal,
   type PlayDetailsValues,
 } from "@/components/library/PlayDetailsModal";
+import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import {
@@ -54,8 +58,10 @@ const PAGE_SIZE = 50;
 export function DrawLibraryView() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const session = useAuthStore((s) => s.session);
   const importPanelRef = useRef<FdImportPanelHandle>(null);
   const items = useLibraryStore((s) => s.items);
+  const libraryHydrated = useLibraryStore((s) => s.hydrated);
   const createPlayFromDetails = useLibraryStore((s) => s.createPlayFromDetails);
   const getPlayDocument = useLibraryStore((s) => s.getPlayDocument);
   const removePlay = useLibraryStore((s) => s.removePlay);
@@ -68,12 +74,9 @@ export function DrawLibraryView() {
   const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
   const addPracticeItems = useOrganizerStore((s) => s.addPracticeItems);
   const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
-  const deviceClass = useDeviceClass();
   const { resizerProps } = useLibrarySplitResizer();
   const addPlayToPlaybook = useOrganizerStore((s) => s.addPlayToPlaybook);
   const createPlaybook = useOrganizerStore((s) => s.createPlaybook);
-  const metaHydrated = useOrganizerStore((s) => s.hydrated);
-  const loadMeta = useOrganizerStore((s) => s.loadMeta);
 
   const [sortId, setSortId] = useLibrarySortId();
   const [filter, setFilter] = useState("all");
@@ -83,6 +86,8 @@ export function DrawLibraryView() {
   const [teamFilter, setTeamFilter] = useState("");
   const [seriesFilter, setSeriesFilter] = useState("");
   const [tagsFilter, setTagsFilter] = useState("");
+  const showCreatedBy = canShowLibraryCreatedByColumn(session?.user);
+  const [creatorNames, setCreatorNames] = useState<Map<string, string>>(() => new Map());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [selectedPlay, setSelectedPlay] = useState<Awaited<
@@ -132,6 +137,17 @@ export function DrawLibraryView() {
       if (openNewTimer !== undefined) window.clearTimeout(openNewTimer);
     };
   }, [router, searchParams]);
+
+  useEffect(() => {
+    if (!showCreatedBy) return;
+    let active = true;
+    void loadCreatorNameIndex(session?.user).then((names) => {
+      if (active) setCreatorNames(names);
+    });
+    return () => {
+      active = false;
+    };
+  }, [showCreatedBy, session?.user]);
 
   const assignedPlayIds = useMemo(() => {
     const ids = new Set<string>();
@@ -208,10 +224,6 @@ export function DrawLibraryView() {
     sortId,
   ]);
 
-  useEffect(() => {
-    if (!metaHydrated) void loadMeta();
-  }, [metaHydrated, loadMeta]);
-
   async function sharePlayLink(play: NonNullable<typeof previewPlay>) {
     const doc = selectedPlay ?? (await getPlayDocument(play.id));
     if (!doc) {
@@ -248,7 +260,7 @@ export function DrawLibraryView() {
   }
 
   useEffect(() => {
-    if (!previewId) return;
+    if (!previewId || !libraryHydrated) return;
     let active = true;
     void getPlayDocument(previewId).then((play) => {
       if (active) setSelectedPlay(play ?? null);
@@ -256,7 +268,7 @@ export function DrawLibraryView() {
     return () => {
       active = false;
     };
-  }, [previewId, getPlayDocument, items]);
+  }, [previewId, getPlayDocument, libraryHydrated]);
 
   const itemIds = useMemo(() => new Set(items.map((item) => item.id)), [items]);
   const effectiveSelectedIds = useMemo(() => {
@@ -598,7 +610,8 @@ export function DrawLibraryView() {
           pageSize={PAGE_SIZE}
           onPageChange={setPage}
           onNewPractice={() => void handleNewPracticeFromSelection()}
-          tabletMode={deviceClass === "tablet"}
+          showCreatedBy={showCreatedBy}
+          creatorNames={creatorNames}
         />
         <div {...resizerProps} id="org-split-resizer" />
         <LibraryPreviewPanel
@@ -705,6 +718,7 @@ export function DrawLibraryView() {
             series: previewPlay.series,
             tags: previewPlay.tags,
             courtType: previewPlay.courtType,
+            courtView: previewPlay.courtView,
             season: previewPlay.season,
             playNotes: previewPlay.playNotes,
             videoUrl: previewPlay.videoUrl,
@@ -719,6 +733,7 @@ export function DrawLibraryView() {
               series: details.series,
               tags: details.tags,
               courtType: details.courtType,
+              courtView: details.courtView,
               season: details.season,
               playNotes: details.playNotes || undefined,
               videoUrl: details.videoUrl || undefined,

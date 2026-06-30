@@ -1,5 +1,6 @@
 "use client";
 
+import { eraseStrokesAt } from "@/lib/designer/stroke-partial-eraser";
 import { useCallback, useEffect, useRef } from "react";
 
 export interface InkStroke {
@@ -36,15 +37,6 @@ function redrawInkCanvas(
   }
 }
 
-function strokeNearPoint(stroke: InkStroke, x: number, y: number, radius: number) {
-  for (let i = 0; i < stroke.points.length; i += 2) {
-    const dx = stroke.points[i] - x;
-    const dy = stroke.points[i + 1] - y;
-    if (Math.hypot(dx, dy) <= radius) return true;
-  }
-  return false;
-}
-
 interface Props {
   width: number;
   height: number;
@@ -69,6 +61,11 @@ export function PracticeSheetInkLayer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const draftRef = useRef<number[]>([]);
+  const strokesRef = useRef(strokes);
+
+  useEffect(() => {
+    strokesRef.current = strokes;
+  }, [strokes]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -102,7 +99,7 @@ export function PracticeSheetInkLayer({
       draftRef.current = [point.x, point.y];
     } else {
       onStrokesChange(
-        strokes.filter((stroke) => !strokeNearPoint(stroke, point.x, point.y, ERASER_RADIUS)),
+        eraseStrokesAt(strokesRef.current, point.x, point.y, ERASER_RADIUS),
       );
     }
   }
@@ -128,7 +125,7 @@ export function PracticeSheetInkLayer({
     }
 
     onStrokesChange(
-      strokes.filter((stroke) => !strokeNearPoint(stroke, point.x, point.y, ERASER_RADIUS)),
+      eraseStrokesAt(strokesRef.current, point.x, point.y, ERASER_RADIUS),
     );
   }
 

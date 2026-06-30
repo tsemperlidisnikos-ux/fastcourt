@@ -1,11 +1,26 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
+import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
+import { CourtSettingsPanel } from "@/components/designer/CourtSettingsPanel";
+import { VideoEmbed, VideoProviderBadge } from "@/components/library/VideoEmbed";
 import { useClientMounted } from "@/hooks/useClientMounted";
-import { courtImagePath } from "@/lib/designer/court-assets";
+import {
+  DEFAULT_NEW_PLAY_COURT_VIEW,
+  mergeCourtViewSettings,
+  patchCourtViewSettings,
+} from "@/lib/designer/court-view-settings";
+import { createFrame } from "@/lib/designer/play-factory";
+import { isValidVideoUrl, parseVideoUrl } from "@/lib/library/video-url";
+import {
+  defaultTagColorForIndex,
+  resolveTagColor,
+  TAG_COLOR_PALETTE,
+} from "@/lib/library/tag-colors";
+import { contrastingTextOnBackground } from "@/lib/settings/color-contrast";
 import { useOrganizerStore } from "@/stores/organizer-store";
-import type { CourtType } from "@/types/designer";
+import type { CourtType, CourtViewSettings } from "@/types/designer";
 import type { LibraryItemType, PlayDetailsValues } from "@/types/library";
 
 export type { PlayDetailsValues };
@@ -18,21 +33,20 @@ interface Props {
   onSubmit: (values: PlayDetailsValues) => void | Promise<void>;
 }
 
-function parseTags(raw: string) {
-  return raw
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
+function normalizeTag(value: string) {
+  return value.trim().replace(/,+$/, "");
 }
 
-function isValidVideoUrl(raw: string) {
-  if (!raw.trim()) return true;
-  try {
-    const url = new URL(raw.trim());
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
+function uniqueTags(tags: string[]) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const tag of tags) {
+    const key = tag.toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
   }
+  return out;
 }
 
 function buildFormState(
@@ -49,13 +63,18 @@ function buildFormState(
     series:
       initial?.series ??
       (nextType === "drill" ? "Drill" : (seriesList[0] ?? "Offense")),
-    tagsText: (initial?.tags ?? []).join(", "),
+    selectedTags: uniqueTags(initial?.tags ?? []),
     courtType: initial?.courtType ?? "half",
+    courtView: mergeCourtViewSettings(
+      initial?.courtView ?? DEFAULT_NEW_PLAY_COURT_VIEW,
+    ),
     season: initial?.season ?? seasons[0] ?? "Default",
     playNotes: initial?.playNotes ?? "",
     videoUrl: initial?.videoUrl ?? "",
   };
 }
+
+const PREVIEW_FRAME = createFrame("Preview", 1);
 
 export function PlayDetailsModal(props: Props) {
   const mounted = useClientMounted();
@@ -79,7 +98,9 @@ function PlayDetailsModalBody({
   const teams = useOrganizerStore((s) => s.teams);
   const seriesList = useOrganizerStore((s) => s.series);
   const fieldTags = useOrganizerStore((s) => s.fieldTags);
+  const fieldTagColors = useOrganizerStore((s) => s.fieldTagColors);
   const addField = useOrganizerStore((s) => s.addField);
+  const setTagColor = useOrganizerStore((s) => s.setTagColor);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -88,8 +109,14 @@ function PlayDetailsModalBody({
   const [title, setTitle] = useState(defaults.title);
   const [team, setTeam] = useState(defaults.team);
   const [series, setSeries] = useState(defaults.series);
-  const [tagsText, setTagsText] = useState(defaults.tagsText);
+  const [selectedTags, setSelectedTags] = useState<string[]>(defaults.selectedTags);
+  const [tagDraft, setTagDraft] = useState("");
+  const [tagDraftColor, setTagDraftColor] = useState<string>(() =>
+    defaultTagColorForIndex(defaults.selectedTags.length),
+  );
+  const [colorEditTag, setColorEditTag] = useState<string | null>(null);
   const [courtType, setCourtType] = useState<CourtType>(defaults.courtType);
+  const [courtView, setCourtView] = useState<CourtViewSettings>(defaults.courtView);
   const [season, setSeason] = useState(defaults.season);
   const [playNotes, setPlayNotes] = useState(defaults.playNotes);
   const [videoUrl, setVideoUrl] = useState(defaults.videoUrl);
@@ -100,9 +127,14 @@ function PlayDetailsModalBody({
     mode === "edit" ? "Save" : isDrill ? "Create Drill" : "Create Play";
 
   const tagOptions = useMemo(
-    () => Array.from(new Set([...fieldTags, ...parseTags(tagsText)])),
-    [fieldTags, tagsText],
+    () => Array.from(new Set([...fieldTags, ...selectedTags])),
+    [fieldTags, selectedTags],
   );
+  const parsedVideo = useMemo(() => parseVideoUrl(videoUrl), [videoUrl]);
+
+  function patchCourtView(patch: Partial<CourtViewSettings>) {
+    setCourtView((prev) => patchCourtViewSettings(prev, patch));
+  }
 
   async function handleSubmit() {
     const trimmedTitle = title.trim();
@@ -123,8 +155,9 @@ function PlayDetailsModalBody({
         title: trimmedTitle,
         team: team || teams[0] || "No Team",
         series: series || "",
-        tags: parseTags(tagsText),
+        tags: selectedTags,
         courtType,
+        courtView,
         season: season || seasons[0] || "Default",
         playNotes: playNotes.trim(),
         videoUrl: videoUrl.trim(),
@@ -134,13 +167,73 @@ function PlayDetailsModalBody({
     }
   }
 
+  async function addTagsToSelection(candidates: string[], color?: string) {
+    const normalized = uniqueTags(candidates.map(normalizeTag).filter(Boolean));
+    if (!normalized.length) return;
+    for (let i = 0; i < normalized.length; i++) {
+      const tag = normalized[i]!;
+      const tagColor =
+        i === 0 && color
+          ? color
+          : defaultTagColorForIndex(selectedTags.length + i);
+      await addField("tags", tag);
+      await setTagColor(tag, tagColor);
+    }
+    setSelectedTags((prev) => uniqueTags([...prev, ...normalized]));
+    setColorEditTag(null);
+  }
+
   async function handleAddTag() {
-    const candidate = tagsText.split(",").pop()?.trim() ?? "";
+    const candidate = normalizeTag(tagDraft);
     if (!candidate) return;
-    await addField("tags", candidate);
-    const existing = parseTags(tagsText);
-    if (!existing.includes(candidate)) {
-      setTagsText(existing.length ? `${existing.join(", ")}, ${candidate}` : candidate);
+    await addTagsToSelection([candidate], tagDraftColor);
+    setTagDraft("");
+    setTagDraftColor(defaultTagColorForIndex(selectedTags.length + 1));
+  }
+
+  function handleTagColorPick(color: string) {
+    setTagDraftColor(color);
+    if (colorEditTag) {
+      void setTagColor(colorEditTag, color);
+    }
+  }
+
+  function handleSelectTagForColor(tag: string) {
+    if (colorEditTag?.toLowerCase() === tag.toLowerCase()) {
+      setColorEditTag(null);
+      return;
+    }
+    setColorEditTag(tag);
+    setTagDraftColor(resolveTagColor(tag, fieldTagColors));
+  }
+
+  function handleRemoveTag(tag: string) {
+    setSelectedTags((prev) => prev.filter((t) => t !== tag));
+    if (colorEditTag?.toLowerCase() === tag.toLowerCase()) {
+      setColorEditTag(null);
+    }
+  }
+
+  function handleTagDraftChange(value: string) {
+    if (!value.includes(",")) {
+      setTagDraft(value);
+      return;
+    }
+    const parts = value.split(",");
+    const pending = parts.pop() ?? "";
+    const ready = parts.map(normalizeTag).filter(Boolean);
+    if (ready.length) void addTagsToSelection(ready, tagDraftColor);
+    setTagDraft(pending);
+  }
+
+  function handleTagDraftKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void handleAddTag();
+      return;
+    }
+    if (e.key === "Backspace" && !tagDraft && selectedTags.length) {
+      setSelectedTags((prev) => prev.slice(0, -1));
     }
   }
 
@@ -178,7 +271,7 @@ function PlayDetailsModalBody({
           </p>
         ) : null}
         <div className="play-details-modal-body">
-          <div className="play-details-form">
+          <div className="play-details-meta-grid">
             <div className="play-details-field play-details-field-wide play-details-kind-field">
               <span className="play-details-field-label">
                 Type <span className="play-details-required">*</span>
@@ -256,55 +349,6 @@ function PlayDetailsModalBody({
               </select>
             </div>
             <div className="play-details-field">
-              <label htmlFor="new-play-tags">Tags</label>
-              <div className="play-details-tags-row">
-                <div className="play-details-tags-input-wrap">
-                  <span className="play-details-tags-search" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                      <path
-                        fill="currentColor"
-                        d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                      />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    id="new-play-tags"
-                    list="new-play-tags-list"
-                    placeholder="Select Tags"
-                    autoComplete="off"
-                    value={tagsText}
-                    onChange={(e) => setTagsText(e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="play-details-tags-add"
-                  id="btn-new-play-add-tag"
-                  title="Add tag"
-                  onClick={() => void handleAddTag()}
-                >
-                  +
-                </button>
-              </div>
-              <datalist id="new-play-tags-list">
-                {tagOptions.map((tag) => (
-                  <option key={tag} value={tag} />
-                ))}
-              </datalist>
-            </div>
-            <div className="play-details-field">
-              <label htmlFor="new-play-court-type">Court Type</label>
-              <select
-                id="new-play-court-type"
-                value={courtType}
-                onChange={(e) => setCourtType(e.target.value as CourtType)}
-              >
-                <option value="half">Half Court</option>
-                <option value="full">Full Court</option>
-              </select>
-            </div>
-            <div className="play-details-field">
               <label htmlFor="new-play-season">Season</label>
               <select
                 id="new-play-season"
@@ -318,6 +362,106 @@ function PlayDetailsModalBody({
                 ))}
               </select>
             </div>
+            <div className="play-details-field play-details-field-wide">
+              <label htmlFor="new-play-tags">Tags</label>
+              <div className="play-details-tags-row">
+                <div className="play-details-tags-input-wrap">
+                  <span className="play-details-tags-search" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                      <path
+                        fill="currentColor"
+                        d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                      />
+                    </svg>
+                  </span>
+                  {selectedTags.map((tag) => {
+                    const background = resolveTagColor(tag, fieldTagColors);
+                    const isColorActive =
+                      colorEditTag?.toLowerCase() === tag.toLowerCase();
+                    return (
+                    <span
+                      key={tag}
+                      className={`play-details-tag-chip${isColorActive ? " is-color-active" : ""}`}
+                      style={{
+                        backgroundColor: background,
+                        color: contrastingTextOnBackground(background),
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="play-details-tag-chip-label"
+                        aria-label={`Edit color for tag ${tag}`}
+                        aria-pressed={isColorActive}
+                        onClick={() => handleSelectTagForColor(tag)}
+                      >
+                        {tag}
+                      </button>
+                      <button
+                        type="button"
+                        className="play-details-tag-chip-remove"
+                        aria-label={`Remove tag ${tag}`}
+                        onClick={() => handleRemoveTag(tag)}
+                      >
+                        ×
+                      </button>
+                    </span>
+                    );
+                  })}
+                  <input
+                    type="text"
+                    id="new-play-tags"
+                    list="new-play-tags-list"
+                    placeholder={selectedTags.length ? "Add another tag…" : "Select Tags"}
+                    autoComplete="off"
+                    value={tagDraft}
+                    onChange={(e) => handleTagDraftChange(e.target.value)}
+                    onKeyDown={handleTagDraftKeyDown}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="play-details-tags-add"
+                  id="btn-new-play-add-tag"
+                  title="Add tag"
+                  onClick={() => void handleAddTag()}
+                >
+                  +
+                </button>
+              </div>
+              <div className="play-details-tag-colors" role="radiogroup" aria-label="Tag color">
+                {TAG_COLOR_PALETTE.map((swatch) => (
+                  <button
+                    key={swatch.id}
+                    type="button"
+                    className={`play-details-tag-color-swatch${tagDraftColor === swatch.value ? " is-active" : ""}`}
+                    style={{ backgroundColor: swatch.value }}
+                    title={swatch.label}
+                    aria-label={swatch.label}
+                    aria-pressed={tagDraftColor === swatch.value}
+                    onClick={() => handleTagColorPick(swatch.value)}
+                  />
+                ))}
+              </div>
+              {colorEditTag ? (
+                <p className="play-details-tag-color-hint">
+                  Editing color for <strong>{colorEditTag}</strong>. Click the tag again to deselect.
+                </p>
+              ) : (
+                <p className="play-details-tag-color-hint">
+                  Pick a color, then add a tag — or click a tag to change its color.
+                </p>
+              )}
+              <datalist id="new-play-tags-list">
+                {tagOptions
+                  .filter(
+                    (tag) =>
+                      !selectedTags.some((selected) => selected.toLowerCase() === tag.toLowerCase()),
+                  )
+                  .map((tag) => (
+                    <option key={tag} value={tag} />
+                  ))}
+              </datalist>
+            </div>
             <div className="play-details-field">
               <label htmlFor="new-play-notes">Play Notes</label>
               <input
@@ -329,28 +473,56 @@ function PlayDetailsModalBody({
                 onChange={(e) => setPlayNotes(e.target.value)}
               />
             </div>
-            <div className="play-details-field play-details-field-wide">
+            <div className="play-details-field">
               <label htmlFor="new-play-video-url">Video link</label>
               <input
                 type="url"
                 id="new-play-video-url"
-                placeholder="YouTube, Vimeo, or https:// video link"
+                placeholder="YouTube, Vimeo, Hudl, or .mp4"
                 autoComplete="off"
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
               />
-              <p className="play-details-hint">
-                Shown in Present mode, player links, and Playbook PDF QR code.
-              </p>
             </div>
           </div>
-          <div className="play-details-preview">
-            <img
-              id="new-play-court-preview"
-              src={courtImagePath(courtType)}
-              alt="Court preview"
-            />
+
+          <div className="play-details-court-section">
+            <div className="play-details-court-settings fc-court-settings">
+              <CourtSettingsPanel
+                courtType={courtType}
+                courtView={courtView}
+                onCourtTypeChange={setCourtType}
+                onCourtViewChange={patchCourtView}
+              />
+            </div>
+            <div className="play-details-preview">
+              <CourtFrameThumbnail
+                courtType={courtType}
+                frame={PREVIEW_FRAME}
+                courtView={courtView}
+                courtTemplate={courtView.template}
+                size="sm"
+                alt="Court preview"
+              />
+            </div>
           </div>
+
+          {parsedVideo ? (
+            <div className="play-details-video-preview play-details-field-wide">
+              <VideoProviderBadge parsed={parsedVideo} />
+              {parsedVideo.embedUrl ? (
+                <VideoEmbed
+                  videoUrl={videoUrl}
+                  title={title.trim() || modalTitle}
+                  compact
+                />
+              ) : (
+                <p className="play-details-hint">
+                  Preview opens on {parsedVideo.providerLabel} when players tap Watch video.
+                </p>
+              )}
+            </div>
+          ) : null}
         </div>
         <div className="play-details-modal-foot modal-actions">
           <button

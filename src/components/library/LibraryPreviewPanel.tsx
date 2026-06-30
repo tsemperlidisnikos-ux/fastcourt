@@ -4,7 +4,11 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { PrintPreviewIcon } from "@/components/library/PrintPreviewIcon";
+import { mergeCourtViewSettings } from "@/lib/designer/court-view-settings";
 import { getLibraryPreviewThumbSize } from "@/lib/library/library-preview-thumb-size";
+import { canInlineEmbedVideo } from "@/lib/library/video-url";
+import { VideoEmbed } from "@/components/library/VideoEmbed";
+import { VideoWatchButton } from "@/components/library/VideoWatchButton";
 import type { StoredPlay } from "@/types/library";
 
 const CourtFrameThumbnail = dynamic(
@@ -72,7 +76,13 @@ export function LibraryPreviewPanel({
     if (!grid) return;
 
     const applyThumbSize = () => {
-      const size = getLibraryPreviewThumbSize(grid.clientWidth, play.courtType);
+      const courtTemplate = mergeCourtViewSettings(play.courtView).template;
+      const size = getLibraryPreviewThumbSize(
+        grid.clientWidth,
+        play.courtType,
+        undefined,
+        courtTemplate,
+      );
       grid.style.setProperty("--fc-lib-preview-col-w", `${size.columnWidth}px`);
       grid.style.setProperty("--fc-lib-preview-thumb-w", `${size.thumbWidth}px`);
       grid.style.setProperty("--fc-lib-preview-thumb-h", `${size.thumbHeight}px`);
@@ -253,16 +263,14 @@ export function LibraryPreviewPanel({
             ▶
           </button>
           {play.videoUrl ? (
-            <a
+            <VideoWatchButton
+              videoUrl={play.videoUrl}
+              title={play.title}
               className="org-preview-tool-btn org-preview-video-btn"
               id="btn-library-video-play"
-              href={play.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Watch video"
-            >
-              ▶
-            </a>
+              titleAttr="Watch video"
+              label="▶"
+            />
           ) : null}
           <button
             type="button"
@@ -316,6 +324,12 @@ export function LibraryPreviewPanel({
           </div>
         ) : null}
 
+        {play.videoUrl && canInlineEmbedVideo(play.videoUrl) ? (
+          <div className="org-preview-video-embed" id="library-preview-video-embed">
+            <VideoEmbed videoUrl={play.videoUrl} title={play.title} compact />
+          </div>
+        ) : null}
+
         <div
           className="org-preview-frames fd-preview-content fc-lib-preview-frames-grid"
           id="library-preview-content"
@@ -343,6 +357,7 @@ export function LibraryPreviewPanel({
                     frame={frame}
                     size="sm"
                     alt={frameLabel(frame, index)}
+                    courtView={play.courtView}
                   />
                 </div>
                 {notesText ? (

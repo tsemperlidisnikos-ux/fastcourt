@@ -12,22 +12,17 @@ import { useLibraryStore } from "@/stores/library-store";
 import { useSettingsStore } from "@/stores/settings-store";
 
 const TABS = [
-  { id: "draw", label: "Draw", href: "/library" },
-  { id: "playbooks", label: "Playbooks", href: "/library?tab=playbooks" },
-  { id: "fields", label: "Fields", href: "/library?tab=fields" },
-  { id: "practice", label: "Practice", href: "/library?tab=practice" },
-  { id: "players", label: "Players", href: "/library?tab=players" },
+  { id: "draw", label: "LIBRARY", href: "/library" },
+  { id: "playbooks", label: "PLAYBOOKS", href: "/library?tab=playbooks" },
+  { id: "gameplan", label: "GAME PLAN", shortLabel: "PLAN", href: "/library?tab=gameplan" },
+  { id: "fields", label: "FIELDS", href: "/library?tab=fields" },
+  { id: "practice", label: "PRACTICE", href: "/library?tab=practice" },
+  { id: "players", label: "PLAYERS", href: "/library?tab=players" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function FdAppHeader({
-  sectionLabel = "PLAYS",
-  activeTab = "draw",
-}: {
-  sectionLabel?: string;
-  activeTab?: TabId;
-}) {
+export function FdAppHeader({ activeTab = "draw" }: { activeTab?: TabId }) {
   const pathname = usePathname();
   const [practiceSheetOpen, setPracticeSheetOpen] = useState(false);
   const pdfBrand = useSettingsStore((s) => s.pdfBrand);
@@ -43,11 +38,7 @@ export function FdAppHeader({
       <header className="fd-topbar-util" aria-label="Application bar">
         <div className="fd-topbar-util-inner">
           <div className="fd-topbar-util-left org-topnav-left" aria-hidden="true" />
-          <div className="fd-topbar-util-center">
-            <span className="fd-topnav-section-label" id="fd-topnav-section-label">
-              {sectionLabel}
-            </span>
-          </div>
+          <div className="fd-topbar-util-center" aria-hidden="true" />
           <div className="fd-topbar-util-right org-topnav-right">
             <UserMenu variant="topbar" />
           </div>
@@ -108,8 +99,16 @@ export function FdAppHeader({
                     href={tab.href}
                     className={`fd-main-tab org-main-tab${active ? " active" : ""}`}
                     data-fd-tab={tab.id}
+                    title={"shortLabel" in tab ? tab.label : undefined}
                   >
-                    {tab.label}
+                    {"shortLabel" in tab ? (
+                      <>
+                        <span className="fd-main-tab-label-full">{tab.label}</span>
+                        <span className="fd-main-tab-label-short">{tab.shortLabel}</span>
+                      </>
+                    ) : (
+                      tab.label
+                    )}
                   </Link>
                 );
               })}

@@ -40,16 +40,30 @@ export function TrialBanner({ user }: Props) {
     >
       <div className="fc-trial-banner-inner">
         <div className="fc-trial-banner-copy">
-          <p className="fc-trial-banner-title">
-            {expired ? "Trial ended" : "Trial access"}
+          <p className="fc-trial-banner-headline">
+            <strong className="fc-trial-banner-title">
+              {expired ? "Trial ended" : "Trial access"}
+            </strong>
+            <span className="fc-trial-banner-sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="fc-trial-banner-message">
+              {formatTrialAccessMessage(user)}
+            </span>
+            {billing.supportEmail ? (
+              <>
+                <span className="fc-trial-banner-sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="fc-trial-banner-support-inline">
+                  Questions?{" "}
+                  <a href={`mailto:${billing.supportEmail}`}>
+                    {billing.supportEmail}
+                  </a>
+                </span>
+              </>
+            ) : null}
           </p>
-          <p className="fc-trial-banner-message">{formatTrialAccessMessage(user)}</p>
-          {billing.supportEmail ? (
-            <p className="fc-trial-banner-support">
-              Questions?{" "}
-              <a href={`mailto:${billing.supportEmail}`}>{billing.supportEmail}</a>
-            </p>
-          ) : null}
         </div>
         <div className="fc-trial-banner-actions">
           {plans.length > 1 ? (

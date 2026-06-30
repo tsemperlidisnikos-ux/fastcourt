@@ -9,6 +9,7 @@ import {
   ensureAdminUserRegistry,
   expiryDateInputValue,
   expiryTimeInputValue,
+  filterVisibleAdminUsers,
   formatAuthDate,
   formatExpiryLabel,
   getInitials,
@@ -20,7 +21,9 @@ import {
   saveAdminUsers,
 } from "@/lib/auth/admin-users";
 import {
+  deleteCloudAdminUser,
   fetchCloudAdminUsers,
+  isPersistableCloudProfile,
   saveCloudAdminUsers,
 } from "@/lib/auth/profiles-cloud";
 import { createClient } from "@/lib/supabase/client";
@@ -32,6 +35,7 @@ import { applyAdminRegistryToSession } from "@/lib/auth/admin-users";
 import { AdminLibraryContentModal } from "@/components/settings/AdminLibraryContentModal";
 import { AccountSystemSection } from "@/components/settings/AccountSystemSection";
 import { AppearanceSettingsSection } from "@/components/settings/AppearanceSettingsSection";
+import { FieldsDetailsSettingsSection } from "@/components/settings/FieldsDetailsSettingsSection";
 import { BillingSection } from "@/components/settings/BillingSection";
 import { PdfBrandingSection } from "@/components/settings/PdfBrandingSection";
 import { TeamOrganizationsSection } from "@/components/settings/TeamOrganizationsSection";
@@ -47,6 +51,13 @@ import {
 } from "@/lib/library/admin-library-summary";
 import { listStoredPlays } from "@/lib/library/idb";
 import { getPlaybookSections } from "@/lib/library/meta";
+import {
+  loadDefaultFieldsConfig,
+  saveDefaultFieldsConfig,
+} from "@/lib/settings/default-fields";
+import { clearAllFieldCategoryEntries } from "@/lib/settings/clear-field-categories";
+import { useOrganizerStore } from "@/stores/organizer-store";
+import type { DefaultFieldsConfig } from "@/types/default-fields";
 import type { AuthSession } from "@/types/auth";
 import type { AdminUserRecord } from "@/types/admin-user";
 import type { TeamOrganization } from "@/types/team-org";
@@ -57,6 +68,7 @@ type NavId =
   | "team-organizations"
   | "billing"
   | "appearance"
+  | "fields-details"
   | "pdf-branding"
   | "account"
   | "tools";
@@ -71,6 +83,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { id: "team-organizations", label: "Team organizations", kind: "embed" },
       { id: "billing", label: "Billing & setup", kind: "embed" },
       { id: "appearance", label: "Appearance", kind: "section" },
+      { id: "fields-details", label: "Fields details", kind: "section" },
     ],
   },
   {
@@ -133,22 +146,75 @@ function UserListItem({
 }
 
 function ManageAccessSection({
-  user,
+  draft,
+  onDraftChange,
+  canEditRole,
+}: {
+  draft: AdminUserRecord;
+  onDraftChange: (next: AdminUserRecord) => void;
+  canEditRole: boolean;
+}) {
+  function applyRole(role: AdminUserRecord["role"]) {
+    if (role === "admin") {
+      onDraftChange({
+        ...draft,
+        role,
+        accessType: "unlimited",
+        expiresAt: null,
+        trialDays: 0,
+      });
+      return;
+    }
+    onDraftChange({
+      ...draft,
+      role,
+      accessType: draft.accessType === "unlimited" ? "trial" : draft.accessType,
+      expiresAt:
+        draft.expiresAt ??
+        addDaysToExpiry(draft.trialDays ?? DEFAULT_TRIAL_DAYS),
+    });
+  }
+
+  return (
+    <>
+      {canEditRole ? (
+        <label className="admin-role-field">
+          <span className="admin-trial-label">Account role</span>
+          <select
+            className="admin-role-select"
+            value={draft.role}
+            onChange={(e) => applyRole(e.target.value as AdminUserRecord["role"])}
+            aria-label="Account role"
+          >
+            <option value="coach">Coach</option>
+            <option value="team_admin">Team Administrator</option>
+            <option value="admin">Master Administrator</option>
+          </select>
+          <p className="admin-user-detail-muted">
+            Master administrators manage all users, billing, organizations, and
+            appearance settings.
+          </p>
+        </label>
+      ) : null}
+
+      {draft.role === "admin" ? (
+        <p className="admin-user-detail-muted">
+          Administrator account — access is always unlimited.
+        </p>
+      ) : (
+        <AccessExpiryControls draft={draft} onDraftChange={onDraftChange} />
+      )}
+    </>
+  );
+}
+
+function AccessExpiryControls({
   draft,
   onDraftChange,
 }: {
-  user: AdminUserRecord;
   draft: AdminUserRecord;
   onDraftChange: (next: AdminUserRecord) => void;
 }) {
-  if (isAdminRecord(user)) {
-    return (
-      <p className="admin-user-detail-muted">
-        Administrator account — access is always unlimited.
-      </p>
-    );
-  }
-
   const dateVal = expiryDateInputValue(draft.expiresAt);
   const timeVal = expiryTimeInputValue(draft.expiresAt);
 
@@ -262,6 +328,7 @@ function ManageAccessSection({
 function UserDetail({
   user,
   draft,
+  actorEmail,
   onDraftChange,
   profileMode,
   onEdit,
@@ -271,6 +338,7 @@ function UserDetail({
 }: {
   user: AdminUserRecord | null;
   draft: AdminUserRecord | null;
+  actorEmail: string;
   onDraftChange: (next: AdminUserRecord) => void;
   profileMode: ProfileMode;
   onEdit: () => void;
@@ -303,11 +371,14 @@ function UserDetail({
           ) : null}
         </header>
         <div className="admin-user-detail-toolbar">
-          {!isAdminRecord(user) ? (
+          {!isAdminRecord(user) ||
+          user.email.toLowerCase() !== actorEmail.toLowerCase() ? (
             <>
-              <button type="button" className="admin-expiry-btn" onClick={onEdit}>
-                Edit profile
-              </button>
+              {!isAdminRecord(user) ? (
+                <button type="button" className="admin-expiry-btn" onClick={onEdit}>
+                  Edit profile
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="admin-delete-btn"
@@ -379,8 +450,8 @@ function UserDetail({
         <section className="admin-user-detail-section admin-user-detail-section-manage">
           <h4 className="admin-user-detail-section-title">Manage access</h4>
           <ManageAccessSection
-            user={user}
             draft={draft}
+            canEditRole={user.email.toLowerCase() !== actorEmail.toLowerCase()}
             onDraftChange={onDraftChange}
           />
         </section>
@@ -524,6 +595,23 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const setBilling = useSettingsStore((s) => s.setBilling);
   const persistAll = useSettingsStore((s) => s.persistAll);
   const setSession = useAuthStore((s) => s.setSession);
+  const loadOrganizerMeta = useOrganizerStore((s) => s.loadMeta);
+
+  const [defaultFields, setDefaultFields] = useState<DefaultFieldsConfig>(() =>
+    loadDefaultFieldsConfig(),
+  );
+
+  useEffect(() => {
+    const flag = "fc_fields_wiped_v2";
+    if (typeof window === "undefined" || localStorage.getItem(flag)) return;
+    void (async () => {
+      const next = await clearAllFieldCategoryEntries();
+      await loadOrganizerMeta();
+      setDefaultFields(next);
+      setDirty(false);
+      localStorage.setItem(flag, "1");
+    })();
+  }, [loadOrganizerMeta]);
 
   const [cloudUsersLoaded, setCloudUsersLoaded] = useState(false);
 
@@ -537,14 +625,15 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
 
     void fetchCloudAdminUsers(supabase).then((result) => {
       if (result.ok && result.users.length > 0) {
-        setUsers(result.users);
-        setDrafts(Object.fromEntries(result.users.map((u) => [u.id, { ...u }])));
+        const visibleUsers = filterVisibleAdminUsers(result.users);
+        setUsers(visibleUsers);
+        setDrafts(Object.fromEntries(visibleUsers.map((u) => [u.id, { ...u }])));
         setSelectedId((prev) =>
-          prev && result.users.some((u) => u.id === prev)
+          prev && visibleUsers.some((u) => u.id === prev)
             ? prev
-            : (result.users[0]?.id ?? null),
+            : (visibleUsers[0]?.id ?? null),
         );
-        saveAdminUsers(result.users);
+        saveAdminUsers(visibleUsers);
       } else if (!result.ok) {
         console.warn("FastCourt: cloud admin users load failed", result.error);
       }
@@ -622,6 +711,14 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
       saveTeamOrganizations(orgs);
       setDirty(false);
       appNotice("Saved", "Team organizations updated.");
+      return;
+    }
+
+    if (navId === "fields-details") {
+      saveDefaultFieldsConfig(defaultFields);
+      await loadOrganizerMeta();
+      setDirty(false);
+      appNotice("Saved", "Default fields updated.");
       return;
     }
 
@@ -727,7 +824,10 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   }
 
   async function handleDeleteProfile(user: AdminUserRecord) {
-    if (isAdminRecord(user)) return;
+    const isSelf =
+      user.id === session.user.id ||
+      user.email.toLowerCase() === session.user.email.toLowerCase();
+    if (isAdminRecord(user) && isSelf) return;
     const confirmed = await appConfirm({
       title: "Delete profile",
       message: `Delete profile for ${user.displayName} (${user.email})? This cannot be undone.`,
@@ -735,6 +835,17 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
       danger: true,
     });
     if (!confirmed) return;
+
+    if (session.cloud && isPersistableCloudProfile(user)) {
+      const supabase = createClient();
+      if (supabase) {
+        const result = await deleteCloudAdminUser(supabase, user.id);
+        if (!result.ok) {
+          appNotice("Cloud sync", result.error);
+          return;
+        }
+      }
+    }
 
     const merged = users
       .map((u) => drafts[u.id] ?? u)
@@ -868,6 +979,7 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
                         <UserDetail
                           user={selectedUser}
                           draft={selectedDraft}
+                          actorEmail={session.user.email}
                           onDraftChange={updateDraft}
                           profileMode={profileMode}
                           onEdit={() => setProfileMode("edit")}
@@ -934,6 +1046,20 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
                         const saved = setAppLogo(dataUrl, true);
                         if (!saved) return false;
                         return true;
+                      }}
+                    />
+                  ) : null}
+
+                  {navId === "fields-details" ? (
+                    <FieldsDetailsSettingsSection
+                      config={defaultFields}
+                      onChange={(next) => {
+                        setDefaultFields(next);
+                        setDirty(true);
+                      }}
+                      onCleared={(next) => {
+                        setDefaultFields(next);
+                        setDirty(false);
                       }}
                     />
                   ) : null}

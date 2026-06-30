@@ -1,4 +1,6 @@
-import { listStoredPlays, putStoredPlays } from "@/lib/library/idb";
+import { listStoredPlays, putStoredPlays, replaceAllStoredPlays } from "@/lib/library/idb";
+import { stampPlayOwner } from "@/lib/library/play-ownership";
+import { scheduleCloudLibrarySync } from "@/lib/cloud/library-sync";
 import type { StoredPlay } from "@/types/library";
 
 export interface LibraryExportPayload {
@@ -47,8 +49,50 @@ export async function exportLibraryJson() {
   return payload;
 }
 
-export async function importLibraryPayload(payload: unknown): Promise<number> {
-  let plays: StoredPlay[] = [];
+function ensurePlayFrames(play: StoredPlay): StoredPlay {
+  if (play.frames?.length) return play;
+  return {
+    ...play,
+    frames: [
+      {
+        id: `frame-${play.id}`,
+        name: "Frame 1",
+        objects: [],
+        actions: [],
+        actionSequence: [],
+      },
+    ],
+  };
+}
+
+/** Re-assign imported plays to the signed-in user so library filters show them. */
+export async function adoptImportedPlaysForSession(
+  plays: StoredPlay[],
+): Promise<StoredPlay[]> {
+  const shaped = plays.map(ensurePlayFrames);
+  if (!isBrowser()) return shaped;
+
+  const { useAuthStore } = await import("@/stores/auth-store");
+  const user = useAuthStore.getState().session?.user;
+  if (!user) return shaped;
+
+  return shaped.map((play) =>
+    stampPlayOwner(
+      {
+        ...play,
+        ownerUserId: undefined,
+        ownerEmail: undefined,
+        ownerDisplayName: undefined,
+      },
+      user,
+    ),
+  );
+}
+
+function parseImportPayload(payload: unknown): {
+  plays: StoredPlay[];
+  replace: boolean;
+} {
   if (
     payload &&
     typeof payload === "object" &&
@@ -56,29 +100,55 @@ export async function importLibraryPayload(payload: unknown): Promise<number> {
     (payload as { type: string }).type === "fastcourt_library_export" &&
     Array.isArray((payload as LibraryExportPayload).plays)
   ) {
-    plays = (payload as LibraryExportPayload).plays;
-  } else if (
+    return {
+      plays: (payload as LibraryExportPayload).plays,
+      replace: true,
+    };
+  }
+
+  if (
     payload &&
     typeof payload === "object" &&
     "type" in payload &&
     (payload as { type: string }).type === "fastcourt_user_backup" &&
     Array.isArray((payload as UserBackupPayload).plays)
   ) {
-    plays = (payload as UserBackupPayload).plays;
-  } else if (Array.isArray(payload)) {
-    plays = payload as StoredPlay[];
-  } else if (
+    return {
+      plays: (payload as UserBackupPayload).plays,
+      replace: true,
+    };
+  }
+
+  if (Array.isArray(payload)) {
+    return { plays: payload as StoredPlay[], replace: false };
+  }
+
+  if (
     payload &&
     typeof payload === "object" &&
     Array.isArray((payload as { plays?: StoredPlay[] }).plays)
   ) {
-    plays = (payload as { plays: StoredPlay[] }).plays;
-  } else {
-    throw new Error("Unrecognized backup format.");
+    return {
+      plays: (payload as { plays: StoredPlay[] }).plays,
+      replace: false,
+    };
   }
 
-  if (!plays.length) return 0;
-  await putStoredPlays(plays);
+  throw new Error("Unrecognized backup format.");
+}
+
+export async function importLibraryPayload(payload: unknown): Promise<number> {
+  const { plays: rawPlays, replace } = parseImportPayload(payload);
+  if (!rawPlays.length) return 0;
+
+  const plays = await adoptImportedPlaysForSession(rawPlays);
+  if (replace) {
+    await replaceAllStoredPlays(plays);
+  } else {
+    await putStoredPlays(plays);
+  }
+
+  void scheduleCloudLibrarySync();
   return plays.length;
 }
 

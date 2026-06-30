@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { PracticePrintDocument } from "@/components/library/PracticePrintDocument";
+import { useOverlayPrint } from "@/lib/print/use-overlay-print";
 import type { ResolvedPracticeRow } from "@/lib/practice/practice-items";
 import type { PracticeSession } from "@/types/library-meta";
 
@@ -13,32 +13,27 @@ interface Props {
 }
 
 export function PracticePrintOverlay({ session, rows, onClose }: Props) {
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
-
-  function handlePrint() {
-    window.print();
-  }
+  const handlePrint = useOverlayPrint({
+    printClass: "fc-practice-print-active",
+    contentRootId: "fc-practice-print-content",
+    onClose,
+  });
 
   const title = session.title || "Practice";
 
   return createPortal(
-    <div className="fc-print-overlay fc-practice-print-overlay" id="practice-print-overlay" role="dialog">
+    <div
+      className="fc-print-overlay fc-practice-print-overlay"
+      id="practice-print-overlay"
+      role="dialog"
+      aria-labelledby="practice-print-overlay-title"
+    >
       <div className="fc-print-overlay-backdrop" onClick={onClose} aria-hidden />
       <div className="fc-print-overlay-panel fc-print-overlay-panel-practice">
         <div className="fc-print-overlay-toolbar fc-practice-print-toolbar no-print">
-          <h2 className="fc-print-overlay-title">{title}</h2>
+          <h2 className="fc-print-overlay-title" id="practice-print-overlay-title">
+            {title}
+          </h2>
           <p className="fc-practice-print-toolbar-hint">
             Use <strong>Print / Save PDF</strong> when ready.
           </p>

@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { DownloadIcon } from "@/components/library/DownloadIcon";
+import { GoogleDriveAddIcon } from "@/components/library/GoogleDriveAddIcon";
 import { PrintPreviewIcon } from "@/components/library/PrintPreviewIcon";
 import { LibraryPrintOverlay } from "@/components/library/LibraryPrintOverlay";
 import { PlaybookInlinePreview } from "@/components/library/PlaybookInlinePreview";
 import { PlaybookPrintOverlay } from "@/components/library/PlaybookPrintOverlay";
-import { PlaybookPrintSettingsPanel } from "@/components/library/PlaybookPrintSettingsPanel";
-import { PresentationOverlay } from "@/components/library/PresentationOverlay";
-import { SettingsGearIcon } from "@/components/library/SettingsGearIcon";
 import { AddPlayToPlaybookModal } from "@/components/library/AddPlayToPlaybookModal";
+import { PlaybookPlaysList } from "@/components/library/PlaybookPlaysList";
+import {
+  PlaybookContextMenu,
+  type PlaybookContextMenuState,
+} from "@/components/library/PlaybookContextMenu";
+import { PlaybookRemovePlayDialog } from "@/components/library/PlaybookDialogs";
 import { shareContentToPlayers } from "@/lib/players/share-to-players";
+import { syncLibraryForUser } from "@/lib/cloud/library-sync";
+import { FC_CONTEXT_MENU_TRIGGER_ATTR } from "@/lib/ui/context-menu-policy";
+import { useAuthStore } from "@/stores/auth-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import {
   appConfirm,
@@ -19,6 +25,12 @@ import {
   appPlaybookName,
 } from "@/stores/dialog-store";
 import { usePlaybookPrintConfigStore } from "@/stores/playbook-print-config-store";
+import {
+  buildPlaybookPageList,
+  DEFAULT_PLAYBOOK_PRINT_SETTINGS,
+  findPlaybookPageIndexForPlay,
+} from "@/lib/library/playbook-print";
+import { toPlaybookPrintSettings } from "@/lib/library/playbook-print-config";
 import type { StoredPlay } from "@/types/library";
 
 const PAGE_SIZE = 8;
@@ -38,7 +50,6 @@ function formatUpdated(iso: string) {
 }
 
 export function PlaybooksView() {
-  const router = useRouter();
   const playbooks = useOrganizerStore((s) => s.playbooks);
   const plays = useOrganizerStore((s) => s.plays);
   const teams = useOrganizerStore((s) => s.teams);
@@ -47,41 +58,30 @@ export function PlaybooksView() {
   const deletePlaybook = useOrganizerStore((s) => s.deletePlaybook);
   const addPlayToPlaybook = useOrganizerStore((s) => s.addPlayToPlaybook);
   const removePlayFromPlaybook = useOrganizerStore((s) => s.removePlayFromPlaybook);
-  const reorderPlaybookPlays = useOrganizerStore((s) => s.reorderPlaybookPlays);
   const resolvePlaybookPlays = useOrganizerStore((s) => s.resolvePlaybookPlays);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [dragPlayIndex, setDragPlayIndex] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [printPlay, setPrintPlay] = useState<StoredPlay | null>(null);
   const [printPlaybookOpen, setPrintPlaybookOpen] = useState(false);
-  const [printSettingsOpen, setPrintSettingsOpen] = useState(false);
-  const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
-  const [manageMenuOpen, setManageMenuOpen] = useState(false);
+  const [autoPrintPlaybook, setAutoPrintPlaybook] = useState(false);
+  const [cloudSyncing, setCloudSyncing] = useState(false);
+  const [contextMenu, setContextMenu] = useState<PlaybookContextMenuState | null>(null);
   const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
+  const [selectedPageIndex, setSelectedPageIndex] = useState(0);
+  const [previewZoomPct, setPreviewZoomPct] = useState(80);
+  const [focusPageIndex, setFocusPageIndex] = useState<number | null>(null);
   const [addPlayOpen, setAddPlayOpen] = useState(false);
-  const headerActionsSlot = useSyncExternalStore(
-    () => () => {},
-    () => document.getElementById("fd-main-tabs-actions"),
-    () => null,
-  );
+  const [removePlayTarget, setRemovePlayTarget] = useState<{
+    playId: string;
+    playTitle: string;
+  } | null>(null);
 
-  useEffect(() => {
-    if (!manageMenuOpen) return;
-    function closeMenu() {
-      setManageMenuOpen(false);
-    }
-    document.addEventListener("click", closeMenu);
-    return () => document.removeEventListener("click", closeMenu);
-  }, [manageMenuOpen]);
+  const session = useAuthStore((s) => s.session);
 
   const printConfig = usePlaybookPrintConfigStore((s) => s.config);
   const printConfigHydrated = usePlaybookPrintConfigStore((s) => s.hydrated);
   const hydratePrintConfig = usePlaybookPrintConfigStore((s) => s.hydrate);
-
-  useEffect(() => {
-    if (!printConfigHydrated) hydratePrintConfig();
-  }, [printConfigHydrated, hydratePrintConfig]);
 
   const selected = playbooks.find((p) => p.id === selectedId) ?? null;
   const selectedPlays = useMemo(
@@ -99,6 +99,33 @@ export function PlaybooksView() {
     }
     return selectedPlays[0]?.id ?? null;
   }, [selectedPlays, selectedPlayId]);
+
+  const printSettings = useMemo(
+    () => ({
+      ...DEFAULT_PLAYBOOK_PRINT_SETTINGS,
+      ...toPlaybookPrintSettings(printConfig),
+    }),
+    [printConfig],
+  );
+
+  const playbookPages = useMemo(() => {
+    if (!selectedPlays.length) return [];
+    return buildPlaybookPageList(selectedPlays, printSettings).pages;
+  }, [selectedPlays, printSettings]);
+
+  useEffect(() => {
+    if (!printConfigHydrated) hydratePrintConfig();
+  }, [printConfigHydrated, hydratePrintConfig]);
+
+  useEffect(() => {
+    if (!playbookPages.length) {
+      setSelectedPageIndex(0);
+      return;
+    }
+    setSelectedPageIndex((current) =>
+      Math.min(Math.max(0, current), playbookPages.length - 1),
+    );
+  }, [playbookPages.length, selected?.id]);
 
   const totalPages = Math.max(1, Math.ceil(playbooks.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -142,45 +169,34 @@ export function PlaybooksView() {
     setSelectedId(pb.id);
   }
 
-  async function handleOpenRenamePlaybook() {
-    if (!selected) return;
+  async function handleOpenRenamePlaybook(playbookId: string) {
+    const playbook = playbooks.find((pb) => pb.id === playbookId);
+    if (!playbook) return;
     const result = await appPlaybookName({
       mode: "rename",
-      initialName: selected.name,
-      initialTeam: selected.team,
+      initialName: playbook.name,
+      initialTeam: playbook.team,
       teams,
       existingNames: playbooks
-        .filter((pb) => pb.id !== selected.id)
+        .filter((pb) => pb.id !== playbook.id)
         .map((pb) => pb.name),
     });
     if (!result) return;
-    await updatePlaybook(selected.id, { name: result.name });
-    setManageMenuOpen(false);
+    await updatePlaybook(playbook.id, { name: result.name });
   }
 
-  async function handleOpenDeletePlaybook() {
-    if (!selected) return;
-    const playCount = selected.playRefs.length;
+  async function handleOpenDeletePlaybook(playbookId: string) {
+    const playbook = playbooks.find((pb) => pb.id === playbookId);
+    if (!playbook) return;
+    const playCount = playbook.playRefs.length;
     const confirmed = await appConfirm({
       title: "Delete playbook",
-      message: `Delete "${selected.name}"?${playCount > 0 ? ` This playbook contains ${playCount} play${playCount === 1 ? "" : "s"}.` : ""} This cannot be undone.`,
+      message: `Delete "${playbook.name}"?${playCount > 0 ? ` This playbook contains ${playCount} play${playCount === 1 ? "" : "s"}.` : ""} This cannot be undone.`,
       confirmLabel: "Delete",
       danger: true,
     });
     if (!confirmed) return;
-    await handleDeletePlaybook();
-  }
-
-  async function handleOpenRemovePlay(play: { id: string; title: string }) {
-    if (!selected) return;
-    const confirmed = await appConfirm({
-      title: "Remove from playbook",
-      message: `Remove "${play.title}" from "${selected.name}"? The play stays in your library.`,
-      confirmLabel: "Remove",
-      danger: true,
-    });
-    if (!confirmed) return;
-    await removePlayFromPlaybook(selected.id, play.id);
+    await handleDeletePlaybook(playbookId);
   }
 
   async function handleAddPlays(playIds: string[]) {
@@ -188,25 +204,115 @@ export function PlaybooksView() {
     for (const playId of playIds) {
       await addPlayToPlaybook(selected.id, playId);
     }
+    const lastPlayId = playIds[playIds.length - 1];
+    if (lastPlayId) {
+      setSelectedPlayId(lastPlayId);
+      const nextPlays = resolvePlaybookPlays({
+        ...selected,
+        playRefs: [...selected.playRefs, ...playIds],
+      });
+      const pages = buildPlaybookPageList(
+        nextPlays,
+        printSettings,
+      ).pages;
+      const pageIndex = findPlaybookPageIndexForPlay(pages, lastPlayId);
+      setSelectedPageIndex(pageIndex);
+      setFocusPageIndex(pageIndex);
+    }
   }
 
-  async function handleDeletePlaybook() {
-    if (!selected) return;
-    await deletePlaybook(selected.id);
-    setSelectedId(null);
-    setManageMenuOpen(false);
+  function handleSelectPlaybookPage(index: number) {
+    setSelectedPageIndex(index);
+    const page = playbookPages[index];
+    if (page?.playId) {
+      setSelectedPlayId(page.playId);
+    }
+  }
+
+  function handleSelectPlay(playId: string) {
+    const pageIndex = findPlaybookPageIndexForPlay(playbookPages, playId);
+    setSelectedPlayId(playId);
+    setSelectedPageIndex(pageIndex);
+    setFocusPageIndex(pageIndex);
+  }
+
+  function handleRequestRemovePlay(playId: string) {
+    const play = selectedPlays.find((item) => item.id === playId);
+    if (!play) return;
+    setRemovePlayTarget({
+      playId,
+      playTitle: play.title?.trim() || "Untitled",
+    });
+  }
+
+  async function handleConfirmRemovePlay() {
+    if (!selected || !removePlayTarget) return;
+    const { playId } = removePlayTarget;
+    const nextPlays = selectedPlays.filter((play) => play.id !== playId);
+    await removePlayFromPlaybook(selected.id, playId);
+    if (activePlayId === playId) {
+      const nextPlayId = nextPlays[0]?.id ?? null;
+      setSelectedPlayId(nextPlayId);
+      if (nextPlayId) {
+        const pages = buildPlaybookPageList(nextPlays, printSettings).pages;
+        const pageIndex = findPlaybookPageIndexForPlay(pages, nextPlayId);
+        setSelectedPageIndex(pageIndex);
+        setFocusPageIndex(pageIndex);
+      } else {
+        setSelectedPageIndex(0);
+        setFocusPageIndex(null);
+      }
+    }
+    setRemovePlayTarget(null);
+  }
+
+  async function handleDeletePlaybook(playbookId: string) {
+    await deletePlaybook(playbookId);
+    if (selectedId === playbookId) {
+      setSelectedId(null);
+    }
+  }
+
+  function handlePlaybookContextMenu(
+    playbookId: string,
+    e: MouseEvent<HTMLButtonElement>,
+  ) {
+    e.preventDefault();
+    setSelectedId(playbookId);
+    setContextMenu({ x: e.clientX, y: e.clientY, playbookId });
   }
 
   function handlePrintPreview() {
     if (!selected || !selectedPlays.length) return;
+    setAutoPrintPlaybook(false);
     setPrintPlaybookOpen(true);
   }
 
-  function handlePresent() {
-    if (!selectedPlays.length) return;
-    const play =
-      selectedPlays.find((item) => item.id === activePlayId) ?? selectedPlays[0];
-    setPresentPlay(play);
+  function handleDownloadPdf() {
+    if (!selected || !selectedPlays.length) return;
+    setAutoPrintPlaybook(true);
+    setPrintPlaybookOpen(true);
+  }
+
+  async function handleSaveToCloud() {
+    if (!session?.cloud) {
+      appNotice("Cloud save", "Sign in with cloud mode to save your library.");
+      return;
+    }
+    setCloudSyncing(true);
+    try {
+      const result = await syncLibraryForUser(session.user);
+      if (!result.ok) {
+        appNotice("Cloud save", result.error);
+        return;
+      }
+      appNotice(
+        "Cloud save",
+        `Saved ${result.result.playCount} plays and ${result.result.playbookCount} playbooks to your account.`,
+      );
+    } finally {
+      setCloudSyncing(false);
+    }
   }
 
   const detailState = !selected
@@ -215,28 +321,8 @@ export function PlaybooksView() {
       ? "empty"
       : "split";
 
-  const headerActions =
-    headerActionsSlot &&
-    playbooks.length > 0 &&
-    createPortal(
-      <button
-        type="button"
-        className={`fc-playbooks-settings-btn${printSettingsOpen ? " active" : ""}`}
-        id="btn-playbooks-print-settings"
-        title="Print settings"
-        aria-label="Print settings"
-        aria-pressed={printSettingsOpen}
-        disabled={!selected}
-        onClick={() => setPrintSettingsOpen((open) => !open)}
-      >
-        <SettingsGearIcon size={22} />
-      </button>,
-      headerActionsSlot,
-    );
-
   return (
     <>
-      {headerActions}
       <div className="fc-playbooks-shell" id="fc-playbooks-shell">
         <aside className="fc-playbooks-sidebar" id="fc-playbooks-sidebar" aria-label="Playbooks">
           <div className="fc-playbooks-sidebar-toolbar">
@@ -246,52 +332,8 @@ export function PlaybooksView() {
               id="btn-playbooks-create-playbook"
               onClick={() => void handleOpenCreatePlaybook()}
             >
-              Create Playbook
+              ADD PLAYBOOK
             </button>
-            <div className="fc-playbooks-manage-wrap">
-              <button
-                type="button"
-                className="fc-playbooks-manage-playbook-btn"
-                id="btn-playbooks-manage-playbook"
-                disabled={!playbooks.length}
-                aria-expanded={manageMenuOpen}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setManageMenuOpen((open) => !open);
-                }}
-              >
-                Manage Playbooks
-              </button>
-              <div
-                className="fc-playbooks-manage-menu"
-                id="fc-playbooks-manage-menu"
-                hidden={!manageMenuOpen}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  className="fc-playbooks-manage-menu-item"
-                  disabled={!selected}
-                  onClick={() => {
-                    setManageMenuOpen(false);
-                    void handleOpenRenamePlaybook();
-                  }}
-                >
-                  Edit Playbook
-                </button>
-                <button
-                  type="button"
-                  className="fc-playbooks-manage-menu-item fc-playbooks-manage-menu-delete"
-                  disabled={!selected}
-                  onClick={() => {
-                    setManageMenuOpen(false);
-                    void handleOpenDeletePlaybook();
-                  }}
-                >
-                  Delete Playbook
-                </button>
-              </div>
-            </div>
           </div>
           <div
             className="fc-playbooks-sidebar-list"
@@ -313,7 +355,9 @@ export function PlaybooksView() {
                     className={`fc-playbooks-sidebar-item${selectedId === section.id ? " selected" : ""}`}
                     role="option"
                     aria-selected={selectedId === section.id}
+                    {...{ [FC_CONTEXT_MENU_TRIGGER_ATTR]: "" }}
                     onClick={() => setSelectedId(section.id)}
+                    onContextMenu={(e) => handlePlaybookContextMenu(section.id, e)}
                   >
                     <span className="fc-playbooks-sidebar-item-main">
                       <span className="fc-playbooks-sidebar-item-name">
@@ -412,25 +456,37 @@ export function PlaybooksView() {
               </button>
               <button
                 type="button"
-                className="fc-playbooks-present-btn"
-                id="btn-playbooks-present"
-                title="Present play"
-                aria-label="Present play"
-                disabled={!selected || !selectedPlays.length}
-                onClick={handlePresent}
+                className="fc-playbooks-toolbar-icon-btn"
+                id="btn-playbooks-save-cloud"
+                title="Save to cloud"
+                aria-label="Save to cloud"
+                disabled={cloudSyncing || !selected}
+                onClick={() => void handleSaveToCloud()}
               >
-                ▶
+                <GoogleDriveAddIcon size={18} />
               </button>
               <button
                 type="button"
-                className="fc-playbooks-preview-btn"
+                className="fc-playbooks-toolbar-icon-btn"
+                id="btn-playbooks-download-pdf"
+                title="Download PDF"
+                aria-label="Download PDF"
+                disabled={!selected || !selectedPlays.length}
+                onClick={handleDownloadPdf}
+              >
+                <DownloadIcon size={18} />
+              </button>
+              <button
+                type="button"
+                className={`fc-playbooks-preview-btn${printPlaybookOpen ? " active" : ""}`}
                 id="btn-playbooks-preview"
                 title="Print / preview layout"
                 aria-label="Print preview"
+                aria-pressed={printPlaybookOpen}
                 disabled={!selected || !selectedPlays.length}
                 onClick={handlePrintPreview}
               >
-                <PrintPreviewIcon size={22} />
+                <PrintPreviewIcon size={18} />
               </button>
             </div>
           </div>
@@ -455,75 +511,26 @@ export function PlaybooksView() {
               </div>
             ) : (
               <div className="fc-playbooks-detail-split" id="fc-playbooks-detail-split">
-                <aside className="fc-playbooks-plays-pane" id="fc-playbooks-plays-pane">
-                  <div className="fc-playbooks-plays-list" id="fc-playbooks-plays-list">
-                    {selectedPlays.map((play, index) => (
-                      <div
-                        key={play.id}
-                        className="fc-playbooks-list-item-row"
-                        draggable
-                        onDragStart={() => setDragPlayIndex(index)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={() => {
-                          if (
-                            selected &&
-                            dragPlayIndex != null &&
-                            dragPlayIndex !== index
-                          ) {
-                            void reorderPlaybookPlays(
-                              selected.id,
-                              dragPlayIndex,
-                              index,
-                            );
-                          }
-                          setDragPlayIndex(null);
-                        }}
-                      >
-                        <button
-                          type="button"
-                          className={`fc-playbooks-list-item${activePlayId === play.id ? " selected" : ""}`}
-                          onClick={() => setSelectedPlayId(play.id)}
-                          onDoubleClick={(e) => {
-                            e.preventDefault();
-                            router.push(`/designer?item=${play.id}`);
-                          }}
-                        >
-                          {play.title}
-                        </button>
-                        <button
-                          type="button"
-                          className="fc-playbooks-list-remove"
-                          title="Remove from playbook"
-                          aria-label="Remove from playbook"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (selected) {
-                              void handleOpenRemovePlay({
-                                id: play.id,
-                                title: play.title,
-                              });
-                            }
-                          }}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </aside>
+                {selected && selectedPlays.length ? (
+                  <PlaybookPlaysList
+                    plays={selectedPlays}
+                    selectedPlayId={activePlayId}
+                    onSelectPlay={handleSelectPlay}
+                    onRemovePlay={handleRequestRemovePlay}
+                  />
+                ) : null}
                 {selected ? (
-                  printSettingsOpen ? (
-                    <PlaybookPrintSettingsPanel
-                      onClose={() => setPrintSettingsOpen(false)}
-                    />
-                  ) : (
-                    <PlaybookInlinePreview
-                      playbook={selected}
-                      plays={selectedPlays}
-                      scrollToPlayId={activePlayId}
-                      printConfig={printConfig}
-                    />
-                  )
+                  <PlaybookInlinePreview
+                    playbook={selected}
+                    plays={selectedPlays}
+                    printConfig={printConfig}
+                    selectedPageIndex={selectedPageIndex}
+                    focusPageIndex={focusPageIndex}
+                    onFocusPageHandled={() => setFocusPageIndex(null)}
+                    zoomPct={previewZoomPct}
+                    onPageChange={handleSelectPlaybookPage}
+                    onZoomChange={setPreviewZoomPct}
+                  />
                 ) : null}
               </div>
             )}
@@ -536,18 +543,15 @@ export function PlaybooksView() {
         <PlaybookPrintOverlay
           playbook={selected}
           plays={selectedPlays}
-          printConfig={printConfig}
-          onClose={() => setPrintPlaybookOpen(false)}
+          autoPrintOnOpen={autoPrintPlaybook}
+          onClose={() => {
+            setPrintPlaybookOpen(false);
+            setAutoPrintPlaybook(false);
+          }}
         />
       ) : null}
       {printPlay ? (
         <LibraryPrintOverlay play={printPlay} onClose={() => setPrintPlay(null)} />
-      ) : null}
-      {presentPlay ? (
-        <PresentationOverlay
-          play={presentPlay}
-          onClose={() => setPresentPlay(null)}
-        />
       ) : null}
       {selected && addPlayOpen ? (
         <AddPlayToPlaybookModal
@@ -556,6 +560,23 @@ export function PlaybooksView() {
           excludedPlayIds={excludedPlayIds}
           onClose={() => setAddPlayOpen(false)}
           onAdd={(playIds) => void handleAddPlays(playIds)}
+        />
+      ) : null}
+      {contextMenu ? (
+        <PlaybookContextMenu
+          menu={contextMenu}
+          onClose={() => setContextMenu(null)}
+          onRename={() => void handleOpenRenamePlaybook(contextMenu.playbookId)}
+          onDelete={() => void handleOpenDeletePlaybook(contextMenu.playbookId)}
+        />
+      ) : null}
+      {selected && removePlayTarget ? (
+        <PlaybookRemovePlayDialog
+          open
+          playTitle={removePlayTarget.playTitle}
+          playbookName={selected.name}
+          onClose={() => setRemovePlayTarget(null)}
+          onConfirm={() => void handleConfirmRemovePlay()}
         />
       ) : null}
     </>

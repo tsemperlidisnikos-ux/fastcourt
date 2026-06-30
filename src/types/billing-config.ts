@@ -1,5 +1,17 @@
 import type { PaymentMethodsConfig } from "@/types/payment-methods";
 
+export interface LandingPricingConfig {
+  individualYearlyEur: number;
+  individualMonthlyEur: number;
+  clubAdminYearlyEur: number;
+  clubCoachSeatYearlyEur: number;
+  clubCoachSeatMonthlyEur: number;
+  yearlySavePercent: number;
+  clubCoachMin: number;
+  clubCoachMax: number;
+  clubCoachDefault: number;
+}
+
 export interface BillingPlan {
   id: string;
   label: string;
@@ -18,4 +30,5 @@ export interface BillingConfig {
   methods: PaymentMethodsConfig;
   deviceLimitPerCoach: number;
   plans: BillingPlan[];
+  landingPricing: LandingPricingConfig;
 }

@@ -7,7 +7,10 @@ import { ConeMarker } from "@/components/designer/ConeMarker";
 import { ShadowMarker } from "@/components/designer/ShadowMarker";
 import { ZoneMarker } from "@/components/designer/ZoneMarker";
 import { OBJECT_COLORS } from "@/lib/designer/constants";
+import { DEFAULT_APP_FONT_KONVA } from "@/lib/config";
+import { formatDefenseDisplayLabel } from "@/lib/designer/player-limits";
 import { getEditorPlayerJerseyFontSize } from "@/lib/designer/action-geometry";
+import { editorBallRingOuterRadiusFromFontSize, fastDrawBallRingOuterRadiusPx } from "@/lib/designer/player-ball-ring";
 import { useSettingsStore } from "@/stores/settings-store";
 import type { CourtRect, DesignerObject } from "@/types/designer";
 
@@ -55,8 +58,61 @@ export function PlayerMarker({
 }: Props) {
   const draggedRef = useRef(false);
   const playerDisplay = useSettingsStore((s) => s.appearance.playerDisplay);
+  const hitListening = listening || draggable;
 
-  if (object.kind === "ball") return null;
+  if (object.kind === "ball") {
+    const ballRadius = Math.max(6, radius * 0.42);
+
+    function handleBallDragStart(e: Konva.KonvaEventObject<DragEvent>) {
+      e.cancelBubble = true;
+      draggedRef.current = false;
+    }
+
+    function handleBallDragMove(e: Konva.KonvaEventObject<DragEvent>) {
+      e.cancelBubble = true;
+      draggedRef.current = true;
+    }
+
+    function handleBallDragEnd(e: Konva.KonvaEventObject<DragEvent>) {
+      e.cancelBubble = true;
+      const node = e.target;
+      onDragEnd?.(node.x(), node.y());
+    }
+
+    return (
+      <Group
+        x={x}
+        y={y}
+        draggable={draggable}
+        onDragStart={draggable ? handleBallDragStart : undefined}
+        onDragMove={draggable ? handleBallDragMove : undefined}
+        onDragEnd={draggable ? handleBallDragEnd : undefined}
+        onPointerDown={hitListening ? (e) => { e.cancelBubble = true; } : undefined}
+        onPointerUp={(e) => {
+          if (draggedRef.current) {
+            draggedRef.current = false;
+            return;
+          }
+          if (!hitListening) return;
+          e.cancelBubble = true;
+          onPointerUp?.(e);
+        }}
+      >
+        <Circle
+          radius={ballRadius + 8}
+          fill="rgba(0,0,0,0.001)"
+          listening={hitListening}
+        />
+        <Circle
+          radius={ballRadius}
+          fill={OBJECT_COLORS.ball}
+          stroke="#111111"
+          strokeWidth={1.5}
+          listening={false}
+        />
+      </Group>
+    );
+  }
   const fontSize = compact
     ? (compactFontSize ??
       Math.max(radius >= 5 ? 9 : 7, radius * (radius >= 5 ? 1.12 : 0.95)))
@@ -67,41 +123,50 @@ export function PlayerMarker({
   const isOffense = object.kind === "offense";
   const isDefense = object.kind === "defense";
   const isPlayer = isOffense || isDefense;
-  const jerseyText = isDefense
-    ? object.label
-      ? `X${object.label}`
-      : ""
-    : object.label ?? "";
-  const hitListening = listening || draggable;
   const circleDisplayMode = playerDisplay === "circle";
   const showCircleRing = compact
     ? circleDisplayMode
     : circleDisplayMode || selected;
   const ringRadius = radius * 1.12;
-  const labelRadius = showCircleRing && isPlayer ? ringRadius : radius;
   const hasBallRing = isOffense && !!object.hasBall;
   const offenseCircle = isOffense && showCircleRing && !hasBallRing;
-  const defenseCircle = isDefense && showCircleRing;
-  const markerStroke = compactStrokeWidth ?? (compact ? 1.15 : 2.5);
-  const jerseyFontStyle = compact ? "normal" : "bold";
+  const defenseCircle = isDefense && (showCircleRing || !compact);
+  const showMarkerRing = offenseCircle || defenseCircle;
+  const labelRadius =
+    isPlayer && (showCircleRing || showMarkerRing) ? ringRadius : radius;
+  const jerseyText = isDefense
+    ? formatDefenseDisplayLabel(object.label)
+    : object.label ?? "";
+  const textFrameRadius = showMarkerRing ? ringRadius : labelRadius;
+  const jerseyBoxHeight = textFrameRadius * 2;
+  const jerseyBoxWidth =
+    jerseyText.length > 1
+      ? Math.max(textFrameRadius * 2.5, fontSize * 0.58 * jerseyText.length)
+      : textFrameRadius * 2;
+  const displayFontSize = showMarkerRing
+    ? Math.min(
+        fontSize,
+        Math.round(ringRadius * (jerseyText.length > 1 ? 1.15 : 1.22)),
+      )
+    : fontSize;
+  const markerStroke = compactStrokeWidth ?? (compact ? 1 : 2.75);
+  const offenseRingStroke = "#000000";
+  const jerseyFontStyle = "bold";
+  const markerHitRadius =
+    isPlayer && (showCircleRing || showMarkerRing)
+      ? ringRadius + 5
+      : radius + 6;
   const resolvedBallMode =
     ballRingMode ?? (compact ? "thumbnail" : "editor");
-  const ballBase =
-    showCircleRing && isPlayer && !hasBallRing ? ringRadius : radius;
-  const ballRingPadding =
-    resolvedBallMode === "editor"
-      ? Math.max(14, ballBase * 0.5)
-      : Math.max(3, ballBase * 0.24);
   const ballRingRadius =
     ballRingExtra != null
-      ? ballBase + ballRingExtra
+      ? radius + ballRingExtra
       : resolvedBallMode === "editor"
-        ? ballBase + ballRingPadding
-        : Math.max(ballBase + ballRingPadding, 9);
+        ? editorBallRingOuterRadiusFromFontSize(fontSize)
+        : fastDrawBallRingOuterRadiusPx(fontSize);
   const ballStroke =
-    ballRingStrokeWidth ??
-    (resolvedBallMode === "editor" ? 3 : 1);
-  const ballStrokeColor = resolvedBallMode === "editor" ? "#000000" : "#1f2937";
+    ballRingStrokeWidth ?? (resolvedBallMode === "editor" ? 2.75 : 1);
+  const ballStrokeColor = "#000000";
 
   function handleDragStart(e: Konva.KonvaEventObject<DragEvent>) {
     e.cancelBubble = true;
@@ -143,7 +208,7 @@ export function PlayerMarker({
       }}
     >
       <Circle
-        radius={radius + 10}
+        radius={markerHitRadius}
         fill="rgba(0,0,0,0.001)"
         listening={hitListening}
       />
@@ -153,6 +218,7 @@ export function PlayerMarker({
           fill="transparent"
           stroke={OBJECT_COLORS.defense}
           strokeWidth={markerStroke}
+          strokeScaleEnabled={false}
           listening={false}
         />
       ) : null}
@@ -160,24 +226,25 @@ export function PlayerMarker({
         <Circle
           radius={ringRadius}
           fill="transparent"
-          stroke="#111111"
+          stroke={offenseRingStroke}
           strokeWidth={markerStroke}
+          strokeScaleEnabled={false}
           listening={false}
         />
       ) : null}
       {isPlayer && jerseyText ? (
         <Text
           text={jerseyText}
-          fontSize={fontSize}
+          fontSize={displayFontSize}
           fill={isDefense ? OBJECT_COLORS.defense : "#111111"}
           fontStyle={jerseyFontStyle}
-          fontFamily="Segoe UI, system-ui, sans-serif"
+          fontFamily={DEFAULT_APP_FONT_KONVA}
           align="center"
           verticalAlign="middle"
-          x={-labelRadius}
-          y={-labelRadius}
-          width={labelRadius * 2}
-          height={labelRadius * 2}
+          x={-jerseyBoxWidth / 2}
+          y={-jerseyBoxHeight / 2}
+          width={jerseyBoxWidth}
+          height={jerseyBoxHeight}
           listening={false}
         />
       ) : null}

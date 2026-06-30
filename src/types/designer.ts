@@ -1,5 +1,19 @@
 export type CourtType = "half" | "full";
 
+export type CourtTemplate = "NCAA" | "NBA" | "HighSchool" | "FIBA";
+
+export interface CourtViewSettings {
+  template: CourtTemplate;
+  angle: number;
+  sidelinesFt: number;
+  showBaskets: boolean;
+  featureFilters: Record<string, boolean>;
+  floorColor?: string;
+  lineColor?: string;
+  showWoodTiles?: boolean;
+  woodTextureId?: string;
+}
+
 
 
 export type ActionType =
@@ -172,7 +186,12 @@ export interface DesignerAction {
 
   strokeWidth?: number;
 
+  color?: string;
+
   timing?: ActionTiming;
+
+  /** Offense player id that initiated pass/dribble (multi-ball drills). */
+  sourcePlayerId?: string;
 
   isFreehand?: boolean;
 
@@ -198,6 +217,12 @@ export interface DesignerFrame {
 
   notes?: string;
 
+  /** Show frame name overlay during animation playback. Default true when unset. */
+  showTitleInAnimation?: boolean;
+
+  /** Total playback duration for this frame's actions, in seconds. */
+  animDurationSec?: number;
+
 }
 
 
@@ -209,6 +234,8 @@ export interface PlayDocument {
   title: string;
 
   courtType: CourtType;
+
+  courtView?: CourtViewSettings;
 
   frames: DesignerFrame[];
 

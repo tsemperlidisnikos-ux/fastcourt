@@ -7,7 +7,7 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/set-state-in-effect": "off",
     },
   },
   {
@@ -32,6 +32,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "public/pdf.worker.min.mjs",
     "server.js",
+    "scripts/tmp-**",
     "src/lib/fastdraw/legacy/**",
     "lint-report.json",
     "project-analysis.json",

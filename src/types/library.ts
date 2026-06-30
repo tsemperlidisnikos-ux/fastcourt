@@ -1,4 +1,4 @@
-import type { CourtType, PlayDocument } from "@/types/designer";
+import type { CourtType, CourtViewSettings, PlayDocument } from "@/types/designer";
 
 export type LibraryItemType = "play" | "drill" | "playbook";
 
@@ -9,6 +9,7 @@ export interface PlayDetailsValues {
   series: string;
   tags: string[];
   courtType: CourtType;
+  courtView?: CourtViewSettings;
   season: string;
   playNotes: string;
   videoUrl: string;
@@ -34,6 +35,12 @@ export interface StoredPlay extends PlayDocument {
   source?: "manual" | "fdb-import";
   fastDrawLazy?: FdbLazyMeta;
   lazyPending?: boolean;
+  /** Cloud solo library: only this Supabase user may see/edit the play. */
+  ownerUserId?: string;
+  /** Owner email snapshot — prevents cross-account play reuse in cloud. */
+  ownerEmail?: string;
+  /** Snapshot of creator name for admin library views. */
+  ownerDisplayName?: string;
 }
 
 export interface LibraryItem {
@@ -49,6 +56,9 @@ export interface LibraryItem {
   favorite?: boolean;
   source?: StoredPlay["source"];
   lazyPending?: boolean;
+  ownerUserId?: string;
+  ownerEmail?: string;
+  ownerDisplayName?: string;
 }
 
 export interface FdbImportResult {

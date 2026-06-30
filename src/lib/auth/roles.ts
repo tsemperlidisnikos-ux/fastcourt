@@ -1,8 +1,9 @@
-import { MASTER_ADMIN_EMAIL, ROLES, type Role } from "@/lib/config";
+import { getAdminBootstrapEmails, ROLES, type Role } from "@/lib/config";
 import type { SessionUser } from "@/types/auth";
 
 export function isMasterAdminEmail(email: string) {
-  return email.trim().toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase();
+  const normalized = email.trim().toLowerCase();
+  return getAdminBootstrapEmails().includes(normalized);
 }
 
 export function resolveSignupRole(email: string): Role {

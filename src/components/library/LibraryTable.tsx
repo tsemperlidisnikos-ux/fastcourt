@@ -1,65 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, type MouseEvent } from "react";
+import { FC_CONTEXT_MENU_TRIGGER_ATTR } from "@/lib/ui/context-menu-policy";
+import { contrastingTextOnBackground } from "@/lib/settings/color-contrast";
+import { resolveTagColor } from "@/lib/library/tag-colors";
+import {
+  resolvePlayCreatorLabel,
+} from "@/lib/library/play-creator-label";
+import { useOrganizerStore } from "@/stores/organizer-store";
 import type { LibraryItem } from "@/types/library";
 
-function SwipeRow({
-  enabled,
-  selected,
-  onActivate,
-  onContextMenu,
-  children,
-}: {
-  enabled: boolean;
-  selected?: boolean;
-  onActivate: () => void;
-  onContextMenu?: (e: MouseEvent<HTMLTableRowElement>) => void;
-  children: ReactNode;
-}) {
-  const [offset, setOffset] = useState(0);
-  const startX = useRef(0);
-
-  return (
-    <tr
-      className={`${selected ? "selected" : ""}${enabled ? " fc-fd-swipe-host" : ""}`}
-      style={enabled ? { transform: `translateX(${offset}px)` } : undefined}
-      onClick={onActivate}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        onContextMenu?.(e);
-      }}
-      onTouchStart={
-        enabled
-          ? (e) => {
-              startX.current = e.touches[0]?.clientX ?? 0;
-            }
-          : undefined
-      }
-      onTouchMove={
-        enabled
-          ? (e) => {
-              const x = e.touches[0]?.clientX ?? 0;
-              setOffset(Math.max(-72, Math.min(72, x - startX.current)));
-            }
-          : undefined
-      }
-      onTouchEnd={
-        enabled
-          ? () => {
-              if (offset > 40) onActivate();
-              setOffset(0);
-            }
-          : undefined
-      }
-    >
-      {children}
-    </tr>
-  );
-}
-
 const TYPE_LABEL: Record<LibraryItem["type"], string> = {
-  play: "Play",
-  drill: "Drill",
+  play: "PLAY",
+  drill: "DRILL",
   playbook: "Playbook",
 };
 
@@ -67,6 +20,7 @@ interface Props {
   items: LibraryItem[];
   selectedIds: ReadonlySet<string>;
   previewId: string | null;
+  selectionMode?: "multi" | "single";
   onToggleRow: (id: string) => void;
   onToggleAllFiltered: (checked: boolean) => void;
   onPreview: (id: string) => void;
@@ -75,13 +29,15 @@ interface Props {
   pageSize: number;
   onPageChange: (page: number) => void;
   onNewPractice?: () => void;
-  tabletMode?: boolean;
+  showCreatedBy?: boolean;
+  creatorNames?: ReadonlyMap<string, string>;
 }
 
 export function LibraryTable({
   items,
   selectedIds,
   previewId,
+  selectionMode = "multi",
   onToggleRow,
   onToggleAllFiltered,
   onPreview,
@@ -90,8 +46,10 @@ export function LibraryTable({
   pageSize,
   onPageChange,
   onNewPractice,
-  tabletMode = false,
+  showCreatedBy = false,
+  creatorNames,
 }: Props) {
+  const fieldTagColors = useOrganizerStore((s) => s.fieldTagColors);
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, totalPages - 1);
@@ -110,6 +68,8 @@ export function LibraryTable({
     }
   }, [someFilteredSelected]);
 
+  const singleSelect = selectionMode === "single";
+
   return (
     <div className="org-library-main fd-library-main">
       <div className="org-table-view fd-table-view" id="library-table-wrap">
@@ -118,42 +78,50 @@ export function LibraryTable({
             <thead>
               <tr>
                 <th className="col-select" aria-label="Select">
-                  <input
-                    type="checkbox"
-                    id="library-select-all"
-                    className="org-play-row-check library-select-all-check"
-                    title="Select all in list"
-                    aria-label="Select all in list"
-                    ref={selectAllRef}
-                    checked={allFilteredSelected}
-                    disabled={total === 0}
-                    onChange={(e) => onToggleAllFiltered(e.target.checked)}
-                  />
+                  {singleSelect ? null : (
+                    <input
+                      type="checkbox"
+                      id="library-select-all"
+                      className="org-play-row-check library-select-all-check"
+                      title="Select all in list"
+                      aria-label="Select all in list"
+                      ref={selectAllRef}
+                      checked={allFilteredSelected}
+                      disabled={total === 0}
+                      onChange={(e) => onToggleAllFiltered(e.target.checked)}
+                    />
+                  )}
                 </th>
                 <th className="col-season">Season</th>
                 <th className="col-type">Type</th>
                 <th className="col-team">Team</th>
                 <th className="col-series">Series</th>
                 <th className="col-tags">Tags</th>
+                {showCreatedBy ? (
+                  <th className="col-created-by">Created By</th>
+                ) : null}
                 <th className="col-play-name">Play Name</th>
               </tr>
             </thead>
             <tbody id="library-table-body">
               {slice.map((item) => (
-                <SwipeRow
+                <tr
                   key={item.id}
-                  enabled={tabletMode}
-                  selected={previewId === item.id}
-                  onActivate={() => onPreview(item.id)}
-                  onContextMenu={
-                    onRowContextMenu
-                      ? (e) => onRowContextMenu(item.id, e)
-                      : undefined
-                  }
+                  className={previewId === item.id ? "selected" : ""}
+                  {...(onRowContextMenu
+                    ? { [FC_CONTEXT_MENU_TRIGGER_ATTR]: "" }
+                    : {})}
+                  onClick={() => onPreview(item.id)}
+                  onContextMenu={(e) => {
+                    if (!onRowContextMenu) return;
+                    e.preventDefault();
+                    onRowContextMenu(item.id, e);
+                  }}
                 >
                   <td className="col-select">
                     <input
-                      type="checkbox"
+                      type={singleSelect ? "radio" : "checkbox"}
+                      name={singleSelect ? "library-pick-row" : undefined}
                       className="org-play-row-check"
                       checked={selectedIds.has(item.id)}
                       onChange={() => onToggleRow(item.id)}
@@ -168,16 +136,34 @@ export function LibraryTable({
                   <td className="col-tags">
                     {item.tags.length ? (
                       <span className="fd-tag-list">
-                        {item.tags.map((tag) => (
-                          <span key={tag} className="fd-tag-pill fd-tag-dark">
+                        {item.tags.map((tag) => {
+                          const background = resolveTagColor(tag, fieldTagColors);
+                          return (
+                          <span
+                            key={tag}
+                            className="fd-tag-pill"
+                            style={{
+                              backgroundColor: background,
+                              color: contrastingTextOnBackground(background),
+                            }}
+                          >
                             {tag}
                           </span>
-                        ))}
+                          );
+                        })}
                       </span>
                     ) : (
                       <span className="fd-tag-empty">—</span>
                     )}
                   </td>
+                  {showCreatedBy ? (
+                    <td className="col-created-by">
+                      {resolvePlayCreatorLabel(
+                        item,
+                        creatorNames ?? new Map(),
+                      )}
+                    </td>
+                  ) : null}
                   <td className="col-play-name">
                     <span className="org-play-name-text">{item.title}</span>
                     {item.favorite ? (
@@ -186,7 +172,7 @@ export function LibraryTable({
                       </span>
                     ) : null}
                   </td>
-                </SwipeRow>
+                </tr>
               ))}
             </tbody>
           </table>

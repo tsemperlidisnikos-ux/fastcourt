@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
-import type { ResolvedPracticeRow } from "@/lib/practice/practice-items";
+import {
+  isPracticeItemMissing,
+  type ResolvedPracticeRow,
+} from "@/lib/practice/practice-items";
 import type { PracticeSessionItem } from "@/types/library-meta";
 
 interface Props {
@@ -17,6 +20,7 @@ interface Props {
   onUpdate: (patch: Partial<PracticeSessionItem>) => void;
   onMove: (direction: "up" | "down") => void;
   onRemove: () => void;
+  onReplace?: () => void;
 }
 
 export function PracticeItemRow({
@@ -31,10 +35,11 @@ export function PracticeItemRow({
   onUpdate,
   onMove,
   onRemove,
+  onReplace,
 }: Props) {
   const { item, play, index } = row;
   const isCueOnly = !play && !!item.cueLabel;
-  const isMissing = !play && !isCueOnly;
+  const isMissing = isPracticeItemMissing(row);
   const kind = play ? (play.type === "drill" ? "drill" : "play") : "cue";
   const kindLabel = kind === "drill" ? "Drill" : kind === "cue" ? "Block" : "Play";
   const name = play?.title || item.cueLabel || "(Missing from library)";
@@ -72,7 +77,7 @@ export function PracticeItemRow({
             size="sm"
           />
         ) : (
-          <span>{isCueOnly ? "📋" : "🏀"}</span>
+          <span>{isMissing ? "⚠" : isCueOnly ? "📋" : "🏀"}</span>
         )}
       </div>
       <div className="practice-item-main">
@@ -81,8 +86,20 @@ export function PracticeItemRow({
           <span className={`practice-item-type practice-item-type-${kind === "cue" ? "play" : kind}`}>
             {kindLabel}
           </span>
+          {isMissing ? (
+            <span className="practice-item-missing-label">Missing from library</span>
+          ) : null}
           {play?.series ? <span>{play.series}</span> : null}
         </div>
+        {isMissing && onReplace ? (
+          <button
+            type="button"
+            className="practice-item-replace-btn"
+            onClick={onReplace}
+          >
+            Replace play
+          </button>
+        ) : null}
         <input
           type="text"
           className="practice-item-notes"

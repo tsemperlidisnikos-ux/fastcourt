@@ -1,15 +1,11 @@
 import {
   createPropagationContext,
-  propagateActionToContext,
+  propagateFrameActionSequence,
 } from "@/lib/designer/action-propagation";
 import type { DesignerFrame, DesignerObject } from "@/types/designer";
 
 function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
-}
-
-function getActionSequence(frame: DesignerFrame) {
-  return frame.actionSequence ?? frame.actions.map((a) => a.id);
 }
 
 function findSourceByLabel(
@@ -48,12 +44,7 @@ export function applyActionResultsToFrame(
   options: { clearActions?: boolean } = {},
 ): DesignerFrame {
   const ctx = createPropagationContext(sourceFrame);
-  const actionById = new Map(sourceFrame.actions.map((a) => [a.id, a]));
-
-  for (const actionId of getActionSequence(sourceFrame)) {
-    const action = actionById.get(actionId);
-    if (action) propagateActionToContext(action, ctx);
-  }
+  propagateFrameActionSequence(sourceFrame, ctx);
 
   const { ballHolderIds, newPositions } = ctx;
 
@@ -83,4 +74,26 @@ export function applyActionResultsToFrame(
     actions: options.clearActions ? [] : targetFrame.actions,
     actionSequence: options.clearActions ? [] : targetFrame.actionSequence,
   };
+}
+
+/** Player positions + ball possession after running some or all frame actions. */
+export function objectsAfterFrameActions(
+  frame: DesignerFrame,
+  options?: { beforeActionId?: string },
+): DesignerObject[] {
+  const ctx = createPropagationContext(frame);
+  propagateFrameActionSequence(frame, ctx, options);
+
+  const { ballHolderIds, newPositions } = ctx;
+
+  return frame.objects.map((obj) => {
+    const moved = newPositions[obj.id];
+    return {
+      ...obj,
+      x: moved ? clamp01(moved.x) : obj.x,
+      y: moved ? clamp01(moved.y) : obj.y,
+      hasBall:
+        obj.kind === "offense" ? ballHolderIds.has(obj.id) : obj.hasBall,
+    };
+  });
 }

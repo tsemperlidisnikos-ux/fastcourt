@@ -10,6 +10,10 @@ interface CourtImageState {
   courtType: CourtType;
 }
 
+function scheduleStateUpdate(run: () => void) {
+  queueMicrotask(run);
+}
+
 export function useCourtImage(courtType: CourtType) {
   const [state, setState] = useState<CourtImageState>({
     image: null,
@@ -21,15 +25,24 @@ export function useCourtImage(courtType: CourtType) {
     let active = true;
     const img = new window.Image();
 
-    img.onload = () => {
+    const commitLoaded = () => {
       if (!active) return;
       setState({ image: img, failed: false, courtType });
     };
-    img.onerror = () => {
+    const commitFailed = () => {
       if (!active) return;
       setState({ image: null, failed: true, courtType });
     };
+
+    img.onload = () => scheduleStateUpdate(commitLoaded);
+    img.onerror = () => scheduleStateUpdate(commitFailed);
+    img.crossOrigin = "anonymous";
     img.src = courtImageUrl(courtType);
+
+    if (img.complete) {
+      if (img.naturalWidth > 0) scheduleStateUpdate(commitLoaded);
+      else scheduleStateUpdate(commitFailed);
+    }
 
     return () => {
       active = false;

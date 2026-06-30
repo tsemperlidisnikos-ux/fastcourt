@@ -1,0 +1,938 @@
+#screen-organizer .fc-game-plan-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+#screen-organizer .fc-game-plan-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--fd-border, #d8dce3);
+  background: #f7f8fa;
+}
+
+#screen-organizer .fc-game-plan-sidebar-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--fd-border, #d8dce3);
+}
+
+#screen-organizer .fc-game-plan-create-btn,
+#screen-organizer .fc-game-plan-filter-btn,
+#screen-organizer .fc-game-plan-action-btn,
+#screen-organizer .fc-game-plan-bench-btn,
+#screen-organizer .fc-game-plan-add-play-btn,
+#screen-organizer .fc-game-plan-present-btn {
+  border: 1px solid #c8cdd6;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-create-btn {
+  padding: 10px 12px;
+}
+
+#screen-organizer .fc-game-plan-filter-btn {
+  padding: 8px 10px;
+}
+
+#screen-organizer .fc-game-plan-filter-btn.active {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+}
+
+#screen-organizer .fc-game-plan-sidebar-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+#screen-organizer .fc-game-plan-sidebar-empty,
+#screen-organizer .fc-game-plan-main-empty,
+#screen-organizer .fc-game-plan-preview-empty {
+  padding: 24px 16px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#screen-organizer .fc-game-plan-sidebar-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-sidebar-item:hover {
+  border-color: #d1d5db;
+}
+
+#screen-organizer .fc-game-plan-sidebar-item.selected {
+  border-color: #16a34a;
+  box-shadow: inset 0 0 0 1px #16a34a;
+}
+
+#screen-organizer .fc-game-plan-sidebar-item-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+#screen-organizer .fc-game-plan-sidebar-item-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+#screen-organizer .fc-game-plan-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+#screen-organizer .fc-game-plan-status-ready {
+  color: #16a34a;
+}
+
+#screen-organizer .fc-game-plan-sidebar-item-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+#screen-organizer .fc-game-plan-sidebar-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--fd-border, #d8dce3);
+}
+
+#screen-organizer .fc-game-plan-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: #fff;
+}
+
+#screen-organizer .fc-game-plan-main-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--fd-border, #d8dce3);
+}
+
+#screen-organizer .fc-game-plan-main-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+}
+
+#screen-organizer .fc-game-plan-main-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+#screen-organizer .fc-game-plan-main-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+#screen-organizer .fc-game-plan-action-btn,
+#screen-organizer .fc-game-plan-bench-btn {
+  padding: 8px 10px;
+}
+
+#screen-organizer .fc-game-plan-action-btn.danger {
+  color: #b91c1c;
+}
+
+#screen-organizer .fc-game-plan-bench-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#screen-organizer .fc-game-plan-bench-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#screen-organizer .fc-game-plan-scouting-notes {
+  margin: 0 18px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#screen-organizer .fc-game-plan-scouting-notes strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+#screen-organizer .fc-game-plan-postgame-notes {
+  margin: 0 18px 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#screen-organizer .fc-game-plan-postgame-notes strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c2410c;
+}
+
+#screen-organizer .fc-game-plan-opponent-history {
+  margin: 0 18px 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-open {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-open:hover {
+  border-color: #94a3b8;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-date {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-note {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+#screen-organizer .fc-game-plan-opponent-history-rematch {
+  padding: 8px 10px;
+  border: 1px solid #c8cdd6;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.homework-share-badge {
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+}
+
+.homework-share-instruction {
+  margin: 12px auto 0;
+  max-width: 520px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+#screen-organizer .fc-game-plan-homework-panel {
+  margin: 0 18px 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+}
+
+#screen-organizer .fc-game-plan-homework-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+#screen-organizer .fc-game-plan-homework-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e1b4b;
+}
+
+#screen-organizer .fc-game-plan-homework-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #4338ca;
+}
+
+#screen-organizer .fc-game-plan-homework-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#screen-organizer .fc-game-plan-homework-btn {
+  padding: 7px 10px;
+  border: 1px solid #a5b4fc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-homework-btn.primary {
+  background: #312e81;
+  color: #fff;
+  border-color: #312e81;
+}
+
+#screen-organizer .fc-game-plan-homework-btn.danger {
+  color: #b91c1c;
+}
+
+#screen-organizer .fc-game-plan-homework-notes {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #312e81;
+}
+
+#screen-organizer .fc-game-plan-homework-empty {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #4338ca;
+}
+
+#screen-organizer .fc-game-plan-homework-roster {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+#screen-organizer .fc-game-plan-homework-player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #c7d2fe;
+}
+
+#screen-organizer .fc-game-plan-homework-player-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-homework-player-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+#screen-organizer .fc-game-plan-homework-player-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+#screen-organizer .fc-game-plan-homework-player-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4338ca;
+}
+
+#screen-organizer .fc-game-plan-homework-player-badge.opened {
+  color: #0369a1;
+}
+
+#screen-organizer .fc-game-plan-homework-player-badge.studied {
+  color: #15803d;
+}
+
+#screen-organizer .fc-game-plan-homework-player-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+#screen-organizer .fc-game-plan-detail-split {
+  display: grid;
+  grid-template-columns: minmax(280px, 42%) minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+}
+
+#screen-organizer .fc-game-plan-categories-pane {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  border-right: 1px solid var(--fd-border, #d8dce3);
+}
+
+#screen-organizer .fc-game-plan-category {
+  margin-bottom: 16px;
+}
+
+#screen-organizer .fc-game-plan-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#screen-organizer .fc-game-plan-category-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#screen-organizer .fc-game-plan-suggest-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid #c8cdd6;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.fc-game-plan-suggest-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.fc-game-plan-suggest-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.fc-game-plan-suggest-panel {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+.fc-game-plan-suggest-header {
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fc-game-plan-suggest-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.fc-game-plan-suggest-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.fc-game-plan-suggest-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 18px;
+}
+
+.fc-game-plan-suggest-empty {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.fc-game-plan-suggest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.fc-game-plan-suggest-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.fc-game-plan-suggest-row.selected {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.fc-game-plan-suggest-row input {
+  margin-top: 3px;
+}
+
+.fc-game-plan-suggest-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.fc-game-plan-suggest-meta,
+.fc-game-plan-suggest-reasons {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.fc-game-plan-suggest-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.fc-game-plan-suggest-btn {
+  padding: 8px 12px;
+  border: 1px solid #c8cdd6;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.fc-game-plan-suggest-btn.primary {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+}
+
+.fc-game-plan-suggest-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#screen-organizer .fc-game-plan-category-head h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+#screen-organizer .fc-game-plan-add-play-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+#screen-organizer .fc-game-plan-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#screen-organizer .fc-game-plan-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+#screen-organizer .fc-game-plan-entry-row.selected {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+#screen-organizer .fc-game-plan-entry-select {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-entry-index {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 700;
+}
+
+#screen-organizer .fc-game-plan-entry-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+#screen-organizer .fc-game-plan-entry-tools {
+  display: flex;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+#screen-organizer .fc-game-plan-entry-tool {
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 5px;
+  cursor: pointer;
+}
+
+#screen-organizer .fc-game-plan-entry-tool.danger {
+  color: #b91c1c;
+}
+
+#screen-organizer .fc-game-plan-category-empty {
+  margin: 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+#screen-organizer .fc-game-plan-preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: 16px;
+}
+
+#screen-organizer .fc-game-plan-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+#screen-organizer .fc-game-plan-preview-toolbar h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+#screen-organizer .fc-game-plan-present-btn {
+  padding: 8px 12px;
+}
+
+#screen-organizer .fc-game-plan-preview-court {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 0;
+  overflow: auto;
+}
+
+#screen-organizer .fc-game-plan-preview-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+#screen-organizer .fc-game-plan-preview-loading {
+  width: 420px;
+  height: 242px;
+  display: grid;
+  place-items: center;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+/* Bench print overlay */
+.fc-game-plan-bench-print-body {
+  padding: 16px;
+  overflow: auto;
+}
+
+.fc-game-plan-bench-print-doc {
+  width: 11in;
+  min-height: 8.5in;
+  margin: 0 auto;
+  padding: 0.35in 0.4in;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+  font-family: var(--fd-font, Arial, Helvetica, sans-serif);
+}
+
+.fc-game-plan-bench-print-header {
+  text-align: center;
+  margin-bottom: 0.28in;
+}
+
+.fc-game-plan-bench-print-team {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4b5563;
+}
+
+.fc-game-plan-bench-print-title {
+  margin: 0.08in 0 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.fc-game-plan-bench-print-meta {
+  margin: 0.08in 0 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.fc-game-plan-bench-print-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(1.35in, 1fr));
+  gap: 0.18in;
+}
+
+.fc-game-plan-bench-print-col {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.12in 0.14in;
+  min-height: 1.2in;
+}
+
+.fc-game-plan-bench-print-col-title {
+  margin: 0 0 0.08in;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.05in;
+}
+
+.fc-game-plan-bench-print-col-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-game-plan-bench-print-call {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 0.06in;
+}
+
+.fc-game-plan-bench-print-call-note {
+  display: block;
+  margin-top: 0.02in;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.fc-game-plan-bench-print-keys {
+  margin-top: 0.22in;
+  padding-top: 0.12in;
+  border-top: 1px solid #d1d5db;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.fc-game-plan-bench-print-keys strong {
+  display: block;
+  margin-bottom: 0.04in;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fc-game-plan-bench-print-footer {
+  margin-top: 0.12in;
+  text-align: center;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.fc-game-plan-bench-print-toolbar-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 0.35in;
+  }
+
+  html.fc-game-plan-bench-print-active,
+  html.fc-game-plan-bench-print-active body {
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-game-plan-bench-print-active body > *:not(#game-plan-bench-print-overlay) {
+    display: none !important;
+  }
+
+  html.fc-game-plan-bench-print-active #game-plan-bench-print-overlay,
+  html.fc-game-plan-bench-print-active #game-plan-bench-print-overlay * {
+    visibility: visible !important;
+  }
+
+  html.fc-game-plan-bench-print-active #game-plan-bench-print-overlay {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  html.fc-game-plan-bench-print-active .fc-print-overlay-backdrop,
+  html.fc-game-plan-bench-print-active .no-print {
+    display: none !important;
+  }
+
+  html.fc-game-plan-bench-print-active .fc-print-overlay-panel-game-plan {
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  html.fc-game-plan-bench-print-active #fc-game-plan-bench-print-content {
+    overflow: visible !important;
+    padding: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  html.fc-game-plan-bench-print-active .fc-game-plan-bench-print-doc {
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

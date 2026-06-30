@@ -10,7 +10,7 @@ const SHORTCUTS = [
   { keys: "O / P", action: "Offense player" },
   { keys: "X", action: "Defense player" },
   { keys: "L / F / D", action: "Line tool" },
-  { keys: "S", action: "Shot" },
+  { keys: "S", action: "Shot line (Line tool)" },
   { keys: "Ctrl+Z", action: "Undo" },
   { keys: "Ctrl+Shift+Z", action: "Redo" },
   { keys: "Ctrl+Shift+M", action: "Mirror frame" },

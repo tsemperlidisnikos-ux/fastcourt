@@ -2,9 +2,14 @@ import { ensureInviteToken } from "@/lib/auth/team-invite-token";
 import type { OrgMember, TeamOrganization } from "@/types/team-org";
 
 const STORAGE_KEY = "fastcourt_team_orgs_v1";
+const REMOVED_DEMO_ORG_IDS = new Set(["org-promitheas"]);
 
 function canPersistOrganizations() {
   return typeof localStorage !== "undefined";
+}
+
+function stripRemovedDemoOrgs(orgs: TeamOrganization[]) {
+  return orgs.filter((org) => !REMOVED_DEMO_ORG_IDS.has(org.id));
 }
 
 function readStore(): TeamOrganization[] {
@@ -13,7 +18,11 @@ function readStore(): TeamOrganization[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as TeamOrganization[];
-    return Array.isArray(parsed) ? parsed : [];
+    const orgs = Array.isArray(parsed) ? stripRemovedDemoOrgs(parsed) : [];
+    if (orgs.length !== (Array.isArray(parsed) ? parsed.length : 0)) {
+      writeStore(orgs);
+    }
+    return orgs;
   } catch {
     return [];
   }
@@ -24,41 +33,8 @@ function writeStore(orgs: TeamOrganization[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orgs));
 }
 
-function seedOrganizations(): TeamOrganization[] {
-  const now = new Date().toISOString();
-  return [
-    {
-      id: "org-promitheas",
-      name: "Promitheas Patras BC",
-      teamAdminEmail: "info@promitheasbc.gr",
-      coachSeats: 5,
-      expiresAt: null,
-      createdAt: now,
-      coaches: [
-        {
-          id: "coach-stefania",
-          email: "stefania.tomara@gmail.com",
-          role: "coach",
-          status: "active",
-        },
-        {
-          id: "coach-nikos",
-          email: "tsemperlidis.nikos@gmail.com",
-          role: "coach",
-          status: "active",
-        },
-      ],
-      players: [],
-    },
-  ];
-}
-
 export function loadTeamOrganizations(): TeamOrganization[] {
-  const existing = readStore();
-  if (existing.length) return existing;
-  const seeded = seedOrganizations();
-  writeStore(seeded);
-  return seeded;
+  return readStore();
 }
 
 export function saveTeamOrganizations(orgs: TeamOrganization[]) {

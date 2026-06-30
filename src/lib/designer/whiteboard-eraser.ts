@@ -1,28 +1,37 @@
 import type { WhiteboardStroke } from "@/types/designer";
+import { eraseStrokesAt } from "@/lib/designer/stroke-partial-eraser";
 
 export const WHITEBOARD_ERASER_RADIUS_NORM = 0.02;
 
-export function whiteboardStrokeHitsEraser(
-  points: number[],
-  x: number,
-  y: number,
-  radius = WHITEBOARD_ERASER_RADIUS_NORM,
+export function whiteboardStrokeEqual(
+  a: WhiteboardStroke,
+  b: WhiteboardStroke,
 ) {
-  for (let i = 0; i < points.length; i += 2) {
-    if (Math.hypot(points[i] - x, points[i + 1] - y) <= radius) {
-      return true;
-    }
+  if (a.color !== b.color || a.width !== b.width) return false;
+  if (a.points.length !== b.points.length) return false;
+  for (let i = 0; i < a.points.length; i++) {
+    if (a.points[i] !== b.points[i]) return false;
   }
-  return false;
+  return true;
 }
 
-export function filterWhiteboardStrokesAt(
+export function whiteboardStrokesEqual(
+  a: WhiteboardStroke[],
+  b: WhiteboardStroke[],
+) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (!whiteboardStrokeEqual(a[i], b[i])) return false;
+  }
+  return true;
+}
+
+/** Erase only the touched portion of each stroke (partial eraser). */
+export function eraseWhiteboardStrokesAt(
   strokes: WhiteboardStroke[],
   x: number,
   y: number,
   radius = WHITEBOARD_ERASER_RADIUS_NORM,
 ) {
-  return strokes.filter(
-    (stroke) => !whiteboardStrokeHitsEraser(stroke.points, x, y, radius),
-  );
+  return eraseStrokesAt(strokes, x, y, radius);
 }

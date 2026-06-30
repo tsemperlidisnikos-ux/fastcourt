@@ -1,3 +1,4 @@
+import { DEFAULT_TRIAL_DAYS } from "@/lib/config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveSignupRole, isMasterAdminEmail } from "@/lib/auth/roles";
 import { PROFILE_SELECT_COLUMNS, type ProfileRow } from "@/lib/auth/profile";
@@ -9,7 +10,7 @@ function signupAccessType(email: string): AccessType {
 
 function trialExpiresAt(email: string) {
   if (isMasterAdminEmail(email)) return null;
-  const days = 14;
+  const days = DEFAULT_TRIAL_DAYS;
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString();
@@ -31,7 +32,7 @@ export async function upsertProfileForUser(
     display_name: displayName?.trim() || email.split("@")[0] || "Coach",
     role,
     access_type: signupAccessType(email),
-    trial_days: isMasterAdminEmail(email) ? 0 : 14,
+    trial_days: isMasterAdminEmail(email) ? 0 : DEFAULT_TRIAL_DAYS,
     expires_at: trialExpiresAt(email),
     organization: organization?.trim() || null,
     created_at: new Date().toISOString(),

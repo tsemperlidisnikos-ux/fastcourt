@@ -1,5 +1,38 @@
 /* FastCourt library layout supplements (pairs with fd-ui.css) */
 
+/* Unified primary create buttons — Fields / Practice / Players */
+#screen-organizer .fc-organizer-create-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 178px;
+  height: 34px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+/* Unified section toolbars — Fields / Practice / Players */
+#screen-organizer .fc-organizer-section-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  background: #fff;
+  border-bottom: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
 .fd-ui.screen-root {
   height: 100vh;
   height: 100dvh;
@@ -8,7 +41,7 @@
   overflow: hidden;
   background: #f4f4f4;
   color: #1e293b;
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: var(--fc-app-font, "Puck Bold", "Puck", Calibri, "Segoe UI", system-ui, sans-serif);
 }
 
 .fd-ui .org-body {
@@ -31,7 +64,10 @@
 html[data-device-class="laptop"] #screen-organizer,
 html[data-device-class="desktop-wide"] #screen-organizer {
   --fd-topbar-util-height: 40px;
-  --fd-hero-brand-slot: 72px;
+  --fd-hero-brand-slot-base: 72px;
+  --fd-hero-brand-header-scale: 1.5;
+  --fd-hero-brand-slot: calc(var(--fd-hero-brand-slot-base) * var(--fd-hero-brand-header-scale));
+  --fd-hero-brand-row-height: var(--fd-hero-brand-slot);
   --fd-hero-inner-pad-top: 0;
   --fd-hero-inner-pad-bottom: 0;
   --fd-main-tabs-height: 48px;
@@ -72,9 +108,9 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-inner {
 
 html[data-device-class="laptop"] #screen-organizer .fd-hero-top-row,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-hero-top-row {
-  height: var(--fd-hero-brand-slot);
-  min-height: var(--fd-hero-brand-slot);
-  max-height: var(--fd-hero-brand-slot);
+  height: var(--fd-hero-brand-row-height);
+  min-height: var(--fd-hero-brand-row-height);
+  max-height: var(--fd-hero-brand-row-height);
   box-sizing: border-box;
 }
 
@@ -89,8 +125,8 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tabs {
 
 html[data-device-class="laptop"] #screen-organizer .fd-main-tab,
 html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
-  padding: 12px 22px 14px;
-  font-size: 17px;
+  padding: 8px 16px 10px;
+  font-size: var(--fd-header-nav-tab-font-size, 16px);
   line-height: 1.2;
   box-sizing: border-box;
 }
@@ -137,7 +173,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   border-radius: 0;
   background: #fff;
   color: #000;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 9px 12px;
@@ -176,9 +212,9 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 }
 
 #screen-organizer .fc-playbooks-plays-pane {
-  flex: 0 0 min(320px, 38%);
-  max-width: 420px;
-  min-width: 220px;
+  flex: 0 0 min(380px, 45%);
+  max-width: 460px;
+  min-width: 300px;
   min-height: 0;
   overflow-y: auto;
   border-right: 1px solid #e0e0e0;
@@ -216,7 +252,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 
 #screen-organizer .fc-playbooks-sidebar-item-name {
   display: block;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1.25;
   word-break: break-word;
@@ -224,7 +260,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 
 #screen-organizer .fc-playbooks-sidebar-item-updated {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
 }
 
@@ -246,9 +282,11 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 
 .fd-ui .fd-split-resizer {
   width: 6px;
-  cursor: col-resize;
+  cursor: default;
   background: #d1d5db;
   flex-shrink: 0;
+  pointer-events: none;
+  touch-action: auto;
 }
 
 .fd-ui .fd-import-post-panel {
@@ -267,13 +305,13 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 }
 
 .fd-ui .fd-import-post-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: #92400e;
 }
 
 .fd-ui .fd-import-post-summary {
-  font-size: 13px;
+  font-size: 15px;
   color: #78350f;
 }
 
@@ -287,7 +325,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   border: 1px solid #d97706;
   background: #fff;
   color: #92400e;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   padding: 6px 12px;
   border-radius: 3px;
@@ -337,13 +375,13 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 }
 
 .fd-ui .library-clean-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #9a3412;
 }
 
 .fd-ui .library-clean-summary {
-  font-size: 12px;
+  font-size: 14px;
   color: #64748b;
   line-height: 1.35;
 }
@@ -365,7 +403,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   border: 1px solid #fdba74;
   background: #fff;
   color: #334155;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
@@ -389,7 +427,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   border-radius: 6px;
   border: 1px solid #d97706;
   background: #fff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -422,14 +460,14 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 
 .fc-dup-merge-title {
   margin: 0 0 6px;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
 }
 
 .fc-dup-merge-copy {
   margin: 0 0 12px;
   color: #64748b;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .fc-dup-merge-group {
@@ -452,12 +490,9 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
-html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
-  transition: transform 0.15s ease;
-}
 
 .fd-ui .org-preview-frames,
 .fd-ui .fc-lib-preview-frames-grid {
@@ -492,19 +527,19 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   width: 100%;
   max-width: 100%;
   box-shadow: none;
-  contain: layout paint style;
+  contain: layout style;
   isolation: isolate;
 }
 
 .fd-ui .org-preview-frame-title {
   padding: 8px 10px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   text-align: left;
-  background: #1a2b44;
-  color: #fff;
+  background: #f8fafc;
+  color: #000;
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -573,12 +608,19 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 .fd-ui .org-preview-frame-notes {
   flex: 0 0 auto;
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: visible;
 }
 
 .fd-ui .org-preview-frame-limit-notice {
   grid-column: 1 / -1;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: #64748b;
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
@@ -594,7 +636,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   align-items: center;
   justify-content: center;
   background: transparent;
-  font-size: 11px;
+  font-size: 13px;
   color: #64748b;
   font-style: italic;
 }
@@ -609,7 +651,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   border: 1px solid #cbd5e1;
   background: #fff;
   color: #1e293b;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -649,7 +691,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 #screen-organizer .fd-preview-actions-bar .org-preview-breadcrumb {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -667,14 +709,8 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary {
-  background: #111 !important;
-  color: #fff !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  padding: 6px 12px !important;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 14px !important;
+  padding: 6px 14px !important;
 }
 
 #screen-organizer .fc-laptop-preview-header-controls {
@@ -708,7 +744,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   border-radius: 4px;
   background: #111;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
 }
@@ -738,7 +774,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   border-radius: 3px;
   background: transparent;
   color: #334155;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
 }
@@ -795,8 +831,8 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 #screen-organizer .org-preview-frame-title {
-  background: #1a2b44;
-  color: #fff;
+  background: #f8fafc;
+  color: #000;
   text-align: left;
 }
 
@@ -824,7 +860,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 #screen-organizer #library-preview-frame-count {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   margin-right: 4px;
 }
@@ -839,7 +875,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -852,12 +888,15 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 
 #screen-organizer .org-preview-frame-notes {
   padding: 6px 8px;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.35;
   color: #475569;
   border-top: 1px solid #e5e7eb;
   background: #fff;
   min-height: 28px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #screen-organizer .fd-preview-actions-bar .fc-preview-header-print-play {
@@ -903,7 +942,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 #screen-organizer .fc-print-preview-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
   line-height: 1.1;
@@ -923,7 +962,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 #screen-organizer .fd-page-info {
-  font-size: 14px;
+  font-size: 16px;
   color: #1e3a5f;
   font-weight: 700;
 }
@@ -939,7 +978,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   border: 1px solid #cbd5e1;
   background: #fff;
   color: #1e3a5f;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   border-radius: 2px;
@@ -993,6 +1032,57 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   width: min(420px, calc(100vw - 32px));
 }
 
+.fc-print-overlay-panel-playbook {
+  width: min(980px, calc(100vw - 24px));
+}
+
+.fc-print-overlay-panel-playbook.has-print-settings {
+  width: min(1420px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+}
+
+.fc-print-overlay-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fc-print-overlay-toolbar-left .fc-print-overlay-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-print-settings-gear {
+  flex-shrink: 0;
+}
+
+.fc-print-overlay-content-row {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fc-print-overlay-content-row.has-settings .fc-print-overlay-body-playbook {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fc-print-overlay-settings-pane {
+  width: min(400px, 38vw);
+  flex: 0 0 auto;
+  border-right: 1px solid #e2e8f0;
+}
+
+.fc-print-overlay-panel-playbook .fc-print-overlay-body-playbook {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .fc-print-overlay-toolbar {
   display: flex;
   align-items: center;
@@ -1005,7 +1095,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 
 .fc-print-overlay-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f172a;
 }
@@ -1021,7 +1111,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   border-radius: 6px;
   border: 1px solid #cbd5e1;
   background: #fff;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -1055,18 +1145,45 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 
 .fc-print-doc-header h1 {
   margin: 0 0 4px;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .fc-print-doc-header p {
   margin: 0 0 16px;
   color: #64748b;
+  font-size: 15px;
+}
+
+.fc-print-doc-club {
+  margin: 0 0 6px !important;
+  font-size: 14px !important;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #475569 !important;
+}
+
+.fc-print-doc-tagline {
+  margin: -8px 0 16px !important;
+  font-size: 14px !important;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b !important;
+}
+
+.fc-print-doc-footer {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
   font-size: 13px;
+  color: #64748b;
+  text-align: center;
 }
 
 .fc-print-frames-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   align-content: start;
 }
@@ -1075,32 +1192,67 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   display: block;
 }
 
-.fc-print-frame-card h3 {
+.fc-print-frame-card h3,
+.fc-print-frame-title {
   margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  background: #f8fafc;
+  border-radius: 4px 4px 0 0;
 }
 
 .fc-print-frame-card {
   min-width: 0;
+  overflow: hidden;
+}
+
+.fc-print-frame-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  gap: 0;
+}
+
+.fc-print-frame-stack .fc-print-frame-title {
+  margin: 0;
+  padding: 6px 4px;
+  font-size: 13px;
+  line-height: 1.1;
+  text-align: center;
+  border-radius: 0;
 }
 
 .fc-print-frame-court {
   width: 100%;
   background: #e8eaee;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 0;
   overflow: hidden;
   line-height: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding: 0;
 }
 
 .fc-print-frame-court > div {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   flex: 0 0 auto;
   display: block;
+  margin: 0 auto;
+}
+
+.fc-print-frame-notes {
+  margin: 0;
+  padding-top: 4px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #475569;
 }
 
 .fc-print-frame-court canvas {
@@ -1110,53 +1262,133 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  @page fc-library {
+    size: A4 portrait;
+    margin: 14mm;
   }
 
-  #fc-print-preview-content,
-  #fc-print-preview-content *,
-  #fc-practice-print-content,
-  #fc-practice-print-content *,
-  #fc-practice-sheet-content,
-  #fc-practice-sheet-content * {
-    visibility: visible;
+  html.fc-library-print-active {
+    page: fc-library;
   }
 
-  #fc-print-preview-content,
-  #fc-practice-print-content,
-  #fc-practice-sheet-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    padding: 0;
-    overflow: visible;
+  html.fc-library-print-active,
+  html.fc-library-print-active body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
   }
 
-  .fc-print-doc-header-print-only {
-    display: block;
-  }
-
-  .fc-print-overlay {
-    position: static;
-  }
-
-  .fc-print-overlay-backdrop,
-  .no-print {
+  html.fc-library-print-active body > *:not(#print-preview-overlay) {
     display: none !important;
   }
 
-  .fc-print-overlay-panel {
-    margin: 0;
-    width: 100%;
-    max-height: none;
-    box-shadow: none;
-    border-radius: 0;
+  html.fc-library-print-active #print-preview-overlay,
+  html.fc-library-print-active #print-preview-overlay * {
+    visibility: visible !important;
   }
 
-  .fc-print-frames-grid {
-    grid-template-columns: repeat(2, 1fr);
+  html.fc-library-print-active #print-preview-overlay {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  html.fc-library-print-active .fc-print-overlay-backdrop,
+  html.fc-library-print-active .no-print {
+    display: none !important;
+  }
+
+  html.fc-library-print-active .fc-print-overlay-panel {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-library-print-active .fc-print-overlay-panel-compact {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html.fc-library-print-active #fc-print-preview-content {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-library-print-active .fc-print-doc-header-print-only {
+    display: block;
+  }
+
+  html.fc-library-print-active .fc-print-frames-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    width: 100% !important;
+  }
+
+  html.fc-library-print-active .fc-print-frame-card {
+    width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  html.fc-library-print-active .fc-print-frame-court {
+    width: 100% !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  html.fc-library-print-active .fc-print-frame-card h3,
+  html.fc-library-print-active .fc-print-frame-title {
+    color: #000 !important;
+    background: transparent !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html.fc-library-print-active .fc-print-konva-snapshot {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html.fc-library-print-active .fc-print-frame-court canvas {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
@@ -1182,7 +1414,7 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   background: transparent;
   color: #fff;
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
   line-height: 1.25;
   text-align: left;
@@ -1199,12 +1431,21 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
   color: #fff;
 }
 
+.fc-library-play-context-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fc-library-play-context-item:disabled:hover {
+  background: transparent;
+}
+
 .fc-library-play-context-item--submenu {
   padding-right: 12px;
 }
 
 .fc-library-play-context-chevron {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
   opacity: 0.85;
 }
@@ -1236,6 +1477,6 @@ html[data-device-class="tablet"] #screen-organizer .fc-fd-swipe-host {
 .fc-library-play-context-empty {
   display: block;
   padding: 8px 16px;
-  font-size: 12px;
+  font-size: 14px;
   color: #a3a3a3;
 }

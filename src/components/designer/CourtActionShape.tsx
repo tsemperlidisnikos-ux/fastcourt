@@ -10,7 +10,7 @@ import {
 } from "@/lib/designer/action-constants";
 import {
   actionToStagePoints,
-  getActionColor,
+  resolveActionColor,
   resolveActionPointerSize,
   resolveActionStrokeWidth,
   handoffSymbolStageLines,
@@ -18,6 +18,9 @@ import {
   stageDeltaToCourtNorm,
 } from "@/lib/designer/action-geometry";
 import { actionRevealPoints } from "@/lib/designer/animation-engine";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { konvaLineHitWidth } from "@/lib/viewport/touch-targets";
+import type { CourtCoordSpace } from "@/lib/designer/court-view-layout";
 import type { CourtRect, CourtType, DesignerAction } from "@/types/designer";
 
 interface Props {
@@ -42,6 +45,7 @@ interface Props {
   ) => void;
   removable?: boolean;
   revealProgress?: number;
+  courtCoords?: CourtCoordSpace;
 }
 
 function ActionInteractionShell({
@@ -52,6 +56,7 @@ function ActionInteractionShell({
   courtType,
   onPointerUp,
   onTranslate,
+  courtCoords = "raster",
   children,
 }: {
   listen: boolean;
@@ -67,6 +72,7 @@ function ActionInteractionShell({
     dy: number,
     recordUndo?: boolean,
   ) => void;
+  courtCoords?: CourtCoordSpace;
   children: ReactNode;
 }) {
   const draggedRef = useRef(false);
@@ -79,7 +85,13 @@ function ActionInteractionShell({
   function applyDragOffset(node: Konva.Node, recordUndo = false) {
     const origin = dragOriginRef.current;
     if (!origin || !onTranslate) return;
-    const { dx, dy } = stageDeltaToCourtNorm(court, courtType, node.x(), node.y());
+    const { dx, dy } = stageDeltaToCourtNorm(
+      court,
+      courtType,
+      node.x(),
+      node.y(),
+      courtCoords,
+    );
     if (dx === 0 && dy === 0) return;
     onTranslate(action.id, origin, dx, dy, recordUndo);
   }
@@ -138,8 +150,11 @@ export function CourtActionShape({
   onTranslate,
   removable = false,
   revealProgress,
+  courtCoords = "raster",
 }: Props) {
-  const color = getActionColor(action.type);
+  const coarse = useCoarsePointer();
+  const lineHit = konvaLineHitWidth(coarse);
+  const color = resolveActionColor(action);
   const strokeOpts = compact ? { compact: true, compactScale } : {};
   const strokeWidth = resolveActionStrokeWidth(
     action.strokeWidth ?? DEFAULT_ARROW_STROKE,
@@ -150,8 +165,8 @@ export function CourtActionShape({
   const pointerSize = resolveActionPointerSize(court, courtType, strokeOpts);
   const points =
     revealProgress != null && revealProgress < 1
-      ? actionRevealPoints(action, court, courtType, revealProgress)
-      : actionToStagePoints(action, court, courtType);
+      ? actionRevealPoints(action, court, courtType, revealProgress, courtCoords)
+      : actionToStagePoints(action, court, courtType, courtCoords);
   const opacity =
     preview ? 0.75 : action.timing === "optional" ? 0.82 : 1;
   const optionalDash = action.timing === "optional" ? [10, 7] : undefined;
@@ -173,6 +188,7 @@ export function CourtActionShape({
   const listen = interactive && !preview;
   const selectedStroke = selected ? "#9ca3af" : undefined;
   const canDrag = listen && draggable;
+  const shapeProps = { listening: listen };
 
   function wrap(content: ReactNode) {
     if (!listen) return <>{content}</>;
@@ -183,6 +199,7 @@ export function CourtActionShape({
         action={action}
         court={court}
         courtType={courtType}
+        courtCoords={courtCoords}
         onPointerUp={handlePointerUp}
         onTranslate={onTranslate}
       >
@@ -202,7 +219,8 @@ export function CourtActionShape({
           dash={optionalDash ?? SHOT_DASH}
           lineCap="round"
           opacity={opacity}
-          hitStrokeWidth={14}
+          hitStrokeWidth={lineHit}
+          listening={shapeProps.listening}
         />
         <Circle
           x={ex}
@@ -211,6 +229,7 @@ export function CourtActionShape({
           stroke={selectedStroke ?? "#15803d"}
           strokeWidth={compact ? 1 : selected ? 3 : 2}
           fill="rgba(22,163,74,0.42)"
+          listening={shapeProps.listening}
         />
       </>,
     );
@@ -228,7 +247,8 @@ export function CourtActionShape({
           tension={0}
           lineCap="round"
           opacity={opacity}
-          hitStrokeWidth={14}
+          hitStrokeWidth={lineHit}
+          listening={shapeProps.listening}
         />
         <Line
           points={bar}
@@ -236,6 +256,7 @@ export function CourtActionShape({
           strokeWidth={strokeWidth}
           lineCap="round"
           opacity={opacity}
+          listening={shapeProps.listening}
         />
       </>,
     );
@@ -254,13 +275,20 @@ export function CourtActionShape({
         tension={0}
         lineCap="round"
         opacity={opacity}
-        hitStrokeWidth={14}
+        hitStrokeWidth={lineHit}
+        listening={shapeProps.listening}
       />,
     );
   }
 
   if (action.type === "handoff") {
-    const symbolLines = handoffSymbolStageLines(action, court, courtType);
+    const symbolLines = handoffSymbolStageLines(
+      action,
+      court,
+      courtType,
+      strokeOpts,
+      courtCoords,
+    );
     return wrap(
       <>
         <Arrow
@@ -275,7 +303,8 @@ export function CourtActionShape({
           lineCap="round"
           lineJoin="round"
           opacity={opacity}
-          hitStrokeWidth={14}
+          hitStrokeWidth={lineHit}
+          listening={shapeProps.listening}
         />
         {symbolLines.map((linePts, index) => (
           <Line
@@ -292,7 +321,7 @@ export function CourtActionShape({
     );
   }
 
-  if (action.type === "cut" || action.type === "curl" || action.type === "dribble") {
+  if (action.type === "cut" || action.type === "curl") {
     return wrap(
       <Arrow
         points={points}
@@ -306,7 +335,28 @@ export function CourtActionShape({
         lineCap="round"
         lineJoin="round"
         opacity={opacity}
-        hitStrokeWidth={14}
+        hitStrokeWidth={lineHit}
+        listening={shapeProps.listening}
+      />,
+    );
+  }
+
+  if (action.type === "dribble") {
+    return wrap(
+      <Arrow
+        points={points}
+        stroke={selectedStroke ?? color}
+        fill={selectedStroke ?? color}
+        strokeWidth={strokeWidth}
+        dash={optionalDash}
+        pointerLength={pointerSize}
+        pointerWidth={pointerSize}
+        tension={0}
+        lineCap="butt"
+        lineJoin="miter"
+        opacity={opacity}
+        hitStrokeWidth={lineHit}
+        listening={shapeProps.listening}
       />,
     );
   }
@@ -323,7 +373,8 @@ export function CourtActionShape({
       tension={0}
       lineCap="round"
       opacity={opacity}
-      hitStrokeWidth={14}
+      hitStrokeWidth={lineHit}
+      listening={shapeProps.listening}
     />,
   );
 }

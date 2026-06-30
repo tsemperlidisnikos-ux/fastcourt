@@ -62,7 +62,11 @@ describe("pass endpoint snap", () => {
       offense("o1", "1", 0.5, 0.6, false),
     );
     const ballRing = lineSnapRadiusNorm(objects[0]);
+    const ringOnly =
+      lineSnapRadiusNorm(objects[0], 680) -
+      (14 + 2.5) / 680;
     assert.ok(dist > tokenOnly);
+    assert.ok(dist > ringOnly);
     assert.ok(Math.abs(dist - ballRing) < 0.008);
   });
 
@@ -74,6 +78,34 @@ describe("pass endpoint snap", () => {
     ];
     const snapped = snapPassEndpoints(0.64, 0.56, 0.26, 0.41, objects, [dribble]);
     assert.ok(Math.hypot(snapped.x1 - 0.65, snapped.y1 - 0.55) < 0.02);
+  });
+
+  it("pass chains from prior pass end for quick second pass", () => {
+    const firstPass = makeAction("pass", 0.5, 0.6, 0.35, 0.45, "p1");
+    const objects = [
+      offense("o1", "1", 0.5, 0.6, true),
+      offense("o2", "2", 0.35, 0.45),
+      offense("o3", "3", 0.2, 0.35),
+    ];
+    const snapped = snapPassEndpoints(0.36, 0.44, 0.21, 0.36, objects, [firstPass]);
+    assert.ok(Math.hypot(snapped.x1 - 0.35, snapped.y1 - 0.45) < 0.02);
+  });
+
+  it("snapPassEndpoints picks the nearest ball holder when several have the ball", () => {
+    const objects = [
+      offense("o1", "1", 0.3, 0.7, true),
+      offense("o2", "2", 0.7, 0.7, true),
+      offense("o3", "3", 0.3, 0.3),
+      offense("o4", "4", 0.7, 0.3),
+    ];
+    const passFromTwo = snapPassEndpoints(0.7, 0.7, 0.7, 0.3, objects);
+    const passFromOne = snapPassEndpoints(0.3, 0.7, 0.3, 0.3, objects);
+    const distTwoFromP2 = Math.hypot(passFromTwo.x1 - 0.7, passFromTwo.y1 - 0.7);
+    const distTwoFromP1 = Math.hypot(passFromTwo.x1 - 0.3, passFromTwo.y1 - 0.7);
+    const distOneFromP1 = Math.hypot(passFromOne.x1 - 0.3, passFromOne.y1 - 0.7);
+    const distOneFromP2 = Math.hypot(passFromOne.x1 - 0.7, passFromOne.y1 - 0.7);
+    assert.ok(distTwoFromP2 < distTwoFromP1);
+    assert.ok(distOneFromP1 < distOneFromP2);
   });
 });
 

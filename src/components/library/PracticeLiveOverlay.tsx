@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
+import { VideoWatchButton } from "@/components/library/VideoWatchButton";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   getPracticeItemVideoUrl,
@@ -81,6 +82,12 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
   const timerFiredRef = useRef(-1);
 
   const current: ResolvedPracticeRow | null = rows[index] ?? null;
+
+  useEffect(() => {
+    if (mounted && rows.length === 0) {
+      onClose();
+    }
+  }, [mounted, onClose, rows.length]);
 
   const goToBlock = useCallback(
     (nextIndex: number, autoStartTimer = loadPracticeLivePrefs().autoStartTimer) => {
@@ -443,15 +450,12 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                 View diagram
               </button>
               {videoUrl ? (
-                <a
+                <VideoWatchButton
+                  videoUrl={videoUrl}
+                  title={blockName}
                   id="practice-live-watch-video"
                   className="practice-live-video-btn"
-                  href={videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  ▶ Watch video
-                </a>
+                />
               ) : null}
               <button
                 type="button"

@@ -17,6 +17,7 @@ export interface InputDialogOptions {
   placeholder?: string;
   submitLabel?: string;
   allowEmpty?: boolean;
+  multiline?: boolean;
 }
 
 export interface PlaybookNameDialogOptions {

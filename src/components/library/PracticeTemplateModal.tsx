@@ -6,32 +6,43 @@ import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   deleteCustomPracticeTemplate,
   getAllPracticeTemplates,
+  renameCustomPracticeTemplate,
 } from "@/lib/practice/templates";
-import { appConfirm } from "@/stores/dialog-store";
+import { appConfirm, appNotice, appPrompt } from "@/stores/dialog-store";
 import type { PracticeTemplate } from "@/types/library-meta";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSelect: (template: PracticeTemplate) => void;
+  onEdit?: (template: PracticeTemplate) => void;
 }
 
-export function PracticeTemplateModal({ open, onClose, onSelect }: Props) {
+export function PracticeTemplateModal({ open, onClose, onSelect, onEdit }: Props) {
   const mounted = useClientMounted();
   if (!open || !mounted) return null;
   return (
-    <PracticeTemplateModalBody onClose={onClose} onSelect={onSelect} />
+    <PracticeTemplateModalBody
+      onClose={onClose}
+      onSelect={onSelect}
+      onEdit={onEdit}
+    />
   );
 }
 
 function PracticeTemplateModalBody({
   onClose,
   onSelect,
-}: Pick<Props, "onClose" | "onSelect">) {
+  onEdit,
+}: Pick<Props, "onClose" | "onSelect" | "onEdit">) {
   const [templates, setTemplates] = useState<PracticeTemplate[]>([]);
 
+  async function refreshTemplates() {
+    setTemplates(await getAllPracticeTemplates());
+  }
+
   useEffect(() => {
-    void getAllPracticeTemplates().then(setTemplates);
+    void refreshTemplates();
   }, []);
 
   async function handleDeleteTemplate(tpl: PracticeTemplate) {
@@ -44,7 +55,37 @@ function PracticeTemplateModalBody({
     });
     if (!confirmed) return;
     await deleteCustomPracticeTemplate(tpl.id);
-    setTemplates(await getAllPracticeTemplates());
+    await refreshTemplates();
+  }
+
+  async function handleRenameTemplate(tpl: PracticeTemplate) {
+    if (tpl.builtin) return;
+    const name = await appPrompt({
+      title: "Rename template",
+      subtitle: "Choose a new name for this saved template.",
+      label: "Template name",
+      initialValue: tpl.name,
+      placeholder: "e.g. Monday offense template",
+      submitLabel: "Save name",
+    });
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (!trimmed) {
+      appNotice("Name required", "Enter a template name.");
+      return;
+    }
+    const ok = await renameCustomPracticeTemplate(tpl.id, trimmed);
+    if (!ok) {
+      appNotice("Rename failed", "Could not rename this template.");
+      return;
+    }
+    await refreshTemplates();
+  }
+
+  function handleEditTemplate(tpl: PracticeTemplate) {
+    if (tpl.builtin || !onEdit) return;
+    onEdit(tpl);
+    onClose();
   }
 
   return createPortal(
@@ -57,10 +98,10 @@ function PracticeTemplateModalBody({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-title" id="practice-template-modal-title">
-          Start from template
+          Practice templates
         </div>
         <p className="modal-subtitle">
-          Built-in plans or your saved templates.
+          Start from a plan, rename a saved template, or edit its blocks.
         </p>
         <div className="practice-template-list" id="practice-template-list">
           {!templates.length ? (
@@ -97,14 +138,34 @@ function PracticeTemplateModalBody({
                     ) : null}
                   </button>
                   {!tpl.builtin ? (
-                    <button
-                      type="button"
-                      className="practice-template-delete"
-                      title="Delete template"
-                      onClick={() => void handleDeleteTemplate(tpl)}
-                    >
-                      ×
-                    </button>
+                    <div className="practice-template-row-actions">
+                      <button
+                        type="button"
+                        className="practice-template-action-btn"
+                        title="Rename template"
+                        onClick={() => void handleRenameTemplate(tpl)}
+                      >
+                        Rename
+                      </button>
+                      {onEdit ? (
+                        <button
+                          type="button"
+                          className="practice-template-action-btn"
+                          title="Edit template blocks"
+                          onClick={() => handleEditTemplate(tpl)}
+                        >
+                          Edit
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="practice-template-action-btn practice-template-delete"
+                        title="Delete template"
+                        onClick={() => void handleDeleteTemplate(tpl)}
+                      >
+                        ×
+                      </button>
+                    </div>
                   ) : null}
                 </div>
               );

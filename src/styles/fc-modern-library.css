@@ -17,7 +17,7 @@
   --fd-header-black: var(--fc-modern-header-from);
   --fd-filter-bg: var(--fc-modern-surface);
   --fd-border: var(--fc-modern-border);
-  --fd-table-head: #d9d9d9;
+  --fd-table-head: #d9d6d6;
   --fd-table-zebra: var(--fc-modern-surface-soft);
 }
 
@@ -41,11 +41,11 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-team-title {
 #screen-organizer .fd-main-tab,
 #screen-organizer .org-main-tab {
   border-radius: 6px;
-  letter-spacing: 0.02em;
-  text-transform: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   font-weight: 600;
-  font-size: 17px;
-  padding: 10px 20px;
+  font-size: var(--fd-header-nav-tab-font-size, 16px);
+  padding: 8px 16px;
   border: 2px solid transparent;
   margin: 4px 2px;
 }
@@ -84,17 +84,18 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab:hover:not(
 }
 
 #screen-organizer .fd-filter-item label,
-#screen-organizer .fd-filter-label {
+#screen-organizer .fd-filter-label,
+#screen-organizer .fc-fd-library-sort-label {
   color: var(--fc-modern-text-muted);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
 }
 
 #screen-organizer .fd-filter-select,
 #screen-organizer .org-filter-dropdown-btn,
-#screen-organizer .fd-filter-search input,
+#screen-organizer .fd-filter-search .fd-search-wrap,
 #screen-organizer .fd-play-search input,
 #screen-organizer input[type="search"],
 #screen-organizer input[type="text"].fd-filter-input {
@@ -106,9 +107,16 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab:hover:not(
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+#screen-organizer .fd-filter-search .fd-search-input {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 #screen-organizer .fd-filter-select:focus,
 #screen-organizer .org-filter-dropdown-btn:focus-visible,
-#screen-organizer .fd-filter-search input:focus,
+#screen-organizer .fd-filter-search .fd-search-wrap:focus-within,
 #screen-organizer .fd-play-search input:focus,
 #screen-organizer input[type="search"]:focus {
   outline: none;
@@ -132,29 +140,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab:hover:not(
   color: #166534;
 }
 
-/* Primary actions */
-#screen-organizer .fd-create-play-btn,
-#screen-organizer .fd-create-btn,
-#screen-organizer .org-preview-edit-btn-primary {
-  background: var(--fc-modern-accent) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 10px !important;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  font-weight: 700;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-}
-
-#screen-organizer .fd-create-play-btn:hover,
-#screen-organizer .fd-create-btn:hover,
-#screen-organizer .org-preview-edit-btn-primary:hover,
-html[data-device-class="laptop"] #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary:hover,
-html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary:hover {
-  background: var(--fc-modern-accent-hover) !important;
-}
-
-#screen-organizer .fd-create-btn-ghost,
+/* Primary actions — see fc-primary-actions.css (global) */
 #screen-organizer .fd-menu-btn {
   border-radius: 10px;
   border-color: var(--fc-modern-border);
@@ -173,16 +159,18 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar
 #screen-organizer .org-play-table .col-select,
 #screen-organizer .fd-play-table .col-type,
 #screen-organizer .org-play-table .col-type {
-  width: auto;
-  min-width: 0;
-  max-width: none;
+  width: var(--fd-lib-col-type-width, auto);
+  min-width: var(--fd-lib-col-type-min, 60px);
+  max-width: var(--fd-lib-col-type-max, none);
+  white-space: nowrap;
 }
 
 #screen-organizer .fd-play-table .col-season,
 #screen-organizer .org-play-table .col-season {
   width: var(--fd-lib-col-season-width, auto);
-  min-width: var(--fd-lib-col-season-min, 0);
+  min-width: var(--fd-lib-col-season-min, 104px);
   max-width: var(--fd-lib-col-season-max, none);
+  white-space: nowrap;
 }
 
 #screen-organizer .fd-play-table .col-team,
@@ -206,6 +194,16 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar
   max-width: var(--fd-lib-col-tags-max, none);
 }
 
+#screen-organizer .fd-play-table .col-created-by,
+#screen-organizer .org-play-table .col-created-by {
+  width: var(--fd-lib-col-created-by-width, 148px);
+  min-width: var(--fd-lib-col-created-by-min, 120px);
+  max-width: var(--fd-lib-col-created-by-max, 200px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #screen-organizer .fd-play-table .col-play-name,
 #screen-organizer .org-play-table .col-play-name {
   width: auto;
@@ -214,19 +212,29 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar
 
 #screen-organizer .fd-play-table tbody .col-season,
 #screen-organizer .org-play-table tbody .col-season {
-  font-size: 14px;
-  min-width: 88px;
-  max-width: 120px;
+  font-size: 16px;
+  min-width: 104px;
+}
+
+#screen-organizer .fd-play-table tbody .col-type,
+#screen-organizer .org-play-table tbody .col-type {
+  min-width: var(--fd-lib-col-type-min, 60px);
+}
+
+#screen-organizer .fd-play-table tbody td,
+#screen-organizer .org-play-table tbody td {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 #screen-organizer .fd-play-table thead,
 #screen-organizer .org-play-table thead {
-  background: #d9d9d9;
+  background: linear-gradient(180deg, #e8e6e6 0%, #d9d6d6 100%);
 }
 
 #screen-organizer .fd-play-table thead th,
 #screen-organizer .org-play-table thead th {
-  background: #d9d9d9 !important;
+  background: transparent !important;
   color: #333 !important;
   border-bottom: 1px solid #c4c4c4 !important;
   font-weight: 700 !important;
@@ -234,7 +242,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-preview-actions-bar
   letter-spacing: 0 !important;
   text-align: left;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: 15px;
   vertical-align: middle;
 }
 

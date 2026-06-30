@@ -59,11 +59,12 @@ export function buildCopyMessagesBlock(
   players: PlayerRosterEntry[],
   template: string,
   url: string,
+  resolveUrl?: (player: PlayerRosterEntry) => string,
 ) {
   return players
-    .map(
-      (player) =>
-        `${playerRosterDisplayName(player)}:\n${buildPlayerShareMessage(template, player, url)}`,
-    )
+    .map((player) => {
+      const playerUrl = resolveUrl?.(player) || url;
+      return `${playerRosterDisplayName(player)}:\n${buildPlayerShareMessage(template, player, playerUrl)}`;
+    })
     .join("\n\n---\n\n");
 }

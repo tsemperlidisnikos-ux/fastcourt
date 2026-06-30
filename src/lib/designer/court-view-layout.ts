@@ -1,8 +1,8 @@
 import {
-  FD_FULL_COURT_ASPECT,
-  FD_HALF_COURT_ASPECT,
-} from "@/lib/designer/constants";
-import type { CourtRect, CourtType } from "@/types/designer";
+  getCourtAspect,
+  getCourtHgTemplate,
+} from "@/lib/designer/court-hg-templates";
+import type { CourtRect, CourtTemplate, CourtType } from "@/types/designer";
 
 export const COURT_OOB_END_RATIO = 0.2;
 export const COURT_OOB_SIDE_RATIO = 0.16;
@@ -30,7 +30,9 @@ export interface CourtInsets {
 }
 
 export interface CourtViewOptions {
-  oob: "none" | "end" | "sideline-left" | "sideline-right";
+  oob: "none" | "end" | "sideline-left" | "sideline-right" | "sideline-both";
+  /** Feet of out-of-bounds on each sideline and baseline. */
+  sidelinesFt?: number;
 }
 
 export interface CourtViewLayout {
@@ -66,14 +68,33 @@ export function computeCourtViewLayout(
   stageH: number,
   courtType: CourtType,
   opts: CourtViewOptions = { oob: "none" },
+  template: CourtTemplate = "NCAA",
 ): CourtViewLayout {
-  const courtAspect =
-    courtType === "full" ? FD_FULL_COURT_ASPECT : FD_HALF_COURT_ASPECT;
-  const endRatio = opts.oob === "end" ? COURT_OOB_END_RATIO : 0;
-  const sideRatio =
-    opts.oob === "sideline-left" || opts.oob === "sideline-right"
+  const spec = getCourtHgTemplate(template);
+  const courtAspect = getCourtAspect(template, courtType);
+  const courtWidthFt = spec.widthFt;
+  const playLengthFt =
+    courtType === "full" ? spec.fullLengthFt : spec.fullLengthFt / 2;
+
+  const sidelineMarginActive =
+    opts.oob === "sideline-both" &&
+    opts.sidelinesFt != null &&
+    opts.sidelinesFt > 0;
+
+  const sideRatio = sidelineMarginActive
+    ? (opts.sidelinesFt! * 2) / courtWidthFt
+    : opts.oob === "sideline-left" || opts.oob === "sideline-right"
       ? COURT_OOB_SIDE_RATIO
       : 0;
+
+  const endRatio = sidelineMarginActive
+    ? courtType === "full"
+      ? (opts.sidelinesFt! * 2) / spec.fullLengthFt
+      : opts.sidelinesFt! / playLengthFt
+    : opts.oob === "end"
+      ? COURT_OOB_END_RATIO
+      : 0;
+
   const totalAspect = (courtAspect * (1 + sideRatio)) / (1 + endRatio);
 
   let totalW = stageW;
@@ -107,39 +128,81 @@ export function computeCourtViewLayout(
   else if (opts.oob === "sideline-right") courtX = totalX;
 
   const baselineAtTop = courtType !== "full";
+  const symmetricEndMargins = sidelineMarginActive && courtType === "full";
+  const endBandH = symmetricEndMargins ? endH / 2 : endH;
+
   let courtY = totalY;
-  if (endRatio > 0 && baselineAtTop) courtY = totalY + endH;
+  if (endRatio > 0 && baselineAtTop) courtY = totalY + endBandH;
+  else if (symmetricEndMargins) courtY = totalY + endBandH;
 
   const court = { x: courtX, y: courtY, width: courtW, height: courtH };
   const total = { x: totalX, y: totalY, width: totalW, height: totalH };
   const oobRects: CourtViewLayout["oobRects"] = [];
 
   if (endRatio > 0) {
-    oobRects.push({
-      x: courtX,
-      y: baselineAtTop ? totalY : totalY + courtH,
-      width: courtW,
-      height: endH,
-      kind: "end",
-    });
+    if (symmetricEndMargins) {
+      oobRects.push({
+        x: courtX,
+        y: totalY,
+        width: courtW,
+        height: endBandH,
+        kind: "end",
+      });
+      oobRects.push({
+        x: courtX,
+        y: courtY + courtH,
+        width: courtW,
+        height: endBandH,
+        kind: "end",
+      });
+    } else {
+      oobRects.push({
+        x: courtX,
+        y: baselineAtTop ? totalY : totalY + courtH,
+        width: courtW,
+        height: endBandH,
+        kind: "end",
+      });
+    }
   }
   if (sideRatio > 0) {
-    oobRects.push({
-      x: opts.oob === "sideline-left" ? totalX : courtX + courtW,
-      y: courtY,
-      width: sideW,
-      height: courtH,
-      kind: "sideline",
-    });
+    if (opts.oob === "sideline-both") {
+      oobRects.push({
+        x: totalX,
+        y: courtY,
+        width: sideW / 2,
+        height: courtH,
+        kind: "sideline",
+      });
+      oobRects.push({
+        x: courtX + courtW,
+        y: courtY,
+        width: sideW / 2,
+        height: courtH,
+        kind: "sideline",
+      });
+    } else {
+      oobRects.push({
+        x: opts.oob === "sideline-left" ? totalX : courtX + courtW,
+        y: courtY,
+        width: sideW,
+        height: courtH,
+        kind: "sideline",
+      });
+    }
   }
 
   return { court, total, oobRects, opts };
 }
 
+export type CourtCoordSpace = "vector" | "raster";
+
 export function getPlayableCourtRect(
   court: CourtRect,
   courtType: CourtType,
+  coords: CourtCoordSpace = "raster",
 ): CourtRect {
+  if (coords === "vector") return court;
   return insetCourtRect(court, getCourtLineInsets(courtType));
 }
 
@@ -148,8 +211,9 @@ export function courtNormToStage(
   courtType: CourtType,
   nx: number,
   ny: number,
+  coords: CourtCoordSpace = "raster",
 ) {
-  const playable = getPlayableCourtRect(court, courtType);
+  const playable = getPlayableCourtRect(court, courtType, coords);
   return {
     x: playable.x + nx * playable.width,
     y: playable.y + ny * playable.height,
@@ -161,10 +225,86 @@ export function stageToCourtNorm(
   courtType: CourtType,
   x: number,
   y: number,
+  coords: CourtCoordSpace = "raster",
 ) {
-  const playable = getPlayableCourtRect(court, courtType);
+  const playable = getPlayableCourtRect(court, courtType, coords);
   return {
     x: (x - playable.x) / playable.width,
     y: (y - playable.y) / playable.height,
+  };
+}
+
+export interface PlacementNormBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+/** Court-norm bounds for players/objects when OOB margins are enabled. */
+export function getPlacementNormBounds(
+  layout: CourtViewLayout,
+  courtType: CourtType,
+  coords: CourtCoordSpace = "vector",
+): PlacementNormBounds {
+  if (coords !== "vector" || layout.oobRects.length === 0) {
+    return { minX: 0, minY: 0, maxX: 1, maxY: 1 };
+  }
+
+  const { court, total } = layout;
+  const marginLeft = court.x - total.x;
+  const marginTop = court.y - total.y;
+  const marginRight = total.x + total.width - court.x - court.width;
+  const marginBottom = total.y + total.height - court.y - court.height;
+
+  return {
+    minX: -marginLeft / court.width,
+    minY: -marginTop / court.height,
+    maxX: 1 + marginRight / court.width,
+    maxY: 1 + marginBottom / court.height,
+  };
+}
+
+export function clampPlacementNorm(
+  layout: CourtViewLayout,
+  courtType: CourtType,
+  x: number,
+  y: number,
+  coords: CourtCoordSpace = "vector",
+) {
+  const bounds = getPlacementNormBounds(layout, courtType, coords);
+  return {
+    x: Math.min(bounds.maxX, Math.max(bounds.minX, x)),
+    y: Math.min(bounds.maxY, Math.max(bounds.minY, y)),
+  };
+}
+
+export function placementNormToStage(
+  layout: CourtViewLayout,
+  courtType: CourtType,
+  nx: number,
+  ny: number,
+  coords: CourtCoordSpace = "vector",
+) {
+  const { court } = layout;
+  const origin = getPlayableCourtRect(court, courtType, coords);
+  return {
+    x: origin.x + nx * court.width,
+    y: origin.y + ny * court.height,
+  };
+}
+
+export function stageToPlacementNorm(
+  layout: CourtViewLayout,
+  courtType: CourtType,
+  x: number,
+  y: number,
+  coords: CourtCoordSpace = "vector",
+) {
+  const { court } = layout;
+  const origin = getPlayableCourtRect(court, courtType, coords);
+  return {
+    x: (x - origin.x) / court.width,
+    y: (y - origin.y) / court.height,
   };
 }

@@ -5,6 +5,9 @@ import { createPortal } from "react-dom";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
+import { VideoEmbed } from "@/components/library/VideoEmbed";
+import { VideoWatchButton } from "@/components/library/VideoWatchButton";
+import { canInlineEmbedVideo } from "@/lib/library/video-url";
 import { shareMinifiedToStoredPlay } from "@/lib/share/share-link";
 import { useShareStore } from "@/stores/share-store";
 import type { StoredPlay } from "@/types/library";
@@ -111,16 +114,22 @@ export function PracticeShareOverlay() {
                       </button>
                     ) : null}
                     {entry.videoUrl ? (
-                      <a
+                      <VideoWatchButton
+                        videoUrl={entry.videoUrl}
+                        title={play?.title || entry.cueLabel}
                         className="practice-share-action-btn practice-share-action-link"
-                        href={entry.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        ▶ Watch video
-                      </a>
+                        variant="link"
+                      />
                     ) : null}
                   </div>
+                  {entry.videoUrl && canInlineEmbedVideo(entry.videoUrl) ? (
+                    <VideoEmbed
+                      videoUrl={entry.videoUrl}
+                      title={play?.title || entry.cueLabel}
+                      compact
+                      className="practice-share-card-video"
+                    />
+                  ) : null}
                 </div>
               </article>
             );

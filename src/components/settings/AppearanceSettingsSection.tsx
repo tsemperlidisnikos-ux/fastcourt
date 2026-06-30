@@ -54,25 +54,9 @@ export function AppearanceSettingsSection({
         <div className="org-settings-appearance-pane org-settings-line-colors-block">
           <div className="org-settings-appearance-pane-title">Editor colors</div>
           <p className="org-settings-brand-help" id="org-editor-colors-help">
-            Panel accent, utility bar, and line colors apply to all coaches.
-            Only the administrator can change them. Saved with Apply.
+            Line colors apply to all coaches. Only the administrator can change
+            them. Saved with Apply.
           </p>
-          <label className="org-settings-brand-field org-settings-brand-color-field">
-            <span>Panel accent</span>
-            <input
-              type="color"
-              value={settings.panelAccent}
-              onChange={(e) => patch("panelAccent", e.target.value)}
-            />
-          </label>
-          <label className="org-settings-brand-field org-settings-brand-color-field">
-            <span>Utility bar</span>
-            <input
-              type="color"
-              value={settings.utilityBar}
-              onChange={(e) => patch("utilityBar", e.target.value)}
-            />
-          </label>
           <div className="org-settings-sublabel org-settings-line-colors-label">
             Line colors
           </div>
@@ -163,7 +147,7 @@ export function AppearanceSettingsSection({
             Middle header row only: application logo, team name, and club logo.
           </p>
           <label className="org-settings-brand-field org-settings-brand-color-field">
-            <span>Active tab frame color</span>
+            <span>Accent color</span>
             <input
               type="color"
               value={settings.headerNavActiveColor}
@@ -171,9 +155,9 @@ export function AppearanceSettingsSection({
             />
           </label>
           <p className="org-settings-hint">
-            Fill color for the selected library tab (Draw, Playbooks, Fields,
-            Practice, Players). Label text switches light/dark automatically for
-            readability.
+            Accent color for selected library tab, Create buttons (+ CREATE
+            SEASON, Create Playbook, etc.), and related highlights. Label text
+            switches light/dark automatically for readability.
           </p>
           <HeaderAppearancePreview
             settings={settings}
@@ -196,75 +180,6 @@ export function AppearanceSettingsSection({
               ))}
             </select>
           </label>
-          <div className="org-theme-toggle" role="group" aria-label="Theme">
-            <button
-              type="button"
-              className={`org-theme-btn${settings.theme === "light" ? " active" : ""}`}
-              onClick={() => patch("theme", "light")}
-            >
-              ☀ Light
-            </button>
-            <button
-              type="button"
-              className={`org-theme-btn${settings.theme === "dark" ? " active" : ""}`}
-              onClick={() => patch("theme", "dark")}
-            >
-              🌙 Dark
-            </button>
-          </div>
-          <div className="org-settings-sublabel">Players on court</div>
-          <div
-            className="org-player-display-toggle"
-            role="group"
-            aria-label="Player display"
-          >
-            <button
-              type="button"
-              className={`org-player-display-btn${settings.playerDisplay === "number" ? " active" : ""}`}
-              onClick={() => patch("playerDisplay", "number")}
-            >
-              Number only
-            </button>
-            <button
-              type="button"
-              className={`org-player-display-btn${settings.playerDisplay === "circle" ? " active" : ""}`}
-              onClick={() => patch("playerDisplay", "circle")}
-            >
-              Number in circle
-            </button>
-          </div>
-          <div className="org-settings-sublabel">Play editor sidebar</div>
-          <div className="org-settings-col-width-grid org-settings-col-width-grid-single">
-            <label className="org-settings-col-width-field">
-              <span>Font size (px)</span>
-              <div className="org-settings-range-row">
-                <input
-                  type="range"
-                  min={9}
-                  max={20}
-                  value={settings.designerColumns.tableFont}
-                  aria-label="Play editor sidebar font size"
-                  onChange={(e) =>
-                    onChange({
-                      ...settings,
-                      designerColumns: {
-                        ...settings.designerColumns,
-                        tableFont: Number(e.target.value) || 14,
-                      },
-                    })
-                  }
-                />
-                <span className="org-settings-range-value">
-                  {settings.designerColumns.tableFont}px
-                </span>
-              </div>
-            </label>
-          </div>
-          <p className="org-settings-hint">
-            Controls font size in the designer left panel and the court toolbar
-            (FastPlace, Next Frame, Animate, etc.). Applies to all coaches after
-            Apply.
-          </p>
           <div className="org-settings-sublabel">Drawing input</div>
           <label className="org-settings-check">
             <input
@@ -321,6 +236,23 @@ export function AppearanceSettingsSection({
                     libraryColumns: {
                       ...settings.libraryColumns,
                       season: numOrNull(e.target.value),
+                    },
+                  })
+                }
+              />
+            </label>
+            <label className="org-settings-col-width-field">
+              <span>Type (px)</span>
+              <input
+                type="number"
+                placeholder="Auto"
+                value={settings.libraryColumns.type ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    ...settings,
+                    libraryColumns: {
+                      ...settings.libraryColumns,
+                      type: numOrNull(e.target.value),
                     },
                   })
                 }

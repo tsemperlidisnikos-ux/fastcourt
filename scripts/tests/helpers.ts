@@ -67,3 +67,10 @@ export function makeTargetFrame(
 export function ballHolderLabel(frame: DesignerFrame) {
   return frame.objects.find((o) => o.kind === "offense" && o.hasBall)?.label ?? null;
 }
+
+export function ballHolderLabels(objects: DesignerObject[]) {
+  return objects
+    .filter((o) => o.kind === "offense" && o.hasBall)
+    .map((o) => o.label ?? "")
+    .sort();
+}

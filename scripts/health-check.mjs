@@ -2,13 +2,13 @@
 /**
  * FastCourt Next — health check & functional test runner.
  *
- * Runs automated unit tests, static analysis, optional lint/build,
+ * Runs unit tests per feature domain, static analysis, optional lint/build,
  * documents known migration gaps, and prints a manual QA checklist.
  *
  * Usage:
  *   node scripts/health-check.mjs
  *   node scripts/health-check.mjs --lint --build
- *   node scripts/health-check.mjs --json=health-check-report.json
+ *   node scripts/health-check.mjs --strict-coverage
  *   npm run health-check
  *   npm run health-check:full
  */
@@ -17,6 +17,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { FEATURE_DOMAINS, MANUAL_CHECKLIST } from "./check-config.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TESTS_DIR = path.join(ROOT, "scripts", "tests");
@@ -31,57 +32,23 @@ const jsonOut = jsonArg
     : "health-check-report.json"
   : "";
 
-/** @type {Array<{category:string,name:string,status:string,detail?:string}>} */
+/** @type {Array<{category:string,name:string,status:string,detail?:string,domain?:string}>} */
 const results = [];
+
+/** @type {Array<{id:string,name:string,status:string,passed:number,failed:number,skipped:number,warn:number,detail?:string}>} */
+const domainSummary = [];
 
 /** @type {Array<{area:string,item:string,status:string,notes?:string}>} */
 const knownGaps = [];
 
-/** @type {Array<{area:string,steps:string[]}>} */
-const manualChecklist = [
-  {
-    area: "Login / Auth",
-    steps: [
-      "Email/password login (local + cloud if configured)",
-      "OAuth buttons (Google/Apple/Facebook) when cloud is on",
-      "Signup wizard completes and redirects to library",
-      "Team invite link pre-fills on login page",
-    ],
-  },
-  {
-    area: "Library",
-    steps: [
-      "Create new play, open in designer",
-      "Import .fdb file, preview thumbnails render",
-      "Playbooks tab: present / print / share",
-      "Practice tab: create session, live timer",
-      "Players tab: roster list loads",
-    ],
-  },
-  {
-    area: "Designer",
-    steps: [
-      "Place O/D players, assign ball (tap player)",
-      "Draw pass → next frame → ball on receiver",
-      "Dribble + pass chain, handoff, cut, screen",
-      "Formations & FastBuild apply correctly",
-      "Undo/redo, frame duplicate, mirror frame/play",
-      "Animation playback timing & ball transfer",
-      "Whiteboard ink + eraser on frame",
-    ],
-  },
-  {
-    area: "Settings / Admin",
-    steps: [
-      "Coach subscription & PDF branding save",
-      "Admin users CRUD (if admin role)",
-      "Appearance settings persist after reload",
-    ],
-  },
-];
-
-function record(category, name, status, detail = "") {
-  results.push({ category, name, status, detail: detail.slice(0, 500) });
+function record(category, name, status, detail = "", domain = "") {
+  results.push({
+    category,
+    name,
+    status,
+    detail: detail.slice(0, 500),
+    domain,
+  });
 }
 
 function statusIcon(status) {
@@ -131,20 +98,159 @@ function discoverTestFiles() {
     .map((f) => path.join(TESTS_DIR, f));
 }
 
+function checkDomainModules(domain) {
+  if (!domain.modules?.length) return true;
+  const missing = domain.modules.filter((m) => !exists(m));
+  if (missing.length) {
+    record(
+      domain.id,
+      `${domain.name} — modules`,
+      "fail",
+      `Missing: ${missing.join(", ")}`,
+      domain.id,
+    );
+    return false;
+  }
+  record(
+    domain.id,
+    `${domain.name} — modules`,
+    "pass",
+    `${domain.modules.length} core files present`,
+    domain.id,
+  );
+  return true;
+}
+
+function runDomainTests(domain) {
+  const testPaths = (domain.tests ?? [])
+    .map((f) => path.join(TESTS_DIR, f))
+    .filter((p) => fs.existsSync(p));
+
+  if (!testPaths.length) {
+    record(
+      domain.id,
+      `${domain.name} — unit tests`,
+      "skip",
+      "No test files for this domain yet",
+      domain.id,
+    );
+    domainSummary.push({
+      id: domain.id,
+      name: domain.name,
+      status: "skip",
+      passed: 0,
+      failed: 0,
+      skipped: 1,
+      warn: 0,
+      detail: "No tests",
+    });
+    return true;
+  }
+
+  const run = runCommand(
+    `${domain.name} — unit tests (${testPaths.length})`,
+    domain.id,
+    "npx",
+    ["tsx", "--test", ...testPaths],
+  );
+
+  domainSummary.push({
+    id: domain.id,
+    name: domain.name,
+    status: run.ok ? "pass" : "fail",
+    passed: run.ok ? testPaths.length : 0,
+    failed: run.ok ? 0 : 1,
+    skipped: 0,
+    warn: 0,
+    detail: run.ok ? "All tests passed" : "See output above",
+  });
+
+  if (!run.ok) {
+    const failMatch = run.output.match(/✖[^\n]+/g);
+    if (failMatch?.length) {
+      record(
+        domain.id,
+        `${domain.name} — failures`,
+        "fail",
+        failMatch.slice(0, 5).join(" | "),
+        domain.id,
+      );
+    }
+  }
+
+  return run.ok;
+}
+
+function checkTestCoverage() {
+  const all = discoverTestFiles().map((p) => path.basename(p));
+  const mapped = new Map();
+  const duplicates = [];
+
+  for (const domain of FEATURE_DOMAINS) {
+    for (const file of domain.tests ?? []) {
+      if (mapped.has(file)) {
+        duplicates.push(`${file} (${mapped.get(file)}, ${domain.id})`);
+      } else {
+        mapped.set(file, domain.id);
+      }
+    }
+  }
+
+  const unmapped = all.filter((f) => !mapped.has(f));
+  const strict = process.env.CI === "1" || args.has("--strict-coverage");
+
+  if (duplicates.length) {
+    record(
+      "coverage",
+      "duplicate test mappings",
+      "fail",
+      duplicates.join(", "),
+      "coverage",
+    );
+  } else {
+    record(
+      "coverage",
+      "duplicate test mappings",
+      "pass",
+      "Each test file belongs to one domain",
+    );
+  }
+
+  if (unmapped.length) {
+    record(
+      "coverage",
+      "unmapped test files",
+      strict ? "fail" : "warn",
+      unmapped.join(", "),
+      "coverage",
+    );
+  } else {
+    record(
+      "coverage",
+      "unmapped test files",
+      "pass",
+      `All ${all.length} test files mapped to a domain`,
+    );
+  }
+
+  record(
+    "coverage",
+    "unit test files",
+    "pass",
+    `${all.length} files across ${FEATURE_DOMAINS.length} domains`,
+    "coverage",
+  );
+
+  return duplicates.length === 0 && unmapped.length === 0;
+}
+
 function checkKnownGaps() {
   const gaps = [
     {
       area: "Designer",
       item: "WebM/MP4 animation export",
       path: "src/components/designer/DesignerScreen.tsx",
-      pattern: /Export animation \(WebM\)/,
-      invertPattern: true,
-    },
-    {
-      area: "Designer",
-      item: "Court zoom UI (+/−/reset buttons)",
-      path: "src/components/designer/DesignerScreen.tsx",
-      pattern: /zoomCourtIn/,
+      pattern: /handleExportAnimationMp4|exportPlayAnimationMp4/,
     },
     {
       area: "PlayBank",
@@ -175,7 +281,9 @@ function checkKnownGaps() {
         implemented = fs.existsSync(fullPath);
       } else if (gap.pattern && fs.existsSync(fullPath)) {
         const src = fs.readFileSync(fullPath, "utf8");
-        implemented = gap.invertPattern ? !gap.pattern.test(src) : gap.pattern.test(src);
+        implemented = gap.invertPattern
+          ? !gap.pattern.test(src)
+          : gap.pattern.test(src);
       }
     }
 
@@ -184,7 +292,9 @@ function checkKnownGaps() {
       area: gap.area,
       item: gap.item,
       status,
-      notes: implemented ? "Implemented or partially present" : "Not yet migrated from legacy",
+      notes: implemented
+        ? "Implemented or partially present"
+        : "Not yet migrated from legacy",
     });
     if (!implemented) {
       record("gap", gap.item, "warn", `${gap.area}: migration gap`);
@@ -200,8 +310,18 @@ function printSummary() {
 
   console.log("\n=== FastCourt Health Check ===\n");
 
+  console.log("[feature domains]");
+  for (const d of domainSummary) {
+    const detail = d.detail ? ` — ${d.detail}` : "";
+    console.log(`  ${statusIcon(d.status)}  ${d.name}${detail}`);
+  }
+  console.log("");
+
   const byCategory = new Map();
   for (const r of results) {
+    if (r.category === "gap" || FEATURE_DOMAINS.some((d) => d.id === r.category)) {
+      continue;
+    }
     if (!byCategory.has(r.category)) byCategory.set(r.category, []);
     byCategory.get(r.category).push(r);
   }
@@ -225,7 +345,7 @@ function printSummary() {
   }
 
   console.log("[manual QA checklist — run in browser]");
-  for (const section of manualChecklist) {
+  for (const section of MANUAL_CHECKLIST) {
     console.log(`  ${section.area}:`);
     for (const step of section.steps) {
       console.log(`    - ${step}`);
@@ -242,11 +362,16 @@ function printSummary() {
       generatedAt: new Date().toISOString(),
       root: ROOT,
       summary: counts,
+      domainSummary,
       results,
       knownGaps,
-      manualChecklist,
+      manualChecklist: MANUAL_CHECKLIST,
     };
-    fs.writeFileSync(path.join(ROOT, jsonOut), JSON.stringify(report, null, 2));
+    const outPath = path.isAbsolute(jsonOut)
+      ? jsonOut
+      : path.join(ROOT, jsonOut);
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, JSON.stringify(report, null, 2));
     console.log(`Report written: ${jsonOut}`);
   }
 
@@ -256,23 +381,16 @@ function printSummary() {
 function main() {
   console.log("FastCourt health check starting...\n");
 
-  const testFiles = discoverTestFiles();
-  if (!testFiles.length) {
-    record("unit", "test discovery", "fail", "No scripts/tests/*.test.ts files found");
-  } else {
-    const testRun = runCommand(
-      `unit tests (${testFiles.length} files)`,
-      "unit",
-      "npx",
-      ["tsx", "--test", ...testFiles],
-    );
-    if (!testRun.ok) {
-      const failMatch = testRun.output.match(/✖[^\n]+/g);
-      if (failMatch?.length) {
-        record("unit", "failed tests", "fail", failMatch.slice(0, 5).join(" | "));
-      }
-    }
+  let allDomainsOk = true;
+
+  for (const domain of FEATURE_DOMAINS) {
+    checkDomainModules(domain);
+    const ok = runDomainTests(domain);
+    if (!ok) allDomainsOk = false;
   }
+
+  const coverageOk = checkTestCoverage();
+  if (!coverageOk) allDomainsOk = false;
 
   const importRun = spawnSync("node", ["scripts/analyze-imports.mjs", ROOT], {
     cwd: ROOT,
@@ -319,20 +437,22 @@ function main() {
   checkKnownGaps();
 
   if (runLint) {
-    runCommand("eslint", "quality", "npm", ["run", "lint"]);
+    const lint = runCommand("eslint", "quality", "npm", ["run", "lint"]);
+    if (!lint.ok) allDomainsOk = false;
   } else {
     record("quality", "eslint", "skip", "Pass --lint to run");
   }
 
   if (runBuild) {
-    runCommand("next build", "quality", "npm", ["run", "build"], {
+    const build = runCommand("next build", "quality", "npm", ["run", "build"], {
       env: { ...process.env, CI: "1" },
     });
+    if (!build.ok) allDomainsOk = false;
   } else {
     record("quality", "next build", "skip", "Pass --build to run");
   }
 
-  const ok = printSummary();
+  const ok = printSummary() && allDomainsOk;
   process.exit(ok ? 0 : 1);
 }
 

@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <meta name="fastcourt-intro-duration-ms" content="18000" />
+  <title>FastCourt Intro</title>
+  <style>
+    :root {
+      --fc-orange: #ff9e5e;
+      --fc-orange-bright: #ffb880;
+      --fc-orange-glow: #ffd0a8;
+      --fc-white: #f8f9fa;
+      --fc-black: #030303;
+      --total: 18s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--fc-black);
+      font-family: "Arial Rounded MT Bold", "Arial Rounded MT", Arial, sans-serif;
+    }
+
+    .stage {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--fc-black);
+    }
+
+    /* —— Ambient layers —— */
+    .bg-court {
+      position: absolute;
+      inset: -8%;
+      background:
+        url("../../public/assets/landing/hero-court-bg.png") center / cover no-repeat,
+        radial-gradient(ellipse 90% 70% at 50% 40%, rgba(232, 93, 4, 0.22), transparent 65%),
+        linear-gradient(180deg, #0a0c10 0%, #030303 100%);
+      opacity: 0;
+      transform: scale(1.18);
+      filter: brightness(0.35) saturate(1.2);
+      animation: bgCourt var(--total) ease forwards;
+    }
+
+    .bg-court::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, transparent 20%, rgba(0, 0, 0, 0.72) 100%);
+    }
+
+    .light-rays {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      width: 1400px;
+      height: 1400px;
+      margin: -700px 0 0 -700px;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        rgba(255, 123, 26, 0.07) 18deg,
+        transparent 36deg,
+        transparent 60deg,
+        rgba(255, 123, 26, 0.05) 78deg,
+        transparent 96deg,
+        transparent 140deg,
+        rgba(255, 123, 26, 0.06) 158deg,
+        transparent 176deg,
+        transparent 220deg,
+        rgba(255, 123, 26, 0.04) 238deg,
+        transparent 256deg
+      );
+      opacity: 0;
+      animation: lightRays var(--total) linear forwards;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    #particles {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      z-index: 21;
+      opacity: 0.06;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.45) 2px,
+        rgba(0, 0, 0, 0.45) 4px
+      );
+      pointer-events: none;
+    }
+
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.24;
+      z-index: 22;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      animation: grainShift 0.35s steps(2) infinite;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: radial-gradient(circle at 50% 44%, transparent 38%, rgba(0, 0, 0, 0.62) 100%);
+      pointer-events: none;
+    }
+
+    .wipe {
+      position: absolute;
+      inset: 0;
+      z-index: 15;
+      background: linear-gradient(105deg, transparent 42%, var(--fc-orange-bright) 50%, transparent 58%);
+      opacity: 0;
+      transform: translateX(-120%) skewX(-12deg);
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .wipe-1 { animation: wipeFlash 0.55s ease-in 4.35s forwards; }
+    .wipe-2 { animation: wipeFlash 0.55s ease-in 8.15s forwards; }
+    .wipe-3 { animation: wipeFlash 0.55s ease-in 12.05s forwards; }
+    .wipe-4 { animation: wipeFlash 0.65s ease-in 15.85s forwards; }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* —— Scene 1: Epic open —— */
+    .scene-open {
+      animation: sceneOpen var(--total) ease forwards;
+    }
+
+    .court-grid {
+      position: absolute;
+      inset: 0;
+      perspective: 900px;
+      opacity: 0;
+      animation: gridIn 4.8s ease forwards;
+    }
+
+    .court-grid-inner {
+      position: absolute;
+      left: 50%;
+      bottom: -120px;
+      width: 2200px;
+      height: 1200px;
+      margin-left: -1100px;
+      transform: rotateX(68deg);
+      transform-origin: center bottom;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.06) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 2px, transparent 2px);
+      background-size: 80px 80px;
+      mask-image: linear-gradient(180deg, transparent, #000 35%, #000 85%, transparent);
+    }
+
+    .court-lines {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      animation: courtFade 4.8s ease forwards;
+    }
+
+    .court-lines svg { width: 100%; height: 100%; }
+
+    .court-lines path {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 3;
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+      animation: drawLine 1.6s ease-out 0.2s forwards;
+    }
+
+    .court-lines .orange {
+      stroke: rgba(255, 123, 26, 0.55);
+      stroke-width: 5;
+      filter: drop-shadow(0 0 12px rgba(255, 123, 26, 0.6));
+      animation-delay: 0.45s;
+    }
+
+    .speed-streaks { position: absolute; inset: 0; overflow: hidden; }
+
+    .streak {
+      position: absolute;
+      top: 50%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(255, 160, 60, 1), transparent);
+      transform: translateY(-50%) skewX(-28deg);
+      opacity: 0;
+      filter: blur(0.5px);
+    }
+
+    .streak.s1 { left: -400px; width: 360px; animation: streakL 0.65s ease-out 0.5s forwards; }
+    .streak.s2 { right: -400px; width: 360px; animation: streakR 0.65s ease-out 0.55s forwards; }
+    .streak.s3 { left: -500px; width: 220px; top: 38%; animation: streakL 0.5s ease-out 0.7s forwards; opacity: 0.7; }
+    .streak.s4 { right: -500px; width: 220px; top: 58%; animation: streakR 0.5s ease-out 0.72s forwards; opacity: 0.7; }
+
+    .shockwave {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      width: 80px;
+      height: 80px;
+      margin: -40px 0 0 -40px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 140, 50, 0.9);
+      opacity: 0;
+      animation: shockwave 4.8s ease-out forwards;
+    }
+
+    .glow-ring {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      border-radius: 50%;
+      border: 2px solid rgba(232, 93, 4, 0.4);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.5);
+    }
+
+    .glow-ring.r1 {
+      width: 560px; height: 560px;
+      box-shadow: 0 0 80px rgba(232, 93, 4, 0.35), inset 0 0 50px rgba(232, 93, 4, 0.1);
+      animation: ring1 4.8s ease forwards;
+    }
+
+    .glow-ring.r2 {
+      width: 720px; height: 720px;
+      border-color: rgba(255, 123, 26, 0.2);
+      animation: ring2 4.8s ease forwards;
+    }
+
+    .brand-stack {
+      position: absolute;
+      left: 50%;
+      top: 38%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      z-index: 6;
+    }
+
+    .mark-wrap {
+      opacity: 0;
+      transform: scale(0.55);
+      filter: blur(18px) brightness(1.15);
+      animation: markReveal 4.8s cubic-bezier(0.12, 1.15, 0.24, 1) forwards;
+    }
+
+    .mark-wrap img {
+      display: block;
+      width: 360px;
+      height: auto;
+      filter:
+        drop-shadow(0 0 42px rgba(255, 158, 94, 0.65))
+        drop-shadow(0 0 100px rgba(255, 158, 94, 0.28));
+    }
+
+    .brand-title {
+      text-align: center;
+      color: var(--fc-white);
+      opacity: 0;
+      transform: translateY(24px);
+      animation: brandTitleIn 4.8s ease forwards;
+    }
+
+    .brand-title .name {
+      display: block;
+      font-size: 92px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      text-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .brand-title .sport {
+      display: block;
+      margin-top: 14px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.42em;
+      padding-left: 0.42em;
+      color: rgba(248, 249, 250, 0.92);
+    }
+
+    .open-tagline {
+      position: absolute;
+      left: 50%;
+      bottom: 200px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.35em;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--fc-white);
+    }
+
+    .open-tagline .word {
+      opacity: 0;
+      transform: translateY(30px) scale(0.9);
+      display: inline-block;
+    }
+
+    .open-tagline .word:nth-child(1) { animation: wordPop 4.8s ease 0s forwards; }
+    .open-tagline .word.dot { color: var(--fc-orange-bright); animation-delay: 0s; }
+    .open-tagline .word:nth-child(3) { animation: wordPop 4.8s ease 0s forwards; animation-delay: 0.08s; }
+    .open-tagline .word:nth-child(5) { animation: wordPop 4.8s ease 0s forwards; animation-delay: 0.16s; }
+    .open-tagline .dot:nth-child(2) { animation: wordPop 4.8s ease 0s forwards; animation-delay: 0.04s; }
+    .open-tagline .dot:nth-child(4) { animation: wordPop 4.8s ease 0s forwards; animation-delay: 0.12s; }
+
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(255, 160, 50, 0.55), transparent 55%);
+      opacity: 0;
+      animation: flashHit 4.8s ease forwards;
+      z-index: 7;
+      mix-blend-mode: screen;
+    }
+
+    /* —— Feature scenes —— */
+    .scene-feature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 100px;
+      gap: 28px;
+    }
+
+    .scene-design   { animation: sceneDesign var(--total) ease forwards; }
+    .scene-organize { animation: sceneOrganize var(--total) ease forwards; }
+    .scene-practice { animation: scenePractice var(--total) ease forwards; }
+    .scene-outro    { animation: sceneOutro var(--total) ease forwards; justify-content: center; gap: 24px; }
+
+    .feature-label {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--fc-orange-bright);
+      opacity: 0;
+      transform: translateY(24px);
+      text-shadow: 0 0 24px rgba(255, 123, 26, 0.5);
+    }
+
+    .feature-title {
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--fc-white);
+      text-align: center;
+      line-height: 1;
+      opacity: 0;
+      transform: translateY(36px) scale(0.96);
+      text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .feature-title .accent {
+      background: linear-gradient(90deg, var(--fc-orange-bright), #ffd4a8, var(--fc-orange-bright));
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: shimmer 2.5s linear infinite;
+    }
+
+    .shot-frame {
+      position: relative;
+      width: 1520px;
+      perspective: 1400px;
+      opacity: 0;
+      transform: translateY(60px) rotateX(12deg);
+    }
+
+    .shot-frame::before {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255, 123, 26, 0.8), transparent 40%, rgba(255, 200, 120, 0.4));
+      opacity: 0.7;
+      z-index: 0;
+      animation: borderPulse 2s ease-in-out infinite;
+    }
+
+    .shot-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      box-shadow:
+        0 40px 100px rgba(0, 0, 0, 0.65),
+        0 0 80px rgba(232, 93, 4, 0.15);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .shot-inner {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      z-index: 1;
+      background: #0a0a0a;
+    }
+
+    .feature-shot {
+      display: block;
+      width: 100%;
+      height: auto;
+      transform: scale(1);
+      animation: kenBurns 3.2s ease-out forwards;
+    }
+
+    .scene-design .feature-label   { animation: featLabel 3.4s cubic-bezier(0.16, 1, 0.3, 1) 4.7s forwards; }
+    .scene-design .feature-title   { animation: featTitle 3.4s cubic-bezier(0.16, 1, 0.3, 1) 4.85s forwards; }
+    .scene-design .shot-frame      { animation: featShot 3.4s cubic-bezier(0.12, 1.1, 0.24, 1) 5s forwards; }
+
+    .scene-organize .feature-label { animation: featLabel 3.4s cubic-bezier(0.16, 1, 0.3, 1) 8.5s forwards; }
+    .scene-organize .feature-title { animation: featTitle 3.4s cubic-bezier(0.16, 1, 0.3, 1) 8.65s forwards; }
+    .scene-organize .shot-frame    { animation: featShot 3.4s cubic-bezier(0.12, 1.1, 0.24, 1) 8.8s forwards; }
+
+    .scene-practice .feature-label { animation: featLabel 3.4s cubic-bezier(0.16, 1, 0.3, 1) 12.4s forwards; }
+    .scene-practice .feature-title { animation: featTitle 3.4s cubic-bezier(0.16, 1, 0.3, 1) 12.55s forwards; }
+    .scene-practice .shot-frame    { animation: featShot 3.4s cubic-bezier(0.12, 1.1, 0.24, 1) 12.7s forwards; }
+
+    /* —— Outro —— */
+    .outro-burst {
+      position: absolute;
+      left: 50%;
+      top: 38%;
+      width: 600px;
+      height: 600px;
+      margin: -300px 0 0 -300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 120, 30, 0.35), transparent 65%);
+      opacity: 0;
+      animation: outroBurst 2.2s ease 16s forwards;
+    }
+
+    .outro-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      opacity: 0;
+      transform: scale(0.72);
+      animation: outroLogo 2s cubic-bezier(0.12, 1.2, 0.24, 1) 16.1s forwards;
+      z-index: 2;
+    }
+
+    .outro-brand img {
+      display: block;
+      width: 280px;
+      height: auto;
+      filter:
+        drop-shadow(0 0 36px rgba(255, 158, 94, 0.6))
+        drop-shadow(0 0 80px rgba(255, 158, 94, 0.25));
+    }
+
+    .outro-brand .name {
+      font-size: 64px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--fc-white);
+    }
+
+    .outro-brand .sport {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.42em;
+      padding-left: 0.42em;
+      color: rgba(248, 249, 250, 0.88);
+    }
+
+    .outro-line {
+      display: flex;
+      gap: 0.22em;
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--fc-white);
+      z-index: 2;
+    }
+
+    .outro-line span {
+      opacity: 0;
+      transform: translateY(40px) rotateX(90deg);
+      display: inline-block;
+      animation: letterFlip 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .outro-line span:nth-child(1)  { animation-delay: 16.35s; }
+    .outro-line span:nth-child(2)  { animation-delay: 16.4s; }
+    .outro-line span:nth-child(3)  { animation-delay: 16.45s; }
+    .outro-line span:nth-child(4)  { animation-delay: 16.5s; }
+    .outro-line span:nth-child(5)  { animation-delay: 16.55s; }
+    .outro-line span:nth-child(6)  { animation-delay: 16.6s; }
+    .outro-line span:nth-child(7)  { animation-delay: 16.65s; }
+    .outro-line span:nth-child(8)  { animation-delay: 16.7s; }
+    .outro-line span:nth-child(9)  { animation-delay: 16.75s; }
+    .outro-line span:nth-child(10) { animation-delay: 16.8s; }
+    .outro-line span:nth-child(11) { animation-delay: 16.85s; }
+    .outro-line span:nth-child(12) { animation-delay: 16.9s; }
+    .outro-line span:nth-child(13) { animation-delay: 16.95s; }
+    .outro-line span:nth-child(14) { animation-delay: 17s; }
+    .outro-line span:nth-child(15) { animation-delay: 17.05s; }
+    .outro-line span:nth-child(16) { animation-delay: 17.1s; color: var(--fc-orange-bright); }
+
+    .outro-url {
+      font-size: 30px;
+      letter-spacing: 0.28em;
+      color: var(--fc-orange-bright);
+      opacity: 0;
+      transform: scale(0.85);
+      animation: outroUrl 1.2s cubic-bezier(0.16, 1, 0.3, 1) 17.2s forwards;
+      text-shadow: 0 0 30px rgba(255, 123, 26, 0.6);
+      z-index: 2;
+    }
+
+    /* —— Keyframes —— */
+    @keyframes grainShift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-3%, 2%); }
+    }
+
+    @keyframes bgCourt {
+      0%, 3% { opacity: 0; transform: scale(1.22); }
+      12%, 100% { opacity: 1; transform: scale(1.04); }
+    }
+
+    @keyframes lightRays {
+      0%, 5% { opacity: 0; transform: rotate(0deg); }
+      15%, 90% { opacity: 1; }
+      100% { opacity: 0.6; transform: rotate(28deg); }
+    }
+
+    @keyframes sceneOpen {
+      0%, 1% { opacity: 1; }
+      24%, 100% { opacity: 0; }
+    }
+
+    @keyframes gridIn {
+      0%, 6% { opacity: 0; transform: translateY(80px); }
+      20%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes courtFade {
+      0%, 10% { opacity: 0; }
+      22%, 100% { opacity: 1; }
+    }
+
+    @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+    @keyframes streakL {
+      0% { opacity: 0; transform: translate(0, -50%) skewX(-28deg); }
+      15% { opacity: 1; }
+      100% { opacity: 0; transform: translate(1400px, -50%) skewX(-28deg); }
+    }
+
+    @keyframes streakR {
+      0% { opacity: 0; transform: translate(0, -50%) skewX(-28deg); }
+      15% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-1400px, -50%) skewX(-28deg); }
+    }
+
+    @keyframes shockwave {
+      0%, 16% { opacity: 0; transform: scale(0.3); }
+      20% { opacity: 0.9; }
+      28% { opacity: 0; transform: scale(4.5); }
+      100% { opacity: 0; transform: scale(4.5); }
+    }
+
+    @keyframes ring1 {
+      0%, 12% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      24% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      40% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.08); }
+      100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    @keyframes ring2 {
+      0%, 14% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+      28% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+      100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.15); }
+    }
+
+    @keyframes markReveal {
+      0%, 4% { opacity: 0; transform: scale(0.55); filter: blur(18px) brightness(1.15); }
+      16% { opacity: 1; transform: scale(1.08); filter: blur(0) brightness(1.08); }
+      24% { transform: scale(1); filter: blur(0) brightness(1); }
+      34%, 100% { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
+    }
+
+    @keyframes brandTitleIn {
+      0%, 20% { opacity: 0; transform: translateY(24px); }
+      32%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes wordPop {
+      0%, 38% { opacity: 0; transform: translateY(30px) scale(0.9); }
+      48%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes flashHit {
+      0%, 15% { opacity: 0; }
+      19% { opacity: 1; }
+      27%, 100% { opacity: 0; }
+    }
+
+    @keyframes wipeFlash {
+      0% { opacity: 0; transform: translateX(-120%) skewX(-12deg); }
+      40% { opacity: 0.95; }
+      100% { opacity: 0; transform: translateX(120%) skewX(-12deg); }
+    }
+
+    @keyframes sceneDesign {
+      0%, 23% { opacity: 0; }
+      27%, 46% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneOrganize {
+      0%, 45% { opacity: 0; }
+      49%, 68% { opacity: 1; }
+      72%, 100% { opacity: 0; }
+    }
+
+    @keyframes scenePractice {
+      0%, 67% { opacity: 0; }
+      71%, 88% { opacity: 1; }
+      92%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneOutro {
+      0%, 88% { opacity: 0; }
+      92%, 100% { opacity: 1; }
+    }
+
+    @keyframes featLabel {
+      0% { opacity: 0; transform: translateY(24px); }
+      20%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes featTitle {
+      0% { opacity: 0; transform: translateY(36px) scale(0.96); }
+      22%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes featShot {
+      0% { opacity: 0; transform: translateY(60px) rotateX(12deg); }
+      24%, 100% { opacity: 1; transform: translateY(0) rotateX(0deg); }
+    }
+
+    @keyframes kenBurns {
+      0% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes outroBurst {
+      0% { opacity: 0; transform: scale(0.5); }
+      30% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.4; transform: scale(1.4); }
+    }
+
+    @keyframes outroLogo {
+      0% { opacity: 0; transform: scale(0.6) rotate(-6deg); }
+      50% { opacity: 1; transform: scale(1.06) rotate(0deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes letterFlip {
+      0% { opacity: 0; transform: translateY(40px) rotateX(90deg); }
+      60%, 100% { opacity: 1; transform: translateY(0) rotateX(0deg); }
+    }
+
+    @keyframes outroUrl {
+      0% { opacity: 0; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="bg-court" aria-hidden="true"></div>
+    <div class="light-rays" aria-hidden="true"></div>
+    <canvas id="particles" width="1920" height="1080" aria-hidden="true"></canvas>
+
+    <!-- Scene 1: Epic brand open -->
+    <div class="scene scene-open" aria-hidden="true">
+      <div class="court-grid"><div class="court-grid-inner"></div></div>
+      <div class="court-lines">
+        <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+          <path d="M 180 940 Q 960 480 1740 940" />
+          <path class="orange" d="M 320 1000 Q 960 680 1600 1000" />
+          <path d="M 460 1060 Q 960 880 1460 1060" />
+        </svg>
+      </div>
+      <div class="speed-streaks">
+        <div class="streak s1"></div>
+        <div class="streak s2"></div>
+        <div class="streak s3"></div>
+        <div class="streak s4"></div>
+      </div>
+      <div class="shockwave"></div>
+      <div class="glow-ring r1"></div>
+      <div class="glow-ring r2"></div>
+      <div class="flash"></div>
+      <div class="brand-stack">
+        <div class="mark-wrap">
+          <img src="fastcourt-intro-mark.png" alt="" />
+        </div>
+        <div class="brand-title">
+          <span class="name">FASTCOURT</span>
+          <span class="sport">BASKETBALL</span>
+        </div>
+      </div>
+      <p class="open-tagline">
+        <span class="word">Diagram</span>
+        <span class="word dot">•</span>
+        <span class="word">Animate</span>
+        <span class="word dot">•</span>
+        <span class="word">Win</span>
+      </p>
+    </div>
+
+    <!-- Scene 2: Designer -->
+    <div class="scene scene-feature scene-design" aria-hidden="true">
+      <p class="feature-label">FastCourt Designer</p>
+      <h2 class="feature-title">Diagram plays on a <span class="accent">real court</span></h2>
+      <div class="shot-frame">
+        <div class="shot-inner">
+          <img class="feature-shot" src="../../public/assets/landing/explore-designer.png" alt="" width="1520" height="740" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 3: Library -->
+    <div class="scene scene-feature scene-organize" aria-hidden="true">
+      <p class="feature-label">Playbook Library</p>
+      <h2 class="feature-title">Own your <span class="accent">entire playbook</span></h2>
+      <div class="shot-frame">
+        <div class="shot-inner">
+          <img class="feature-shot" src="../../public/assets/landing/explore-organize.png" alt="" width="1520" height="740" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 4: Practice -->
+    <div class="scene scene-feature scene-practice" aria-hidden="true">
+      <p class="feature-label">Practice Planner</p>
+      <h2 class="feature-title">Built for the <span class="accent">gym floor</span></h2>
+      <div class="shot-frame">
+        <div class="shot-inner">
+          <img class="feature-shot" src="../../public/assets/landing/explore-practice-planner.png" alt="" width="1520" height="740" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 5: Outro -->
+    <div class="scene scene-feature scene-outro" aria-hidden="true">
+      <div class="outro-burst"></div>
+      <div class="outro-brand">
+        <img src="fastcourt-intro-mark.png" alt="" />
+        <span class="name">FASTCOURT</span>
+        <span class="sport">BASKETBALL</span>
+      </div>
+      <p class="outro-line" aria-hidden="true">
+        <span>O</span><span>W</span><span>N</span><span>&nbsp;</span>
+        <span>T</span><span>H</span><span>E</span><span>&nbsp;</span>
+        <span>P</span><span>L</span><span>A</span><span>Y</span><span>B</span><span>O</span><span>O</span><span>K</span>
+      </p>
+      <p class="outro-url">fastcourt.eu</p>
+    </div>
+
+    <div class="wipe wipe-1" aria-hidden="true"></div>
+    <div class="wipe wipe-2" aria-hidden="true"></div>
+    <div class="wipe wipe-3" aria-hidden="true"></div>
+    <div class="wipe wipe-4" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+  </div>
+
+  <script>
+    window.__INTRO_DONE__ = false;
+
+    const durationMeta = document.querySelector('meta[name="fastcourt-intro-duration-ms"]');
+    const durationMs = durationMeta
+      ? Math.max(2000, Number(durationMeta.content) || 18000)
+      : 18000;
+
+    /* Floating ember particles */
+    (function initParticles() {
+      const canvas = document.getElementById("particles");
+      const ctx = canvas.getContext("2d");
+      const particles = [];
+      const count = 90;
+
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * 1920,
+          y: Math.random() * 1080,
+          r: Math.random() * 2.2 + 0.4,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: -(Math.random() * 1.2 + 0.3),
+          a: Math.random() * 0.5 + 0.15,
+          hue: 24 + Math.random() * 18,
+        });
+      }
+
+      let running = true;
+      function frame() {
+        if (!running) return;
+        ctx.clearRect(0, 0, 1920, 1080);
+        for (const p of particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.y < -10) { p.y = 1090; p.x = Math.random() * 1920; }
+          if (p.x < -10) p.x = 1930;
+          if (p.x > 1930) p.x = -10;
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3);
+          g.addColorStop(0, `hsla(${p.hue}, 100%, 65%, ${p.a})`);
+          g.addColorStop(1, `hsla(${p.hue}, 100%, 50%, 0)`);
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        requestAnimationFrame(frame);
+      }
+      frame();
+      setTimeout(() => { running = false; }, durationMs);
+    })();
+
+    setTimeout(() => { window.__INTRO_DONE__ = true; }, durationMs);
+  </script>
+</body>
+</html>

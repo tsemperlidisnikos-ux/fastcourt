@@ -5,7 +5,7 @@ import { resolveAppLogoSrc } from "@/lib/settings/app-logo";
 import { resolveHeaderNavActiveTextColor } from "@/lib/settings/color-contrast";
 import type { AppearanceSettings } from "@/types/appearance-settings";
 
-const PREVIEW_TABS = ["Draw", "Playbooks", "Fields"] as const;
+const PREVIEW_TABS = ["LIBRARY", "PLAYBOOKS", "FIELDS"] as const;
 
 export function HeaderAppearancePreview({
   settings,
@@ -15,7 +15,10 @@ export function HeaderAppearancePreview({
 }: {
   settings: Pick<
     AppearanceSettings,
-    "headerColor" | "headerBrandRowColor" | "headerNavActiveColor"
+    | "headerColor"
+    | "headerBrandRowColor"
+    | "headerNavActiveColor"
+    | "headerNavTabFontSize"
   >;
   teamTitle?: string;
   appLogoDataUrl?: string | null;
@@ -30,6 +33,7 @@ export function HeaderAppearancePreview({
     "--fc-preview-nav-active-text": resolveHeaderNavActiveTextColor(
       settings.headerNavActiveColor,
     ),
+    "--fc-preview-nav-tab-font-size": `${settings.headerNavTabFontSize}px`,
   } as CSSProperties;
 
   return (
@@ -54,7 +58,7 @@ export function HeaderAppearancePreview({
           {PREVIEW_TABS.map((tab) => (
             <span
               key={tab}
-              className={`fc-hp-tab${tab === "Draw" ? " is-active" : ""}`}
+              className={`fc-hp-tab${tab === "LIBRARY" ? " is-active" : ""}`}
             >
               {tab}
             </span>

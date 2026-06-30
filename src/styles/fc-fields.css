@@ -12,39 +12,36 @@
 }
 
 #screen-organizer .fc-fields-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
-  padding: 0 20px;
-  min-height: 52px;
-  box-sizing: border-box;
-  background: #fff;
-  border-bottom: 1px solid #d1d5db;
-  flex-shrink: 0;
+  align-items: stretch;
 }
 
 #screen-organizer .fc-fields-subtabs {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 28px;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
+  align-self: stretch;
 }
 
 #screen-organizer .fc-fields-subtab {
   border: none;
   background: transparent;
   color: #666;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 16px 0 12px;
+  padding: 0;
+  margin: 0;
   border-bottom: 3px solid transparent;
   cursor: pointer;
   white-space: nowrap;
+  height: auto;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 #screen-organizer .fc-fields-subtab.active {
@@ -63,25 +60,8 @@
   gap: 8px;
   flex-shrink: 0;
   margin-left: auto;
-}
-
-#screen-organizer .fc-fields-create-btn {
-  border: none !important;
-  border-radius: 0 !important;
-  background: #111 !important;
-  color: #fff !important;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: none !important;
-}
-
-#screen-organizer .fc-fields-create-btn:hover {
-  background: #333 !important;
+  align-self: center;
+  height: auto;
 }
 
 #screen-organizer .fc-fields-delete-btn {

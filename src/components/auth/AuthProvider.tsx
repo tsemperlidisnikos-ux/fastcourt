@@ -6,6 +6,13 @@ import { getAccessError } from "@/lib/auth/access";
 import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
 import { fetchProfile, profileToAuthSession } from "@/lib/auth/profile";
 import { finalizeAuthSession } from "@/lib/auth/session-bootstrap";
+import {
+  ensureLibraryReadyForUser,
+  prepareLibrarySessionForUser,
+  resetLibraryOnSignOut,
+} from "@/lib/cloud/library-sync";
+import { activateLibraryScope, isLibraryScopeReady } from "@/lib/library/library-scope";
+import { kickAuthRehydrate } from "@/lib/auth/hydration";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -18,13 +25,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isCloudEnabled()) {
-      return;
+      function syncLocalLibraryScope() {
+        const session = useAuthStore.getState().session;
+        if (session?.user && !isLibraryScopeReady()) {
+          activateLibraryScope(
+            session.user.id,
+            session.user.id,
+            session.user,
+          );
+        }
+      }
+
+      kickAuthRehydrate();
+      syncLocalLibraryScope();
+      return useAuthStore.subscribe(syncLocalLibraryScope);
     }
 
     const supabase = createClient();
     let active = true;
 
-    async function syncFromUser(userId: string) {
+    async function syncFromUser(userId: string, syncLibrary = false) {
       const profile = await fetchProfile(supabase!, userId);
       if (!active) return;
       if (!profile) {
@@ -48,7 +68,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.replace(`/login?error=${encodeURIComponent(accessError)}`);
         return;
       }
-      setSession(finalized.session);
+
+      if (finalized.session.cloud) {
+        if (syncLibrary) {
+          setSession(finalized.session);
+          await ensureLibraryReadyForUser(finalized.session.user, supabase!);
+        } else {
+          await prepareLibrarySessionForUser(finalized.session.user, supabase!);
+          setSession(finalized.session);
+        }
+      } else {
+        activateLibraryScope(
+          finalized.session.user.id,
+          finalized.session.user.id,
+          finalized.session.user,
+        );
+        setSession(finalized.session);
+      }
+
       await useSettingsStore.getState().hydrateForUser(finalized.session.user);
     }
 
@@ -61,15 +98,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await client.auth.getUser();
       if (!active) return;
       if (user) {
-        await syncFromUser(user.id);
+        await syncFromUser(user.id, true);
       } else {
         signOut();
       }
     }
 
-    void bootstrap().finally(() => {
-      if (active) setReady(true);
-    });
+    void bootstrap()
+      .catch((err) => {
+        console.error("FastCourt auth bootstrap failed:", err);
+        signOut();
+      })
+      .finally(() => {
+        if (active) setReady(true);
+      });
 
     if (!supabase) {
       return () => {
@@ -81,12 +123,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, authSession) => {
       if (!active) return;
-      if (event === "SIGNED_OUT") {
-        signOut();
-        return;
-      }
-      if (authSession?.user) {
-        await syncFromUser(authSession.user.id);
+      try {
+        if (event === "SIGNED_OUT") {
+          await resetLibraryOnSignOut();
+          signOut();
+          return;
+        }
+        if (authSession?.user) {
+          await syncFromUser(authSession.user.id, event === "SIGNED_IN");
+        }
+      } catch (err) {
+        console.error("FastCourt auth state sync failed:", err);
       }
     });
 

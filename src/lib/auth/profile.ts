@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AuthSession, SessionUser } from "@/types/auth";
-import type { Role } from "@/lib/config";
+import { DEFAULT_TRIAL_DAYS, type Role } from "@/lib/config";
 import { applyAdminRegistryToSession } from "@/lib/auth/admin-users";
 import { applyOrganizationAccess } from "@/lib/auth/org-access";
 import { resolveSignupRole, isMasterAdminEmail } from "@/lib/auth/roles";
@@ -70,7 +70,7 @@ export function localDemoSession(
   const master = isMasterAdminEmail(normalized);
 
   const trialEnd = new Date();
-  trialEnd.setDate(trialEnd.getDate() + 14);
+  trialEnd.setDate(trialEnd.getDate() + DEFAULT_TRIAL_DAYS);
 
   const baseUser = {
     id: `local-${normalized}`,

@@ -1,9 +1,15 @@
 /* FastCourt — modern designer refresh (loads after designer-ui-v240.css) */
 
 #screen-designer {
-  --fd-editor-active-bg: #e8eaed;
-  --fd-editor-active-border: #9ca3af;
-  --fd-editor-active-text: #111827;
+  --fd-editor-active-bg: #000000;
+  --fd-editor-active-border: #000000;
+  --fd-editor-active-text: #ffffff;
+  --fc-clipboard-bg: #ffffff;
+  --fc-clipboard-text: #000000;
+  --fc-clipboard-border: #000000;
+  --fc-clipboard-hover-bg: #f8fafc;
+  --fc-clipboard-active-bg: #000000;
+  --fc-clipboard-active-text: #ffffff;
   --fc-modern-accent: #16a34a;
   --fc-modern-accent-hover: #15803d;
   --fc-modern-accent-soft: #ecfdf5;
@@ -90,30 +96,53 @@
 
 #screen-designer .ds-tool-item {
   border-radius: 10px;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
+  border: 1px solid transparent;
+  background: var(--fc-clipboard-bg);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 #screen-designer .ds-tool-item:hover {
-  background: var(--fc-modern-surface);
+  background: var(--fc-clipboard-hover-bg);
+  border-color: var(--fc-clipboard-border);
 }
 
 #screen-designer .ds-tool-item.active,
 #screen-designer .ds-left-panel .ds-tool-item.active {
-  background: var(--fd-editor-active-bg) !important;
-  border: 1px solid var(--fd-editor-active-border) !important;
-  border-bottom: 1px solid var(--fd-editor-active-border) !important;
-  color: var(--fd-editor-active-text) !important;
+  background: #e8eaed !important;
+  border: 1px solid #cbd5e1 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  color: #111827 !important;
   box-shadow: none;
 }
 
 #screen-designer .ds-tool-group-toggle {
   border-radius: 10px;
+  background: var(--fc-clipboard-bg);
+  color: var(--fc-clipboard-text) !important;
+  border-bottom: 1px solid var(--fc-clipboard-border);
+}
+
+#screen-designer .ds-tool-group-toggle .ds-tool-group-label,
+#screen-designer .ds-tool-group-toggle .ds-tool-group-chevron {
+  color: var(--fc-clipboard-text);
+}
+
+#screen-designer .ds-tool-group-toggle:hover {
+  background: var(--fc-clipboard-hover-bg);
 }
 
 #screen-designer .ds-tool-group:has(.ds-tool-item.active):not([data-tool-group="actions"]) .ds-tool-group-toggle {
-  background: var(--fc-modern-surface);
-  border-color: var(--fc-modern-border);
-  color: var(--fd-editor-active-text) !important;
+  background: var(--fc-clipboard-bg);
+  border-color: var(--fc-clipboard-border);
+  color: var(--fc-clipboard-text) !important;
+}
+
+#screen-designer .ds-tool-group:has(.ds-tool-item.active):not([data-tool-group="actions"]) .ds-tool-group-toggle .ds-tool-group-label,
+#screen-designer .ds-tool-group:has(.ds-tool-item.active):not([data-tool-group="actions"]) .ds-tool-group-toggle .ds-tool-group-chevron {
+  color: var(--fc-clipboard-text);
 }
 
 /* Court area */
@@ -129,7 +158,7 @@
 
 #screen-designer .ds-fd-court-toolbar {
   background: #ffffff;
-  border: 1px solid #111827;
+  border: 1px solid #000000;
   border-radius: 14px;
   backdrop-filter: none;
   box-shadow: none;
@@ -139,12 +168,16 @@
 #screen-designer .ds-fd-court-toolbar .ds-fd-tb-btn,
 #screen-designer .ds-fd-court-toolbar-stack .ds-fd-tb-btn {
   border-radius: 10px;
-  border: 1px solid #111827 !important;
+  border: 1px solid #000000 !important;
   text-transform: none;
   letter-spacing: 0.01em;
   font-weight: 600;
-  background: #fff;
-  color: #111827;
+  background: #ffffff;
+  color: #000000;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 #screen-designer .ds-fd-court-toolbar .ds-fd-frame-nav,
@@ -154,18 +187,18 @@
 
 #screen-designer .ds-fd-court-toolbar .ds-fd-tb-btn:hover,
 #screen-designer .ds-fd-court-toolbar-stack .ds-fd-tb-btn:hover {
-  background: #f9fafb;
-  border-color: #111827 !important;
-  color: #111827;
+  background: var(--fc-clipboard-hover-bg);
+  border-color: var(--fc-clipboard-border) !important;
+  color: var(--fc-clipboard-text);
 }
 
 #screen-designer .ds-fd-court-toolbar .ds-fd-tb-btn.is-active,
 #screen-designer .ds-fd-court-toolbar .ds-fd-tb-btn.active,
 #screen-designer .ds-fd-court-toolbar-stack .ds-fd-tb-btn.is-active,
 #screen-designer .ds-fd-court-toolbar-stack .ds-fd-tb-btn.active {
-  background: #f3f4f6 !important;
-  border-color: #111827 !important;
-  color: #111827 !important;
+  background: var(--fc-clipboard-active-bg) !important;
+  border-color: var(--fc-clipboard-border) !important;
+  color: var(--fc-clipboard-active-text) !important;
   box-shadow: none;
 }
 
@@ -184,21 +217,52 @@
 }
 
 #screen-designer .ds-color-swatch.active {
-  outline: 2px solid #6b7280;
+  outline: 2px solid var(--fc-clipboard-border);
   outline-offset: 2px;
 }
 
-/* Frame strip */
-#screen-designer #frames-container .frame-item {
-  border-radius: 10px;
-  border-color: var(--fc-modern-border);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+#screen-designer .ds-sidebar-color-swatches .ds-color-swatch.active {
+  outline: none;
+  border-color: var(--fc-clipboard-border);
+  box-shadow:
+    0 0 0 2px var(--fc-clipboard-border),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
+/* Frame strip — white tiles, black active border */
+#screen-designer #frames-container .frame-item,
+#screen-designer #frames-container .ds-thumb-item {
+  border: 1px solid var(--fc-clipboard-border);
+  background: var(--fc-clipboard-bg);
+  border-radius: 10px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+#screen-designer #frames-container .frame-item:hover,
+#screen-designer #frames-container .ds-thumb-item:hover:not(.active) {
+  background: var(--fc-clipboard-hover-bg);
+  border-color: var(--fc-clipboard-border);
+}
+
+#screen-designer #frames-container .frame-item.active,
 #screen-designer #frames-container .ds-thumb-item.active {
-  background: #e2e5e9 !important;
-  border-color: #d1d5db !important;
-  box-shadow: none !important;
+  background: var(--fc-clipboard-bg) !important;
+  border-color: var(--fc-clipboard-border) !important;
+  box-shadow: inset 0 0 0 2px var(--fc-clipboard-border) !important;
+}
+
+#screen-designer #frames-container .frame-item-court,
+#screen-designer #frames-container .ds-thumb-court {
+  border-color: var(--fc-clipboard-border);
+}
+
+#screen-designer #frames-container .frame-item.active .frame-num-badge,
+#screen-designer #frames-container .ds-thumb-item.active .frame-num-badge {
+  background: var(--fc-clipboard-active-bg);
+  color: var(--fc-clipboard-active-text);
 }
 
 #screen-designer .ds-notes-panel,
@@ -213,25 +277,87 @@
 }
 
 #screen-designer .ds-court-mode-btn.active {
-  background: var(--fd-editor-active-bg);
-  border-color: var(--fd-editor-active-border);
-  color: var(--fd-editor-active-text);
+  background: var(--fc-clipboard-active-bg);
+  border-color: var(--fc-clipboard-border);
+  color: var(--fc-clipboard-active-text);
 }
 
-/* Active/selected controls — light gray everywhere in designer */
+/* Clipboard chips — Lines float bar, zone & shadow type bars */
+#screen-designer .ds-fd-notes-panel .ds-notes-phase-dock,
+#screen-designer .ds-fd-notes-panel .ds-notes-phase-dock .action-timeline--dock,
+#screen-designer .ds-fd-notes-panel .ds-notes-phase-dock .action-timeline-label,
+#screen-designer .ds-fd-notes-panel .ds-notes-phase-dock .action-sequence-item {
+  color: #000 !important;
+}
+
+#screen-designer .line-type-float-bar {
+  border: 1px solid var(--fc-clipboard-border);
+  background: var(--fc-clipboard-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 12px 10px;
+  gap: 8px;
+}
+
+#screen-designer .line-type-float-btn,
+#screen-designer .zone-type-btn,
+#screen-designer .shadow-type-btn {
+  border: 1px solid var(--fc-clipboard-border) !important;
+  background: var(--fc-clipboard-bg) !important;
+  color: var(--fc-clipboard-text) !important;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+#screen-designer .line-type-float-btn:hover,
+#screen-designer .zone-type-btn:hover,
+#screen-designer .shadow-type-btn:hover {
+  background: var(--fc-clipboard-hover-bg) !important;
+  border-color: var(--fc-clipboard-border) !important;
+  color: var(--fc-clipboard-text) !important;
+}
+
 #screen-designer .line-type-float-btn.active,
-#screen-designer .shadow-type-btn.active,
-#screen-designer .zone-type-btn.active {
-  background: var(--fd-editor-active-bg) !important;
-  border-color: var(--fd-editor-active-border) !important;
-  color: var(--fd-editor-active-text) !important;
-  box-shadow: inset 0 0 0 1px var(--fd-editor-active-border) !important;
+#screen-designer .zone-type-btn.active,
+#screen-designer .shadow-type-btn.active {
+  background: var(--fc-clipboard-active-bg) !important;
+  border-color: var(--fc-clipboard-border) !important;
+  color: var(--fc-clipboard-active-text) !important;
+  box-shadow: none !important;
+}
+
+#screen-designer .line-type-float-btn-label,
+#screen-designer .line-type-float-btn-icon {
+  color: inherit;
+}
+
+#screen-designer .ds-fd-court-zoom .ds-court-zoom-btn {
+  border: 1px solid var(--fc-clipboard-border);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+#screen-designer .ds-fd-court-zoom .ds-court-zoom-btn:hover {
+  background: var(--fc-clipboard-hover-bg);
+  border-color: var(--fc-clipboard-border);
+}
+
+#screen-designer .ds-fd-frame-nav-btn {
+  border: 1px solid var(--fc-clipboard-border) !important;
+  background: var(--fc-clipboard-bg) !important;
+  color: var(--fc-clipboard-text) !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#screen-designer .ds-fd-frame-nav-btn:hover {
+  background: var(--fc-clipboard-hover-bg) !important;
 }
 
 #screen-designer .line-type-btn:hover,
 #screen-designer .line-type-btn.suggested {
-  border-color: var(--fd-editor-active-border) !important;
-  background: var(--fd-editor-active-bg) !important;
+  border-color: var(--fc-clipboard-border) !important;
+  background: var(--fc-clipboard-active-bg) !important;
+  color: var(--fc-clipboard-active-text) !important;
 }
 
 #screen-designer .ds-fd-frame-heading-input:focus {
@@ -243,6 +369,91 @@
   accent-color: #6b7280;
 }
 
-#screen-designer .snippets-item.active {
-  background: var(--fd-editor-active-bg) !important;
+#screen-designer .ds-tool-icon svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+#screen-designer .ds-panel-heading-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+#screen-designer .ds-sidebar-compact-toggle {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--fc-clipboard-border);
+  border-radius: 8px;
+  background: var(--fc-clipboard-bg);
+  color: var(--fc-clipboard-text);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+#screen-designer .ds-sidebar-compact-toggle:hover {
+  background: var(--fc-clipboard-hover-bg);
+}
+
+/* Compact icon rail — more court space */
+#screen-designer.sidebar-compact {
+  --fd-editor-sidebar-width: 92px;
+}
+
+#screen-designer.sidebar-compact .ds-panel-heading-tools {
+  justify-content: center;
+}
+
+#screen-designer.sidebar-compact .ds-tool-group-toggle {
+  display: none;
+}
+
+#screen-designer.sidebar-compact .ds-tool-group-menu {
+  display: block !important;
+}
+
+#screen-designer.sidebar-compact .ds-tool-name,
+#screen-designer.sidebar-compact .ds-tool-shortcut {
+  display: none !important;
+}
+
+#screen-designer.sidebar-compact .ds-tool-item {
+  justify-content: center;
+  padding: 10px 6px;
+  min-height: 50px;
+}
+
+#screen-designer.sidebar-compact .ds-tool-icon {
+  margin: 0;
+}
+
+#screen-designer.sidebar-compact .ds-designer-color-panel .ds-options-label,
+#screen-designer.sidebar-compact .ds-designer-color-panel .ds-prop-label {
+  display: none;
+}
+
+#screen-designer.sidebar-compact .ds-sidebar-color-swatches {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#screen-designer.sidebar-compact .ds-sidebar-color-swatches .ds-color-swatch {
+  width: 18px;
+  height: 18px;
+}
+
+#screen-designer.sidebar-compact .shadow-type-bar,
+#screen-designer.sidebar-compact .zone-type-bar {
+  justify-content: center;
+  padding-left: 4px;
+  padding-right: 4px;
 }

@@ -140,8 +140,15 @@ export type AcceptTeamInviteResult =
   | { ok: true; membership: OrganizationMembership }
   | { ok: false; reason: string };
 
+function inviteTokenMatches(stored: string | undefined, provided: string) {
+  const normalized = provided.trim().toLowerCase();
+  if (!normalized || !stored) return false;
+  return stored.toLowerCase() === normalized;
+}
+
 export function acceptTeamInvite(
   invite: {
+    token: string;
     email: string;
     memberRole: OrgMemberKind;
     organizationId: string;
@@ -170,6 +177,9 @@ export function acceptTeamInvite(
   if (invite.memberRole === "team_admin") {
     if (normalizeEmail(org.teamAdminEmail) !== normalizedUser) {
       return { ok: false, reason: "This team administrator invitation is invalid." };
+    }
+    if (!inviteTokenMatches(org.teamAdminInviteToken, invite.token)) {
+      return { ok: false, reason: "This team invitation is no longer valid." };
     }
     const updatedOrg: TeamOrganization = {
       ...org,
@@ -200,6 +210,9 @@ export function acceptTeamInvite(
   const member = members[memberIndex]!;
   if (member.status === "disabled") {
     return { ok: false, reason: "Your team access has been disabled." };
+  }
+  if (!inviteTokenMatches(member.inviteToken, invite.token)) {
+    return { ok: false, reason: "This invitation link has expired." };
   }
 
   const updatedMember = {

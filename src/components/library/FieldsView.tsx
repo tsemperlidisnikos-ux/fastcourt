@@ -1,7 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { FC_CONTEXT_MENU_TRIGGER_ATTR } from "@/lib/ui/context-menu-policy";
+import {
+  FieldContextMenu,
+  type FieldContextMenuState,
+} from "@/components/library/FieldContextMenu";
+import { clearAllFieldCategoryEntries } from "@/lib/settings/clear-field-categories";
 import { useOrganizerStore } from "@/stores/organizer-store";
+import {
+  isProtectedDefaultField,
+  type ProtectedFieldTab,
+} from "@/lib/settings/default-fields";
 import {
   appConfirm,
   appNotice,
@@ -30,10 +40,16 @@ const NAME_COL: Record<FieldsSubTab, string> = {
   tags: "Tag",
 };
 
+function isProtectedField(tab: FieldsSubTab, name: string) {
+  if (tab === "teams") return false;
+  return isProtectedDefaultField(tab as ProtectedFieldTab, name);
+}
+
 export function FieldsView() {
   const [tab, setTab] = useState<FieldsSubTab>("seasons");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<FieldContextMenuState | null>(null);
 
   const seasons = useOrganizerStore((s) => s.seasons);
   const teams = useOrganizerStore((s) => s.teams);
@@ -41,7 +57,19 @@ export function FieldsView() {
   const fieldTags = useOrganizerStore((s) => s.fieldTags);
   const countPlaysForField = useOrganizerStore((s) => s.countPlaysForField);
   const addField = useOrganizerStore((s) => s.addField);
+  const renameField = useOrganizerStore((s) => s.renameField);
   const deleteFields = useOrganizerStore((s) => s.deleteFields);
+  const loadMeta = useOrganizerStore((s) => s.loadMeta);
+
+  useEffect(() => {
+    const flag = "fc_fields_wiped_v2";
+    if (typeof window === "undefined" || localStorage.getItem(flag)) return;
+    void (async () => {
+      await clearAllFieldCategoryEntries();
+      await loadMeta();
+      localStorage.setItem(flag, "1");
+    })();
+  }, [loadMeta]);
 
   const rows = useMemo(() => {
     const list =
@@ -55,30 +83,17 @@ export function FieldsView() {
     const q = query.trim().toLowerCase();
     return list
       .filter((name) => !q || name.toLowerCase().includes(q))
-      .map((name) => ({ name, count: countPlaysForField(tab, name) }));
+      .map((name) => ({
+        name,
+        count: countPlaysForField(tab, name),
+      }));
   }, [tab, seasons, teams, series, fieldTags, query, countPlaysForField]);
-
-  const selectedNames = useMemo(() => [...selected], [selected]);
-  const deleteMessage = useMemo(() => {
-    if (selectedNames.length === 1) {
-      return `Delete "${selectedNames[0]}"? Plays keep their data; only this ${NAME_COL[tab].toLowerCase()} entry is removed from the list.`;
-    }
-    return `Delete ${selectedNames.length} ${NAME_COL[tab].toLowerCase()} entries? This cannot be undone.`;
-  }, [selectedNames, tab]);
-
-  function toggleRow(name: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  }
 
   async function handleCreate(name: string) {
     const ok = await addField(tab, name);
     if (!ok) {
-      throw new Error("This item already exists.");
+      appNotice("Already exists", `A ${NAME_COL[tab].toLowerCase()} with that name already exists.`);
+      return;
     }
   }
 
@@ -96,139 +111,166 @@ export function FieldsView() {
     await handleCreate(name);
   }
 
-  async function handleOpenDelete() {
-    if (!selected.size) {
+  async function handleOpenRename(fieldName: string) {
+    if (isProtectedField(tab, fieldName)) {
       appNotice(
-        "Nothing selected",
-        "Select one or more items from the list first.",
+        "Default field",
+        "This is an admin default and cannot be renamed.",
+      );
+      return;
+    }
+    const fieldLabel = NAME_COL[tab];
+    const fieldLabelLower = fieldLabel.toLowerCase();
+    const nextName = await appPrompt({
+      title: `Rename ${fieldLabelLower}`,
+      subtitle: `Update this ${fieldLabelLower} and linked plays.`,
+      label: `${fieldLabel} name`,
+      initialValue: fieldName,
+      placeholder: `Enter ${fieldLabelLower} name…`,
+      submitLabel: "Rename",
+    });
+    if (nextName === null) return;
+    const ok = await renameField(tab, fieldName, nextName);
+    if (!ok) {
+      appNotice(
+        "Rename failed",
+        `Could not rename this ${fieldLabelLower}. The name may already exist.`,
+      );
+      return;
+    }
+    if (selectedName?.toLowerCase() === fieldName.toLowerCase()) {
+      setSelectedName(nextName.trim());
+    }
+  }
+
+  async function handleOpenDelete(fieldName: string) {
+    if (isProtectedField(tab, fieldName)) {
+      appNotice(
+        "Default field",
+        "This is an admin default and cannot be deleted.",
       );
       return;
     }
     const fieldLabelLower = NAME_COL[tab].toLowerCase();
     const confirmed = await appConfirm({
       title: `Delete ${fieldLabelLower}`,
-      message: deleteMessage,
+      message: `Delete "${fieldName}"? Plays keep their data; only this ${fieldLabelLower} entry is removed from the list.`,
       confirmLabel: "Delete",
       danger: true,
     });
     if (!confirmed) return;
-    await deleteFields(tab, selectedNames);
-    setSelected(new Set());
+    const ok = await deleteFields(tab, [fieldName]);
+    if (!ok) {
+      appNotice(
+        "Default field",
+        "This is an admin default and cannot be deleted.",
+      );
+      return;
+    }
+    if (selectedName?.toLowerCase() === fieldName.toLowerCase()) {
+      setSelectedName(null);
+    }
+  }
+
+  function handleRowContextMenu(fieldName: string, e: MouseEvent<HTMLTableRowElement>) {
+    e.preventDefault();
+    setSelectedName(fieldName);
+    setContextMenu({ x: e.clientX, y: e.clientY, fieldName });
   }
 
   return (
-    <div className="fc-fields-shell" id="fc-fields-shell">
-      <div className="fc-fields-toolbar">
-        <nav className="fc-fields-subtabs" aria-label="Field types">
-          {SUBTABS.map((s) => (
+    <>
+      <div className="fc-fields-shell" id="fc-fields-shell">
+        <div className="fc-fields-toolbar fc-organizer-section-toolbar">
+          <nav className="fc-fields-subtabs" aria-label="Field types">
+            {SUBTABS.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`fc-fields-subtab${tab === s.id ? " active" : ""}`}
+                data-fields-tab={s.id}
+                onClick={() => {
+                  setTab(s.id);
+                  setQuery("");
+                  setSelectedName(null);
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </nav>
+          <div className="fc-fields-actions">
             <button
-              key={s.id}
               type="button"
-              className={`fc-fields-subtab${tab === s.id ? " active" : ""}`}
-              data-fields-tab={s.id}
-              onClick={() => {
-                setTab(s.id);
-                setQuery("");
-                setSelected(new Set());
-              }}
+              className="fc-organizer-create-btn"
+              id="btn-fields-create"
+              onClick={() => void handleOpenCreate()}
             >
-              {s.label}
+              ADD {CREATE_LABEL[tab]}
             </button>
-          ))}
-        </nav>
-        <div className="fc-fields-actions">
-          <button
-            type="button"
-            className="fc-fields-create-btn fd-create-play-btn"
-            id="btn-fields-create"
-            onClick={() => void handleOpenCreate()}
-          >
-            + CREATE {CREATE_LABEL[tab]}
-          </button>
-          <button
-            type="button"
-            className="fc-fields-delete-btn fd-create-play-btn"
-            id="btn-fields-delete"
-            disabled={!selected.size}
-            onClick={() => void handleOpenDelete()}
-          >
-            DELETE {CREATE_LABEL[tab]}
-          </button>
+          </div>
         </div>
-      </div>
-      <div className="fc-fields-card">
-        <div className="fc-fields-search-row">
-          <span className="fd-search-icon" aria-hidden="true">
-            🔍
-          </span>
-          <input
-            type="search"
-            className="fc-fields-search-input"
-            id="fields-search-input"
-            placeholder="Search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-          />
-        </div>
-        <div className="fc-fields-table-wrap">
-          <table className="fc-fields-table">
-            <thead>
-              <tr>
-                <th className="fc-fields-col-check" scope="col">
-                  <input
-                    type="checkbox"
-                    className="fc-fields-select-all"
-                    id="fields-select-all"
-                    aria-label="Select all"
-                    checked={rows.length > 0 && selected.size === rows.length}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelected(new Set(rows.map((r) => r.name)));
-                      } else {
-                        setSelected(new Set());
-                      }
-                    }}
-                  />
-                </th>
-                <th className="fc-fields-col-name" id="fields-table-name-col">
-                  {NAME_COL[tab]}
-                </th>
-                <th className="fc-fields-col-count"># of Plays</th>
-              </tr>
-            </thead>
-            <tbody id="fields-table-body">
-              {!rows.length ? (
-                <tr className="fc-fields-empty-row">
-                  <td colSpan={3}>No matches</td>
+        <div className="fc-fields-card">
+          <div className="fc-fields-search-row">
+            <span className="fd-search-icon" aria-hidden="true">
+              🔍
+            </span>
+            <input
+              type="search"
+              className="fc-fields-search-input"
+              id="fields-search-input"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+          <div className="fc-fields-table-wrap">
+            <table className="fc-fields-table">
+              <thead>
+                <tr>
+                  <th className="fc-fields-col-name" id="fields-table-name-col">
+                    {NAME_COL[tab]}
+                  </th>
+                  <th className="fc-fields-col-count"># of Plays</th>
                 </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr
-                    key={row.name}
-                    className={`fc-fields-row${selected.has(row.name) ? " selected" : ""}`}
-                    data-fields-name={row.name}
-                    onClick={() => toggleRow(row.name)}
-                  >
-                    <td className="fc-fields-col-check">
-                      <input
-                        type="checkbox"
-                        className="fc-fields-row-check"
-                        checked={selected.has(row.name)}
-                        onChange={() => toggleRow(row.name)}
-                        aria-label={`Select ${row.name}`}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </td>
-                    <td className="fc-fields-col-name">{row.name}</td>
-                    <td className="fc-fields-col-count">{row.count}</td>
+              </thead>
+              <tbody id="fields-table-body">
+                {!rows.length ? (
+                  <tr className="fc-fields-empty-row">
+                    <td colSpan={2}>No matches</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  rows.map((row) => (
+                    <tr
+                      key={row.name}
+                      className={`fc-fields-row${selectedName === row.name ? " selected" : ""}`}
+                      data-fields-name={row.name}
+                      {...{ [FC_CONTEXT_MENU_TRIGGER_ATTR]: "" }}
+                      onClick={() => setSelectedName(row.name)}
+                      onContextMenu={(e) => handleRowContextMenu(row.name, e)}
+                    >
+                      <td className="fc-fields-col-name">{row.name}</td>
+                      <td className="fc-fields-col-count">{row.count}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+      {contextMenu ? (
+        <FieldContextMenu
+          menu={contextMenu}
+          fieldLabel={NAME_COL[tab]}
+          canRename={!isProtectedField(tab, contextMenu.fieldName)}
+          canDelete={!isProtectedField(tab, contextMenu.fieldName)}
+          onClose={() => setContextMenu(null)}
+          onRename={() => void handleOpenRename(contextMenu.fieldName)}
+          onDelete={() => void handleOpenDelete(contextMenu.fieldName)}
+        />
+      ) : null}
+    </>
   );
 }

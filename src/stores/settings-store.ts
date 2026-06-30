@@ -8,6 +8,7 @@ import {
 import {
   DEFAULT_APPEARANCE,
   loadAppearanceSettings,
+  normalizeAppFont,
   saveAppearanceSettings,
 } from "@/lib/settings/appearance-settings";
 import {
@@ -22,6 +23,7 @@ import {
   savePdfBrandSettings,
 } from "@/lib/settings/pdf-branding";
 import {
+  APP_LOGO_CHANGED_EVENT,
   loadAppLogoDataUrl,
   saveAppLogoDataUrl,
 } from "@/lib/settings/app-logo";
@@ -38,7 +40,6 @@ import {
 import type {
   AppearanceSettings,
   AppTheme,
-  PlayerDisplayMode,
 } from "@/types/appearance-settings";
 import type { BillingConfig } from "@/types/billing-config";
 import type { PdfBrandSettings } from "@/types/pdf-branding";
@@ -70,8 +71,6 @@ interface SettingsState {
   setPdfBrand: (next: PdfBrandSettings, persist?: boolean) => boolean;
   setAppLogo: (dataUrl: string | null, persist?: boolean) => boolean;
   setBilling: (next: BillingConfig, persist?: boolean) => void;
-  setPracticeLive: (next: PracticeLivePrefs, persist?: boolean) => void;
-  setDesigner: (next: DesignerUserPrefs, persist?: boolean) => void;
   setNotifications: (next: NotificationPrefs, persist?: boolean) => void;
   setUseOrgBranding: (next: boolean, persist?: boolean) => void;
   applyAll: () => void;
@@ -87,13 +86,14 @@ function migrateLegacyAppearance(): AppearanceSettings | null {
     const base = loadAppearanceSettings();
     return {
       ...base,
-      panelAccent: String(legacy.designerAccent ?? base.panelAccent),
-      utilityBar: String(legacy.utilityBarColor ?? base.utilityBar),
+      headerNavActiveColor: String(
+        legacy.designerAccent ?? base.headerNavActiveColor,
+      ),
       actionColors: {
         ...base.actionColors,
         ...(legacy.actionColors as AppearanceSettings["actionColors"]),
       },
-      appFont: String(legacy.appFontFamily ?? base.appFont),
+      appFont: normalizeAppFont(String(legacy.appFontFamily ?? base.appFont)),
       libraryColumns: {
         ...base.libraryColumns,
         ...(legacy.libraryColumnWidths as object),
@@ -121,13 +121,7 @@ function applyLegacyThemeOverrides(appearance: AppearanceSettings): AppearanceSe
   if (theme === "light" || theme === "dark") {
     next = { ...next, theme };
   }
-  const playerDisplay = localStorage.getItem(
-    "fastcourt_player_display",
-  ) as PlayerDisplayMode | null;
-  if (playerDisplay === "number" || playerDisplay === "circle") {
-    next = { ...next, playerDisplay };
-  }
-  return next;
+  return { ...next, playerDisplay: "number" };
 }
 
 function baseHydrate(): Pick<
@@ -151,16 +145,49 @@ function baseHydrate(): Pick<
   };
 }
 
+function initialClientState(): Pick<
+  SettingsState,
+  | "hydrated"
+  | "appearance"
+  | "pdfBrand"
+  | "appLogoDataUrl"
+  | "billing"
+  | "practiceLive"
+  | "designer"
+  | "notifications"
+> {
+  if (typeof window === "undefined") {
+    return {
+      hydrated: false,
+      appearance: DEFAULT_APPEARANCE,
+      pdfBrand: DEFAULT_PDF_BRAND,
+      appLogoDataUrl: null,
+      billing: DEFAULT_BILLING_CONFIG,
+      practiceLive: loadPracticeLivePrefs(),
+      designer: { ...DEFAULT_DESIGNER_PREFS },
+      notifications: { ...DEFAULT_NOTIFICATION_PREFS },
+    };
+  }
+
+  const base = baseHydrate();
+  return {
+    hydrated: true,
+    ...base,
+  };
+}
+
+const initialState = initialClientState();
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
-  hydrated: false,
+  hydrated: initialState.hydrated,
   scopedUserId: null,
-  appearance: DEFAULT_APPEARANCE,
-  pdfBrand: DEFAULT_PDF_BRAND,
-  appLogoDataUrl: null,
-  billing: DEFAULT_BILLING_CONFIG,
-  practiceLive: loadPracticeLivePrefs(),
-  designer: { ...DEFAULT_DESIGNER_PREFS },
-  notifications: { ...DEFAULT_NOTIFICATION_PREFS },
+  appearance: initialState.appearance,
+  pdfBrand: initialState.pdfBrand,
+  appLogoDataUrl: initialState.appLogoDataUrl,
+  billing: initialState.billing,
+  practiceLive: initialState.practiceLive,
+  designer: initialState.designer,
+  notifications: initialState.notifications,
   useOrgBranding: true,
   cloudSyncedAt: null,
 
@@ -186,16 +213,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setAppearance: (next, persist = false) => {
+    const normalized = { ...next, playerDisplay: "number" as const };
     const { pdfBrand, scopedUserId } = get();
     const syncedPdfBrand =
-      pdfBrand.headerColor !== next.headerColor
-        ? { ...pdfBrand, headerColor: next.headerColor }
+      pdfBrand.headerColor !== normalized.headerColor
+        ? { ...pdfBrand, headerColor: normalized.headerColor }
         : pdfBrand;
-    set({ appearance: next, pdfBrand: syncedPdfBrand });
-    applyAppearanceToDocument(next);
-    if (persist) saveAppearanceSettings(next);
-    localStorage.setItem("fastcourt_theme", next.theme);
-    localStorage.setItem("fastcourt_player_display", next.playerDisplay);
+    set({ appearance: normalized, pdfBrand: syncedPdfBrand });
+    applyAppearanceToDocument(normalized);
+    if (persist) saveAppearanceSettings(normalized);
+    localStorage.setItem("fastcourt_theme", normalized.theme);
     if (persist && scopedUserId) {
       void get().persistAll();
     }
@@ -220,24 +247,19 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAppLogo: (dataUrl, persist = false) => {
     const next = dataUrl?.trim() ? dataUrl : null;
     set({ appLogoDataUrl: next });
-    if (persist) return saveAppLogoDataUrl(next);
+    if (persist) {
+      const saved = saveAppLogoDataUrl(next);
+      if (saved && typeof window !== "undefined") {
+        window.dispatchEvent(new Event(APP_LOGO_CHANGED_EVENT));
+      }
+      return saved;
+    }
     return true;
   },
 
   setBilling: (next, persist = false) => {
     set({ billing: next });
     if (persist) saveBillingConfig(next);
-  },
-
-  setPracticeLive: (next, persist = false) => {
-    set({ practiceLive: next });
-    if (persist) savePracticeLivePrefs(next);
-    if (persist && get().scopedUserId) void get().persistAll();
-  },
-
-  setDesigner: (next, persist = false) => {
-    set({ designer: next });
-    if (persist && get().scopedUserId) void get().persistAll();
   },
 
   setNotifications: (next, persist = false) => {
@@ -275,7 +297,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     saveBillingConfig(billing);
     savePracticeLivePrefs(practiceLive);
     localStorage.setItem("fastcourt_theme", appearance.theme);
-    localStorage.setItem("fastcourt_player_display", appearance.playerDisplay);
 
     const sessionUser = user ?? useAuthStore.getState().session?.user ?? null;
     if (!sessionUser?.id) return;

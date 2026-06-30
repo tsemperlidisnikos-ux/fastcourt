@@ -78,7 +78,7 @@ export function ToolsSection() {
               const count = await restoreLatestBackup();
               await refresh();
               return count;
-            }, `Restored latest backup (${history.length ? history[0].plays.length : 0} plays).`)
+            }, `Restored ${history[0]?.plays.length ?? 0} play(s) from latest backup.`)
           }
           disabled={!history.length}
         >
@@ -138,8 +138,12 @@ export function ToolsSection() {
               const payload = JSON.parse(String(reader.result));
               const count = await importLibraryPayload(payload);
               await refresh();
-              return count;
-            }, `Imported ${file.name}.`);
+              if (!count) {
+                throw new Error(
+                  "No plays found in this file. Use Export library (JSON) or Backup now from Tools.",
+                );
+              }
+            }, `Imported plays from ${file.name}. Refresh the Library tab if needed.`);
           };
           reader.readAsText(file);
           e.target.value = "";

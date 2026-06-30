@@ -1,10 +1,17 @@
 import type { CourtType } from "@/types/designer";
 import type { LibraryItemType, StoredPlay } from "@/types/library";
+import type { PlaybookFormatOptions } from "@/types/playbook-print-config";
+import {
+  getConfiguredPlaybookGrid,
+  getPlaybookChunkGridForLayout,
+} from "@/lib/library/playbook-print-format";
 
 export const FASTDRAW_FRAMES_PER_PAGE_LANDSCAPE = 9;
 export const FASTDRAW_FRAMES_PER_PAGE_PORTRAIT = 6;
+export const FASTDRAW_FRAMES_PER_PAGE_COMPACT = 4;
 export const FASTDRAW_TOC_ENTRIES_PER_PAGE = 17;
 export const FASTDRAW_GRID_COLS = 3;
+export const FASTDRAW_GRID_COLS_COMPACT = 2;
 
 export type PlaybookPrintOrientation = "landscape" | "portrait";
 
@@ -12,16 +19,78 @@ export interface PlaybookGridLayout {
   framesPerPage: number;
   rows: number;
   cols: number;
-  gridClass: "fd-grid-9" | "fd-grid-6";
+  gridClass: "fd-grid-9" | "fd-grid-6" | "fd-grid-3" | "fd-grid-4" | "fd-grid-custom";
 }
 
-export function getPlaybookGridLayout(): PlaybookGridLayout {
-  // FastDraw classic layout: 3×3 grid on every content page (portrait or landscape).
+export function getPlaybookGridLayout(format?: PlaybookFormatOptions): PlaybookGridLayout {
+  if (format) {
+    const { cols, rows, framesPerPage } = getConfiguredPlaybookGrid(format);
+    const gridClass =
+      cols === 2 && rows === 2
+        ? "fd-grid-4"
+        : cols === 3 && rows === 1
+          ? "fd-grid-3"
+          : cols === 3 && rows === 2
+            ? "fd-grid-6"
+            : cols === 3 && rows === 3
+              ? "fd-grid-9"
+              : "fd-grid-custom";
+    return {
+      framesPerPage,
+      rows,
+      cols,
+      gridClass,
+    };
+  }
+
+  // FastDraw classic layout: up to 3×3 frames per content page.
   return {
     framesPerPage: FASTDRAW_FRAMES_PER_PAGE_LANDSCAPE,
     rows: 3,
     cols: FASTDRAW_GRID_COLS,
     gridClass: "fd-grid-9",
+  };
+}
+
+/** Grid rows / padding for a partial page chunk. */
+export function getPlaybookChunkGrid(
+  itemCount: number,
+  format?: PlaybookFormatOptions,
+): {
+  rows: number;
+  cols: number;
+  gridClass: "fd-grid-9" | "fd-grid-6" | "fd-grid-3" | "fd-grid-4" | "fd-grid-custom";
+  padCount: number;
+} {
+  if (format) {
+    const layout = getConfiguredPlaybookGrid(format);
+    const chunk = getPlaybookChunkGridForLayout(
+      itemCount,
+      layout.cols,
+      layout.rows,
+    );
+    const gridClass =
+      layout.cols === 2 && layout.rows === 2
+        ? "fd-grid-4"
+        : layout.cols === 3 && chunk.rows === 1
+          ? "fd-grid-3"
+          : layout.cols === 3 && chunk.rows === 2
+            ? "fd-grid-6"
+            : layout.cols === 3 && chunk.rows === 3
+              ? "fd-grid-9"
+              : "fd-grid-custom";
+    return { ...chunk, gridClass };
+  }
+
+  const cols = FASTDRAW_GRID_COLS;
+  const count = Math.max(0, itemCount);
+  const rows = Math.min(3, Math.max(1, Math.ceil(count / cols) || 1));
+  const slots = rows * cols;
+  return {
+    rows,
+    cols,
+    gridClass: rows === 1 ? "fd-grid-3" : rows === 2 ? "fd-grid-6" : "fd-grid-9",
+    padCount: Math.max(0, slots - count),
   };
 }
 
@@ -32,6 +101,8 @@ export interface PlaybookPrintSettings {
   includePageNumbers: boolean;
   eachPlaySeparatePage?: boolean;
   orientation?: PlaybookPrintOrientation;
+  format?: PlaybookFormatOptions;
+  overwriteClassicLayout?: boolean;
 }
 
 export const DEFAULT_PLAYBOOK_PRINT_SETTINGS: PlaybookPrintSettings = {
@@ -98,7 +169,7 @@ export function computePlaybookPagination(
   plays: StoredPlay[],
   settings: PlaybookPrintSettings,
 ): PlaybookPagination {
-  const grid = getPlaybookGridLayout();
+  const grid = getPlaybookGridLayout(settings.format);
   const framesPerPage = grid.framesPerPage;
   const includeToc = settings.includeToc !== false && plays.length > 0;
   const coverPages = settings.includeCover !== false ? 1 : 0;
@@ -206,12 +277,103 @@ export function buildPlaybookTocEntries(
   return entries;
 }
 
+export type PlaybookPageKind = "cover" | "toc" | "section" | "content";
+
+export interface PlaybookPageDescriptor {
+  index: number;
+  pageNum: number;
+  kind: PlaybookPageKind;
+  label: string;
+  playId?: string;
+  contentSheetIndex?: number;
+  tocPageIndex?: number;
+}
+
+export function buildPlaybookPageList(
+  plays: StoredPlay[],
+  settings: PlaybookPrintSettings,
+): { pages: PlaybookPageDescriptor[]; pagination: PlaybookPagination } {
+  const pagination = computePlaybookPagination(plays, settings);
+  const pages: PlaybookPageDescriptor[] = [];
+  let index = 0;
+
+  if (settings.includeCover !== false) {
+    pages.push({
+      index,
+      pageNum: 1,
+      kind: "cover",
+      label: "Cover",
+    });
+    index += 1;
+  }
+
+  if (settings.includeToc !== false && plays.length > 0) {
+    for (let p = 0; p < pagination.tocPages; p += 1) {
+      pages.push({
+        index,
+        pageNum: pagination.coverPages + p + 1,
+        kind: "toc",
+        label: p === 0 ? "Contents" : `Contents (${p + 1})`,
+        tocPageIndex: p,
+      });
+      index += 1;
+    }
+  }
+
+  pagination.contentSheets.forEach((sheet, sheetIndex) => {
+    const pageNum = pagination.coverPages + pagination.tocPages + sheetIndex + 1;
+    if (sheet.type === "section") {
+      pages.push({
+        index,
+        pageNum,
+        kind: "section",
+        label: sheet.label || "Section",
+        contentSheetIndex: sheetIndex,
+      });
+    } else {
+      const playLabel = sheet.play.title || "Play";
+      pages.push({
+        index,
+        pageNum,
+        kind: "content",
+        label: sheet.playContinued ? `${playLabel} (cont.)` : playLabel,
+        playId: sheet.play.id,
+        contentSheetIndex: sheetIndex,
+      });
+    }
+    index += 1;
+  });
+
+  return { pages, pagination };
+}
+
+export function findPlaybookPageIndexForPlay(
+  pages: PlaybookPageDescriptor[],
+  playId: string,
+): number {
+  const match = pages.find(
+    (page) => page.kind === "content" && page.playId === playId && !page.label.endsWith("(cont.)"),
+  );
+  return match?.index ?? pages.find((page) => page.playId === playId)?.index ?? 0;
+}
+
 export function stripNotesForPrint(notes: string): string {
   if (!notes) return "";
+
+  const normalize = (raw: string) =>
+    raw
+      .replace(/<\s*br\s*\/?>/gi, "\n")
+      .replace(/<\/\s*p\s*>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n[ \t]+/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
   if (typeof document === "undefined") {
-    return notes.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return normalize(notes);
   }
   const el = document.createElement("div");
   el.innerHTML = notes;
-  return (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  return normalize(el.textContent ?? notes);
 }

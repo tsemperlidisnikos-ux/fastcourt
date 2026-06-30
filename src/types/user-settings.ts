@@ -4,7 +4,6 @@ import type { PracticeLivePrefs } from "@/lib/practice/live-prefs";
 
 export interface DesignerUserPrefs {
   defaultCourtZoom: number;
-  snapToGrid: boolean;
 }
 
 export interface NotificationPrefs {
@@ -31,7 +30,6 @@ export interface UserSettingsBundle {
 
 export const DEFAULT_DESIGNER_PREFS: DesignerUserPrefs = {
   defaultCourtZoom: 90,
-  snapToGrid: true,
 };
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {

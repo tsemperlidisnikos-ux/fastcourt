@@ -4,6 +4,11 @@
 
 import { useMemo, useState } from "react";
 
+import { DEFAULT_TRIAL_DAYS } from "@/lib/config";
+import {
+  withDefaultTrialDays,
+} from "@/lib/settings/billing-config";
+import { previewLandingPricing } from "@/lib/landing/pricing";
 import {
 
   getActivePaymentMethodsForConfig,
@@ -16,7 +21,7 @@ import {
 
 } from "@/lib/settings/payment-methods";
 
-import type { BillingConfig } from "@/types/billing-config";
+import type { BillingConfig, LandingPricingConfig } from "@/types/billing-config";
 
 import type { AdminUserRecord } from "@/types/admin-user";
 
@@ -78,12 +83,26 @@ export function BillingSection({
 
   );
 
+  const landingPreview = useMemo(
+    () => previewLandingPricing(config.landingPricing),
+    [config.landingPricing],
+  );
+
 
 
   function patch<K extends keyof BillingConfig>(key: K, value: BillingConfig[K]) {
 
     onChange({ ...config, [key]: value });
 
+  }
+
+
+
+  function patchLandingPricing(patchValue: Partial<LandingPricingConfig>) {
+    onChange({
+      ...config,
+      landingPricing: { ...config.landingPricing, ...patchValue },
+    });
   }
 
 
@@ -223,9 +242,12 @@ export function BillingSection({
               value={config.defaultTrialDays}
 
               onChange={(e) =>
-
-                patch("defaultTrialDays", Number(e.target.value) || 14)
-
+                onChange(
+                  withDefaultTrialDays(
+                    config,
+                    Number(e.target.value) || DEFAULT_TRIAL_DAYS,
+                  ),
+                )
               }
 
             />
@@ -257,6 +279,294 @@ export function BillingSection({
           />
 
         </label>
+
+
+
+        <div className="org-settings-sublabel">Landing page pricing</div>
+
+        <p className="admin-billing-help">
+
+          Prices shown on the public homepage pricing section. Monthly amounts for
+
+          yearly billing are calculated automatically (yearly total ÷ 12).
+
+        </p>
+
+
+
+        <div className="admin-billing-row">
+
+          <label className="admin-billing-field">
+
+            <span>Individual yearly (€)</span>
+
+            <input
+
+              type="number"
+
+              min={0}
+
+              step={1}
+
+              value={config.landingPricing.individualYearlyEur}
+
+              onChange={(e) =>
+
+                patchLandingPricing({
+
+                  individualYearlyEur: Number(e.target.value),
+
+                })
+
+              }
+
+            />
+
+          </label>
+
+          <label className="admin-billing-field">
+
+            <span>Individual monthly (€)</span>
+
+            <input
+
+              type="number"
+
+              min={0}
+
+              step={0.5}
+
+              value={config.landingPricing.individualMonthlyEur}
+
+              onChange={(e) =>
+
+                patchLandingPricing({
+
+                  individualMonthlyEur: Number(e.target.value),
+
+                })
+
+              }
+
+            />
+
+          </label>
+
+        </div>
+
+
+
+        <div className="admin-billing-row">
+
+          <label className="admin-billing-field">
+
+            <span>Club admin yearly (€)</span>
+
+            <input
+
+              type="number"
+
+              min={0}
+
+              step={1}
+
+              value={config.landingPricing.clubAdminYearlyEur}
+
+              onChange={(e) =>
+
+                patchLandingPricing({ clubAdminYearlyEur: Number(e.target.value) })
+
+              }
+
+            />
+
+          </label>
+
+          <label className="admin-billing-field">
+
+            <span>Yearly save badge (%)</span>
+
+            <input
+
+              type="number"
+
+              min={0}
+
+              max={90}
+
+              value={config.landingPricing.yearlySavePercent}
+
+              onChange={(e) =>
+
+                patchLandingPricing({ yearlySavePercent: Number(e.target.value) })
+
+              }
+
+            />
+
+          </label>
+
+        </div>
+
+
+
+        <div className="admin-billing-row">
+
+          <label className="admin-billing-field">
+
+            <span>Coach seat yearly (€)</span>
+
+            <input
+
+              type="number"
+
+              min={0}
+
+              step={1}
+
+              value={config.landingPricing.clubCoachSeatYearlyEur}
+
+              onChange={(e) =>
+
+                patchLandingPricing({
+
+                  clubCoachSeatYearlyEur: Number(e.target.value),
+
+                })
+
+              }
+
+            />
+
+          </label>
+
+          <label className="admin-billing-field">
+
+            <span>Coach seat monthly (€)</span>
+
+            <input
+
+              type="number"
+
+              min={0}
+
+              step={0.5}
+
+              value={config.landingPricing.clubCoachSeatMonthlyEur}
+
+              onChange={(e) =>
+
+                patchLandingPricing({
+
+                  clubCoachSeatMonthlyEur: Number(e.target.value),
+
+                })
+
+              }
+
+            />
+
+          </label>
+
+        </div>
+
+
+
+        <div className="admin-billing-row">
+
+          <label className="admin-billing-field">
+
+            <span>Club slider min coaches</span>
+
+            <input
+
+              type="number"
+
+              min={1}
+
+              max={50}
+
+              value={config.landingPricing.clubCoachMin}
+
+              onChange={(e) =>
+
+                patchLandingPricing({ clubCoachMin: Number(e.target.value) })
+
+              }
+
+            />
+
+          </label>
+
+          <label className="admin-billing-field">
+
+            <span>Club slider max coaches</span>
+
+            <input
+
+              type="number"
+
+              min={1}
+
+              max={100}
+
+              value={config.landingPricing.clubCoachMax}
+
+              onChange={(e) =>
+
+                patchLandingPricing({ clubCoachMax: Number(e.target.value) })
+
+              }
+
+            />
+
+          </label>
+
+          <label className="admin-billing-field">
+
+            <span>Default coach count</span>
+
+            <input
+
+              type="number"
+
+              min={1}
+
+              max={100}
+
+              value={config.landingPricing.clubCoachDefault}
+
+              onChange={(e) =>
+
+                patchLandingPricing({ clubCoachDefault: Number(e.target.value) })
+
+              }
+
+            />
+
+          </label>
+
+        </div>
+
+
+
+        <div className="admin-billing-preview admin-billing-preview-compact">
+
+          <div className="admin-section-title">Landing preview</div>
+
+          <p className="admin-billing-help">
+
+            Individual yearly billing: €{landingPreview.individualYearlyMonthly.toFixed(2)}/mo ·
+
+            Individual monthly billing: €{landingPreview.individualMonthly.toFixed(2)}/mo ·
+
+            Club ({landingPreview.seats} coaches) yearly billing: €
+
+            {landingPreview.clubYearlyMonthly.toFixed(2)}/mo
+
+          </p>
+
+        </div>
 
 
 

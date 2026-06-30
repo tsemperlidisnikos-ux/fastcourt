@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { APP_BUILD } from "@/lib/config";
+import { resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -23,6 +24,7 @@ export function AppNav() {
       const supabase = createClient();
       await supabase?.auth.signOut();
     }
+    await resetLibraryOnSignOut();
     signOut();
     router.replace("/login");
   }

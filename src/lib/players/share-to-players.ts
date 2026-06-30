@@ -1,16 +1,19 @@
 import { defaultRosterTeam } from "@/lib/players/team-options";
+import { playerRosterDisplayName } from "@/lib/players/player-roster";
 import { buildPracticeShareItems } from "@/lib/practice/practice-items";
 import {
   buildSmartPlaybookUrl,
   buildSmartPracticeUrl,
   buildSmartPlayUrl,
+  buildSmartHomeworkUrl,
+  DEFAULT_SHARE_STAGE,
   type SmartShareResult,
 } from "@/lib/share/share-link";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import { appNotice } from "@/stores/dialog-store";
 import { useShareStore } from "@/stores/share-store";
 import type { StoredPlay } from "@/types/library";
-import type { PlaybookSection, PracticeSession } from "@/types/library-meta";
+import type { PlaybookSection, PracticeSession, GamePlan, PlayerHomeworkAssignment } from "@/types/library-meta";
 import type { PlayerShareContentType } from "@/types/player-roster";
 
 export type ShareableContent =
@@ -25,6 +28,12 @@ export type ShareableContent =
       kind: "practice";
       session: PracticeSession;
       playsById: Map<string, StoredPlay>;
+    }
+  | {
+      kind: "homework";
+      assignment: PlayerHomeworkAssignment;
+      plan: GamePlan;
+      plays: StoredPlay[];
     };
 
 function resolveShareMeta(content: ShareableContent): {
@@ -69,6 +78,13 @@ function resolveShareMeta(content: ShareableContent): {
         contentType: "practice",
       };
     }
+    case "homework":
+      return {
+        result: buildSmartHomeworkUrl(content.assignment, content.plan, content.plays),
+        contentName: content.assignment.title || "Homework",
+        team: content.assignment.team || "No Team",
+        contentType: "homework",
+      };
   }
 }
 
@@ -127,4 +143,48 @@ export function sharePlaysAsPlaybookToPlayers(
     section: { name, team, subtitle },
     plays,
   });
+}
+
+export function shareHomeworkToPlayers(
+  assignment: PlayerHomeworkAssignment,
+  plan: GamePlan,
+  plays: StoredPlay[],
+): boolean {
+  if (!assignment.playIds.length) {
+    appNotice("Nothing to share", "This homework has no plays yet.");
+    return false;
+  }
+
+  void useOrganizerStore.getState().ensureHomeworkPlayerTokens(assignment.id).then((fresh) => {
+    const resolved = fresh || assignment;
+    const baseResult = buildSmartHomeworkUrl(resolved, plan, plays);
+    if (!baseResult.ok || !baseResult.url) {
+      appNotice(
+        "Share link failed",
+        baseResult.error === "too_long"
+          ? "This homework is too large for a share link."
+          : "Could not create share link.",
+      );
+      return;
+    }
+
+    useShareStore.getState().openSendModal({
+      url: baseResult.url,
+      contentName: resolved.title || "Homework",
+      team: resolveShareTeam(resolved.team || "No Team"),
+      contentType: "homework",
+      resolvePlayerUrl: (player) => {
+        const token = resolved.playerTokens?.[player.id];
+        if (!token) return null;
+        const result = buildSmartHomeworkUrl(resolved, plan, plays, DEFAULT_SHARE_STAGE, {
+          playerId: player.id,
+          playerName: playerRosterDisplayName(player),
+          playerToken: token,
+        });
+        return result.ok && result.url ? result.url : null;
+      },
+    });
+  });
+
+  return true;
 }

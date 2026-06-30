@@ -9,7 +9,9 @@ import type { LibraryItemType, StoredPlay } from "@/types/library";
 import {
   canPlaceRosterPlayer,
   nextAvailableJersey,
+  normalizeRosterLabel,
 } from "@/lib/designer/player-limits";
+import { DEFAULT_PLAYBACK_SPEED } from "@/lib/designer/animation-timing";
 import { createBlankPlay } from "@/lib/designer/play-factory";
 
 interface LegacyPlayer {
@@ -84,8 +86,9 @@ function playerToObject(player: LegacyPlayer): DesignerObject | null {
   const y = player.y ?? player.ny;
   if (typeof x !== "number" || typeof y !== "number") return null;
 
-  const label = String(player.number ?? player.num ?? "");
+  const labelRaw = String(player.number ?? player.num ?? "");
   const kind: ObjectKind = player.isDefense ? "defense" : "offense";
+  const label = normalizeRosterLabel(kind, labelRaw);
 
   return {
     id: newId("obj"),
@@ -326,6 +329,8 @@ export function legacyPlayToStored(play: LegacyPlay, source: StoredPlay["source"
     title,
     courtType: play.courtType === "full" ? "full" : "half",
     frames,
+    animSpeed: DEFAULT_PLAYBACK_SPEED,
+    animPauseMs: 800,
     type: inferLibraryType(title, play.category),
     season,
     team,
@@ -351,6 +356,9 @@ export function storedPlayToLibraryItem(play: StoredPlay) {
     favorite: play.favorite,
     source: play.source,
     lazyPending: play.lazyPending,
+    ownerUserId: play.ownerUserId,
+    ownerEmail: play.ownerEmail,
+    ownerDisplayName: play.ownerDisplayName,
   };
 }
 

@@ -2,17 +2,60 @@
   "name": "FastCourt",
   "short_name": "FastCourt",
   "description": "Tactical basketball play designer for teams",
-  "start_url": "/library",
+  "id": "/",
+  "start_url": "/library?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#000000",
   "categories": ["sports", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/icons/fastcourt-logo.png",
+      "src": "/assets/landing/fastcourt-intro-mark.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/landing/fastcourt-intro-mark.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/assets/landing/fastcourt-intro-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Library",
+      "short_name": "Library",
+      "url": "/library?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/assets/landing/fastcourt-intro-mark.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Designer",
+      "short_name": "Designer",
+      "url": "/designer?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/assets/landing/fastcourt-intro-mark.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

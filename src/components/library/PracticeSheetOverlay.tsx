@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { PracticeSheetDocument } from "@/components/library/PracticeSheetDocument";
 import type { InkStroke } from "@/components/library/PracticeSheetInkLayer";
+import { useOverlayPrint } from "@/lib/print/use-overlay-print";
 import { useSettingsStore } from "@/stores/settings-store";
 
 const INK_COLORS = ["#111827", "#2563eb", "#dc2626", "#16a34a"] as const;
@@ -18,48 +19,21 @@ export function PracticeSheetOverlay({ onClose }: Props) {
     return {
       clubName: pdfBrand.clubName.trim(),
       clubLogo: pdfBrand.logoDataUrl?.trim() ?? "",
+      footerText: pdfBrand.footerText.trim(),
     };
   });
 
-  const { clubName, clubLogo } = brandSnapshot;
+  const { clubName, clubLogo, footerText } = brandSnapshot;
 
   const [mode, setMode] = useState<"draw" | "preview">("draw");
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [inkColor, setInkColor] = useState<string>(INK_COLORS[0]);
   const [strokes, setStrokes] = useState<InkStroke[]>([]);
-
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-
-    function onBeforePrint() {
-      document.documentElement.classList.add("fc-practice-sheet-printing");
-    }
-
-    function onAfterPrint() {
-      document.documentElement.classList.remove("fc-practice-sheet-printing");
-    }
-
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("beforeprint", onBeforePrint);
-    window.addEventListener("afterprint", onAfterPrint);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("beforeprint", onBeforePrint);
-      window.removeEventListener("afterprint", onAfterPrint);
-      document.documentElement.classList.remove("fc-practice-sheet-printing");
-    };
-  }, [onClose]);
-
-  function handlePrint() {
-    document.documentElement.classList.add("fc-practice-sheet-printing");
-    window.print();
-  }
+  const handlePrint = useOverlayPrint({
+    printClass: "fc-practice-sheet-printing",
+    contentRootId: "fc-practice-sheet-content",
+    onClose,
+  });
 
   function handleClearInk() {
     setStrokes([]);
@@ -77,7 +51,7 @@ export function PracticeSheetOverlay({ onClose }: Props) {
       <style
         data-fc-practice-sheet-print-page
         dangerouslySetInnerHTML={{
-          __html: "@page { size: A4 landscape; margin: 0.15in; }",
+          __html: "@page { size: A4 landscape; margin: 0.4cm; }",
         }}
       />
       <div className="fc-print-overlay-panel fc-print-overlay-panel-practice-sheet">
@@ -158,6 +132,7 @@ export function PracticeSheetOverlay({ onClose }: Props) {
           <PracticeSheetDocument
             teamLogo={clubLogo}
             teamName={clubName}
+            footerText={footerText}
             strokes={strokes}
             onStrokesChange={setStrokes}
             inkColor={inkColor}

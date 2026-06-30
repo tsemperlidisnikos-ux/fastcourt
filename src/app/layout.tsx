@@ -1,18 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { ShareProviders } from "@/components/share/ShareProviders";
-import { APP_DESCRIPTION, APP_NAME } from "@/lib/config";
+import {
+  APP_DESCRIPTION,
+  APP_ICON_PATH,
+  APP_LOGO_PATH,
+  APP_NAME,
+  PWA_BACKGROUND_COLOR,
+  PWA_THEME_COLOR,
+} from "@/lib/config";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -20,14 +16,30 @@ export const metadata: Metadata = {
   applicationName: APP_NAME,
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/fastcourt-logo.png",
-    apple: "/icons/fastcourt-logo.png",
+    icon: [
+      { url: APP_ICON_PATH, sizes: "512x512", type: "image/png" },
+      { url: "/icons/fastcourt-logo.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: APP_ICON_PATH, sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: APP_NAME,
+    statusBarStyle: "black-translucent",
+    startupImage: APP_ICON_PATH,
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    google: "notranslate",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: PWA_THEME_COLOR,
   colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -38,9 +50,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      translate="no"
+      className="notranslate h-full antialiased"
+      style={{ backgroundColor: PWA_BACKGROUND_COLOR }}
     >
-      <body className="min-h-full flex flex-col">
+      <head>
+        <link rel="preload" href={APP_LOGO_PATH} as="image" fetchPriority="high" />
+      </head>
+      <body className="notranslate min-h-full flex flex-col">
         <ShareProviders>{children}</ShareProviders>
       </body>
     </html>

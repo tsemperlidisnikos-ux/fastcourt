@@ -101,6 +101,27 @@ export function removeRosterPlayer(team: string, playerId: string) {
   setTeamRoster(team, roster);
 }
 
+export function renameTeamRoster(oldTeam: string, newTeam: string) {
+  const oldKey = normalizeTeamKey(oldTeam);
+  const newKey = normalizeTeamKey(newTeam);
+  if (oldKey === newKey) return;
+
+  const data = loadPlayerRosterData();
+  const existing = data.rosters[oldKey];
+  if (!existing) return;
+
+  delete data.rosters[oldKey];
+  const movedPlayers = (existing.players || []).map((player) => ({
+    ...player,
+    team: newKey,
+  }));
+  const target = data.rosters[newKey]?.players;
+  data.rosters[newKey] = {
+    players: Array.isArray(target) ? [...target, ...movedPlayers] : movedPlayers,
+  };
+  savePlayerRosterData(data);
+}
+
 export function updateRosterPlayer(
   originalTeam: string,
   playerId: string,

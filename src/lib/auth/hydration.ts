@@ -1,17 +1,30 @@
 import { useAuthStore } from "@/stores/auth-store";
 
+export function kickAuthRehydrate() {
+  const persist = useAuthStore.persist;
+  if (!persist || persist.hasHydrated()) return;
+  void persist.rehydrate()?.catch((err) => {
+    console.error("FastCourt auth rehydrate failed:", err);
+  });
+}
+
 export function subscribeAuthHydration(onChange: () => void) {
   const persist = useAuthStore.persist;
   if (!persist) {
     onChange();
     return () => {};
   }
-  if (persist.hasHydrated()) {
+  kickAuthRehydrate();
+  if (persist.hasHydrated() || useAuthStore.getState().session) {
     onChange();
   }
   return persist.onFinishHydration(onChange);
 }
 
 export function getAuthHydratedSnapshot() {
-  return useAuthStore.persist?.hasHydrated() ?? true;
+  const persist = useAuthStore.persist;
+  if (!persist) return true;
+  if (persist.hasHydrated()) return true;
+  // Session set in-memory after login before persist finishes rehydrating.
+  return useAuthStore.getState().session !== null;
 }

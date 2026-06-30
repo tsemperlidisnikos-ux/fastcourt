@@ -1,7 +1,24 @@
 @import "tailwindcss";
 @import "../styles/overflow-menus.css";
+@import "../styles/fc-laptop-lock.css";
+@import "../styles/fc-pwa.css";
+
+@import "../styles/fc-primary-actions.css";
+
+@font-face {
+  font-family: "Puck Bold";
+  src:
+    local("Puck Bold"),
+    local("Puck-Bold");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
+  --fc-app-font: "Puck Bold", "Puck", Calibri, "Segoe UI", system-ui, sans-serif;
+  --fc-ui-font: var(--fc-app-font);
+  --fc-text-font: var(--fc-app-font);
   --fc-body: #0f172a;
   --fc-body-gradient: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
   --fc-nav: #0f172a;
@@ -20,34 +37,57 @@
   --color-fc-text: var(--fc-text);
   --color-fc-muted: var(--fc-muted);
   --color-fc-accent: var(--fc-accent);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--fc-app-font);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
   background: var(--fc-body-gradient);
   color: var(--fc-text);
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: var(--fc-app-font);
   min-height: 100vh;
+  top: 0 !important;
+  position: static !important;
 }
 
-/* Editable fields: typed text always black (body uses light theme text color). */
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]),
-textarea,
-select {
+/* Editable fields: typed text black in app UI; welcome/login keeps light text on dark inputs. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not(.welcome-input),
+textarea:not(.welcome-input),
+select:not(.welcome-select) {
   color: #000;
   -webkit-text-fill-color: #000;
 }
 
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"])::placeholder,
-textarea::placeholder {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not(.welcome-input)::placeholder,
+textarea:not(.welcome-input)::placeholder {
   color: #6b7280;
   -webkit-text-fill-color: #6b7280;
   opacity: 1;
 }
 
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):-webkit-autofill,
-textarea:-webkit-autofill,
-select:-webkit-autofill {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not(.welcome-input):-webkit-autofill,
+textarea:not(.welcome-input):-webkit-autofill,
+select:not(.welcome-select):-webkit-autofill {
   -webkit-text-fill-color: #000 !important;
+}
+
+/* Block Chrome / Google Translate UI injected into the page. */
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+.goog-te-gadget,
+.goog-te-menu-value,
+.goog-te-spinner-pos,
+.goog-tooltip,
+.goog-tooltip:hover,
+.goog-text-highlight,
+#google_translate_element,
+.skiptranslate,
+iframe.goog-te-banner-frame,
+iframe.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
 }

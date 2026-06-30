@@ -1,0 +1,144 @@
+/**
+ * Primary action buttons (Create, + CREATE SEASON, modal submit, etc.)
+ * Fill uses admin Accent color; pill shape; uppercase labels.
+ */
+
+#screen-organizer .fc-organizer-create-btn,
+#screen-organizer .fc-playbooks-create-btn,
+#screen-organizer .fd-create-play-btn,
+#screen-organizer .fd-create-btn:not(.fd-create-btn-ghost):not(.fd-create-btn-compact),
+#screen-organizer .fd-filter-create-btn,
+#screen-organizer .org-preview-edit-btn-primary,
+#screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary,
+#screen-organizer .fc-players-submit,
+.modal-create:not(.fc-playbook-dialog-danger),
+.play-details-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-align: center;
+  background: var(--fd-header-nav-active-color, var(--fc-modern-accent, #16a34a)) !important;
+  color: var(--fd-header-nav-active-text-color, #fff) !important;
+  border: none !important;
+  border-radius: 999px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+#screen-organizer .fc-organizer-create-btn {
+  font-size: 12px !important;
+}
+
+#screen-organizer .fc-playbooks-create-btn {
+  font-size: 13px !important;
+}
+
+#screen-organizer .fd-create-play-btn,
+#screen-organizer .fd-create-btn:not(.fd-create-btn-ghost):not(.fd-create-btn-compact),
+#screen-organizer .fd-filter-create-btn {
+  font-size: 14px !important;
+}
+
+.modal-create:not(.fc-playbook-dialog-danger) {
+  font-size: 13px !important;
+}
+
+.play-details-save {
+  font-size: 15px !important;
+}
+
+/* Right-align primary actions in section toolbars (Fields / Players / Practice) */
+#screen-organizer .fc-organizer-section-toolbar {
+  justify-content: space-between;
+}
+
+#screen-organizer .fc-fields-actions,
+#screen-organizer .fc-players-actions,
+#screen-organizer .practice-toolbar-actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.modal-actions:has(.modal-create),
+.modal-actions:has(.play-details-save),
+.fc-add-play-modal-actions:has(.modal-create) {
+  justify-content: flex-end;
+}
+
+#screen-organizer .fc-organizer-create-btn:hover:not(:disabled),
+#screen-organizer .fc-playbooks-create-btn:hover:not(:disabled),
+#screen-organizer .fd-create-play-btn:hover:not(:disabled),
+#screen-organizer .fd-create-btn:not(.fd-create-btn-ghost):not(.fd-create-btn-compact):hover:not(:disabled),
+#screen-organizer .org-preview-edit-btn-primary:hover:not(:disabled),
+#screen-organizer .fd-preview-actions-bar .org-preview-edit-btn-primary:hover:not(:disabled),
+#screen-organizer .fc-players-submit:hover:not(:disabled),
+.modal-create:not(.fc-playbook-dialog-danger):hover:not(:disabled),
+.play-details-save:hover:not(:disabled) {
+  background: var(--fc-modern-accent-hover, #15803d) !important;
+  color: var(--fd-header-nav-active-text-color, #fff) !important;
+}
+
+#screen-organizer .fc-organizer-create-btn:disabled,
+#screen-organizer .fc-playbooks-create-btn:disabled,
+#screen-organizer .fd-create-play-btn:disabled,
+#screen-organizer .fd-create-btn:not(.fd-create-btn-ghost):not(.fd-create-btn-compact):disabled,
+#screen-organizer .org-preview-edit-btn-primary:disabled,
+#screen-organizer .fc-players-submit:disabled,
+.modal-create:not(.fc-playbook-dialog-danger):disabled,
+.play-details-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fc-playbook-dialog-box .modal-create:not(.fc-playbook-dialog-danger) {
+  color: var(--fd-header-nav-active-text-color, #fff) !important;
+}
+
+.modal-create.fc-playbook-dialog-danger,
+.fc-playbook-dialog-box .modal-create.fc-playbook-dialog-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: #111 !important;
+  color: #fff !important;
+  border: 1px solid #111 !important;
+  border-radius: 999px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.modal-create.fc-playbook-dialog-danger:hover:not(:disabled),
+.fc-playbook-dialog-box .modal-create.fc-playbook-dialog-danger:hover:not(:disabled) {
+  background: #333 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+.fd-ui .fd-create-group .fd-create-btn:only-child,
+.fd-ui .fd-create-group .fd-create-play-btn:only-child {
+  border-radius: 999px !important;
+}
+
+#print-preview-overlay .print-preview-toolbar-actions .modal-create {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  box-shadow: none;
+}
+
+#print-preview-overlay .print-preview-toolbar-actions .modal-create:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}

@@ -2,6 +2,10 @@ import { APP_LOGO_PATH } from "@/lib/config";
 
 const LOGO_STORAGE_KEY = "fastcourt_app_logo_v1";
 
+export const APP_LOGO_STORAGE_KEY = LOGO_STORAGE_KEY;
+
+export const APP_LOGO_CHANGED_EVENT = "fastcourt:app-logo-changed";
+
 function isBrowser() {
   return typeof window !== "undefined";
 }

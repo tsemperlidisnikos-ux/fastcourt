@@ -1,22 +1,16 @@
 "use client";
 
 import type { ComponentType } from "react";
+import { DEFAULT_TRIAL_DAYS } from "@/lib/config";
 import type { SignupStep } from "@/components/auth/signup-flow";
+import { LOCAL_SIGNUP_STEPS } from "@/components/auth/signup-flow";
 import type { SignupWizardValues } from "@/types/signup";
 
 export type { SignupWizardValues };
 
-const SIGNUP_STEP_ORDER: SignupStep[] = [
-  "basic",
-  "verify",
-  "role",
-  "team",
-  "payment",
-  "done",
-];
-
 interface Props {
   step: SignupStep;
+  steps: SignupStep[];
   email: string;
   values: SignupWizardValues;
   onChange: <K extends keyof SignupWizardValues>(
@@ -36,12 +30,44 @@ interface Props {
   }>;
 }
 
-function stepIndex(step: SignupStep) {
-  return SIGNUP_STEP_ORDER.indexOf(step);
+function stepIndex(step: SignupStep, steps: SignupStep[]) {
+  const flowSteps = steps?.length ? steps : LOCAL_SIGNUP_STEPS;
+  return flowSteps.indexOf(step);
+}
+
+function CountrySelect({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <select
+      id={id}
+      className="welcome-input welcome-select"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      <option value="GR">Greece</option>
+      <option value="CY">Cyprus</option>
+      <option value="US">United States</option>
+      <option value="GB">United Kingdom</option>
+      <option value="DE">Germany</option>
+      <option value="FR">France</option>
+      <option value="IT">Italy</option>
+      <option value="ES">Spain</option>
+      <option value="TR">Turkey</option>
+      <option value="OTHER">Other</option>
+    </select>
+  );
 }
 
 export function SignupWizard({
   step,
+  steps,
   email,
   values,
   onChange,
@@ -50,7 +76,8 @@ export function SignupWizard({
   onResendCode,
   PasswordField,
 }: Props) {
-  const activeIdx = stepIndex(step);
+  const flowSteps = steps?.length ? steps : LOCAL_SIGNUP_STEPS;
+  const activeIdx = stepIndex(step, flowSteps);
 
   return (
     <div className="welcome-signup-flow" id="welcome-signup-flow">
@@ -59,7 +86,7 @@ export function SignupWizard({
         id="welcome-signup-progress"
         aria-hidden="true"
       >
-        {SIGNUP_STEP_ORDER.map((dotStep, idx) => {
+        {flowSteps.map((dotStep, idx) => {
           const done = idx < activeIdx;
           const active = dotStep === step;
           return (
@@ -182,6 +209,20 @@ export function SignupWizard({
         </div>
       ) : null}
 
+      {step === "country" ? (
+        <div className="welcome-signup-step-panel" id="welcome-signup-step-country">
+          <p className="welcome-signup-lead">Country</p>
+          <div className="welcome-field">
+            <label htmlFor="auth-coach-country">Country</label>
+            <CountrySelect
+              id="auth-coach-country"
+              value={values.teamCountry}
+              onChange={(v) => onChange("teamCountry", v)}
+            />
+          </div>
+        </div>
+      ) : null}
+
       {step === "team" ? (
         <div className="welcome-signup-step-panel" id="welcome-signup-step-team">
           <p className="welcome-signup-lead">Team / organization</p>
@@ -199,23 +240,11 @@ export function SignupWizard({
           </div>
           <div className="welcome-field">
             <label htmlFor="auth-team-country">Country</label>
-            <select
+            <CountrySelect
               id="auth-team-country"
-              className="welcome-input welcome-select"
               value={values.teamCountry}
-              onChange={(e) => onChange("teamCountry", e.target.value)}
-            >
-              <option value="GR">Greece</option>
-              <option value="CY">Cyprus</option>
-              <option value="US">United States</option>
-              <option value="GB">United Kingdom</option>
-              <option value="DE">Germany</option>
-              <option value="FR">France</option>
-              <option value="IT">Italy</option>
-              <option value="ES">Spain</option>
-              <option value="TR">Turkey</option>
-              <option value="OTHER">Other</option>
-            </select>
+              onChange={(v) => onChange("teamCountry", v)}
+            />
           </div>
           <div className="welcome-field">
             <label htmlFor="auth-team-level">Level</label>
@@ -247,7 +276,7 @@ export function SignupWizard({
           </p>
           <div className="welcome-signup-payment" id="welcome-signup-payment-panel">
             <p className="welcome-signup-plan" id="welcome-signup-plan">
-              14-day Coach trial — full designer and library access.
+              {DEFAULT_TRIAL_DAYS} days Coach trial — full designer and library access.
             </p>
             <p className="welcome-signup-payment-note" id="welcome-signup-payment-note">
               You can add billing later from Settings. Includes 1 tablet per account.

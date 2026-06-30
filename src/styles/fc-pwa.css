@@ -1,0 +1,196 @@
+/* PWA / iOS Add to Home Screen — safe areas and touch polish */
+
+html[data-layout-mode="laptop-lock"] {
+  --fc-safe-top: env(safe-area-inset-top, 0px);
+  --fc-safe-right: env(safe-area-inset-right, 0px);
+  --fc-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --fc-safe-left: env(safe-area-inset-left, 0px);
+  --fc-touch-min: 44px;
+}
+
+@media (display-mode: standalone) {
+  html[data-layout-mode="laptop-lock"] #screen-organizer .fd-topbar-util,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-header {
+    padding-top: var(--fc-safe-top);
+  }
+
+  html[data-layout-mode="laptop-lock"] body {
+    padding-left: var(--fc-safe-left);
+    padding-right: var(--fc-safe-right);
+    padding-bottom: var(--fc-safe-bottom);
+  }
+}
+
+@media (pointer: coarse) {
+  /* Library toolbar */
+  html[data-layout-mode="laptop-lock"] .fd-ui .fd-create-play-btn,
+  html[data-layout-mode="laptop-lock"] .fd-ui .fd-create-btn,
+  html[data-layout-mode="laptop-lock"] .fd-ui .fd-main-tab,
+  html[data-layout-mode="laptop-lock"] .fd-ui .fd-menu-btn,
+  html[data-layout-mode="laptop-lock"] .fd-ui .org-preview-edit-btn,
+  html[data-layout-mode="laptop-lock"] .fd-ui .org-preview-print-btn {
+    min-height: var(--fc-touch-min);
+  }
+
+  /* Library filter row */
+  html[data-layout-mode="laptop-lock"] #screen-organizer .fd-filter-fields .fd-search-wrap,
+  html[data-layout-mode="laptop-lock"] #screen-organizer .fd-filter-fields .fc-fd-library-sort-btn {
+    min-height: var(--fc-touch-min);
+    height: var(--fc-touch-min);
+    max-height: var(--fc-touch-min);
+  }
+
+  html[data-layout-mode="laptop-lock"] #screen-organizer .org-play-table tbody tr {
+    min-height: var(--fc-touch-min);
+  }
+
+  html[data-layout-mode="laptop-lock"] #screen-organizer .org-play-row-check {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Trial banner — compact inline; touch padding on links only */
+  html[data-layout-mode="laptop-lock"] .fc-trial-banner-support a,
+  html[data-layout-mode="laptop-lock"] .fc-trial-banner-support-inline a {
+    display: inline-block;
+    padding: 4px 2px;
+    margin: -4px -2px;
+  }
+
+  html[data-layout-mode="laptop-lock"] .fc-trial-interval-toggle button,
+  html[data-layout-mode="laptop-lock"] .fc-billing-plan-picker button,
+  html[data-layout-mode="laptop-lock"] .fc-payment-method-btn {
+    min-height: var(--fc-touch-min);
+  }
+
+  /* Designer court toolbar */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-tb-btn {
+    min-height: var(--fc-touch-min);
+    min-width: var(--fc-touch-min);
+  }
+
+  /* Designer — prevent scroll/zoom while drawing on court */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-canvas-area,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-canvas-wrap,
+  html[data-layout-mode="laptop-lock"] #screen-designer #court-container {
+    touch-action: none;
+  }
+
+  /* Designer left tool rail */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-tool-item,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-tool-group-toggle,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-accordion-toggle {
+    min-height: var(--fc-touch-min);
+  }
+
+  /* Play bar / header actions */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-icon-btn,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-done-btn,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-user-btn {
+    min-height: var(--fc-touch-min);
+    min-width: var(--fc-touch-min);
+  }
+
+  /* Frame navigation */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-frame-nav-btn {
+    min-height: var(--fc-touch-min);
+    min-width: var(--fc-touch-min);
+  }
+
+  /* Frame thumbnails */
+  html[data-layout-mode="laptop-lock"] #screen-designer #frames-container .ds-thumb-item {
+    min-height: var(--fc-touch-min);
+    padding-top: 12px;
+    padding-bottom: 14px;
+  }
+
+  /* Notes format toolbar */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-notes-panel .notes-fmt-btn,
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-notes-panel .notes-fmt-color-wrap {
+    min-height: var(--fc-touch-min);
+    min-width: var(--fc-touch-min);
+  }
+
+  /* Line type buttons (notes dock) */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-notes-line-options-dock .line-type-float-btn {
+    min-height: var(--fc-touch-min);
+    padding: 8px 10px;
+  }
+
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-notes-line-options-dock .line-type-float-grid {
+    gap: 8px;
+  }
+
+  /* Court zoom controls */
+  html[data-layout-mode="laptop-lock"] #screen-designer .ds-fd-court-zoom button {
+    min-height: var(--fc-touch-min);
+    min-width: var(--fc-touch-min);
+  }
+}
+
+/* Narrower tools column on tablet/phone — more room for court */
+html[data-layout-mode="laptop-lock"][data-device-kind="tablet"] #screen-designer,
+html[data-layout-mode="laptop-lock"][data-device-kind="phone"] #screen-designer {
+  --fd-editor-sidebar-width: 318px;
+  overscroll-behavior: none;
+}
+
+/* Install / update banners */
+.fc-pwa-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 12000;
+  width: min(520px, calc(100vw - 24px));
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.fc-pwa-banner p {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.fc-pwa-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.fc-pwa-banner-primary,
+.fc-pwa-banner-ghost {
+  appearance: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fc-pwa-banner-primary {
+  border: 0;
+  background: #22c55e;
+  color: #052e16;
+}
+
+.fc-pwa-banner-ghost {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: transparent;
+  color: #e2e8f0;
+}
+
+@media (pointer: coarse) {
+  .fc-pwa-banner-primary,
+  .fc-pwa-banner-ghost {
+    min-height: var(--fc-touch-min, 44px);
+  }
+}

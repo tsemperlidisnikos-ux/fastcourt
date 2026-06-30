@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AppErrorFallback } from "@/components/ui/AppErrorFallback";
+import { tryRecoverFromChunkLoadError } from "@/lib/ui/chunk-load-error";
 
 export default function AppRouteError({
   error,
@@ -12,6 +13,7 @@ export default function AppRouteError({
 }) {
   useEffect(() => {
     console.error("FastCourt route error:", error);
+    tryRecoverFromChunkLoadError(error);
   }, [error]);
 
   return (

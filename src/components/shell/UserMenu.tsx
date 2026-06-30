@@ -12,8 +12,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useClientMounted } from "@/hooks/useClientMounted";
+import { resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
-import { isAdminUser } from "@/lib/auth/roles";
 import { listStoredPlays } from "@/lib/library/idb";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
@@ -25,7 +25,7 @@ import {
 } from "@/lib/share/share-link";
 import { appNotice } from "@/stores/dialog-store";
 
-type UserMenuVariant = "topbar" | "designer" | "tablet";
+type UserMenuVariant = "topbar" | "designer";
 
 function downloadJson(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -129,9 +129,6 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
 
   const label = useMemo(() => {
     if (!session) return "User";
-    if (isAdminUser(session.user)) {
-      return `${session.user.displayName.toUpperCase()} — ADMIN`;
-    }
     return session.user.displayName;
   }, [session]);
 
@@ -182,6 +179,7 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
     if (isCloudEnabled()) {
       await createClient()?.auth.signOut();
     }
+    await resetLibraryOnSignOut();
     signOut();
     router.replace("/login");
   }
@@ -211,9 +209,7 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
   const btnClass =
     variant === "designer"
       ? "ds-fd-user-btn org-user-menu-btn"
-      : variant === "tablet"
-        ? "fc-fd-tablet-menu-btn org-user-menu-btn"
-        : "org-user-menu-btn fd-user-btn fd-topbar-user-btn";
+      : "org-user-menu-btn fd-user-btn fd-topbar-user-btn";
 
   const menuPanel = (
     <div
@@ -354,6 +350,16 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
             }}
           >
             Share playbook link
+          </button>
+          <button
+            type="button"
+            className="org-user-menu-action-btn"
+            onClick={() => {
+              setShareOpen(false);
+              router.push("/library?tab=gameplan");
+            }}
+          >
+            Game Plan
           </button>
           <button
             type="button"

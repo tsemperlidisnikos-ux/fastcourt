@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  applySafeNextPath,
+  isPasswordRecoveryLogin,
+} from "@/lib/auth/safe-next-path";
 import { getSupabaseAnonKey, getSupabaseUrl, isCloudConfigured } from "@/lib/supabase/env";
 
 export async function updateSession(request: NextRequest) {
@@ -44,10 +48,11 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && path === "/login") {
-    const next = request.nextUrl.searchParams.get("next") || "/library";
+    if (isPasswordRecoveryLogin(path, request.nextUrl.searchParams.get("recovery"))) {
+      return response;
+    }
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = next;
-    redirectUrl.search = "";
+    applySafeNextPath(redirectUrl, request.nextUrl.searchParams.get("next"));
     return NextResponse.redirect(redirectUrl);
   }
 

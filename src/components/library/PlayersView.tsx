@@ -21,6 +21,7 @@ import {
   getRosterTeamOptions,
   isRealTeam,
 } from "@/lib/players/team-options";
+import { FC_CONTEXT_MENU_TRIGGER_ATTR } from "@/lib/ui/context-menu-policy";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { PlayerRosterEntry } from "@/types/player-roster";
 
@@ -180,7 +181,7 @@ export function PlayersView() {
   return (
     <>
     <div className="fc-players-shell" id="fc-players-shell">
-      <div className="fc-players-toolbar">
+      <div className="fc-players-toolbar fc-organizer-section-toolbar">
         <div className="fc-players-toolbar-left">
           <label className="fc-players-team-field">
             <span>Team</span>
@@ -204,11 +205,11 @@ export function PlayersView() {
         <div className="fc-players-actions">
           <button
             type="button"
-            className="fc-players-create-btn fd-create-play-btn"
+            className="fc-organizer-create-btn"
             id="btn-players-add"
             onClick={openAddForm}
           >
-            + ADD PLAYER
+            ADD PLAYER
           </button>
         </div>
       </div>
@@ -350,6 +351,7 @@ export function PlayersView() {
                     <tr
                       key={player.id}
                       className={selectedPlayerId === player.id ? "selected" : ""}
+                      {...{ [FC_CONTEXT_MENU_TRIGGER_ATTR]: "" }}
                       onContextMenu={(e) => handleRowContextMenu(player, e)}
                       onClick={() => setSelectedPlayerId(player.id)}
                     >

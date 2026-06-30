@@ -135,7 +135,13 @@ const CONE_STRIPES: Array<{ t0: number; t1: number; fill: string }> = [
 ];
 
 /** Toolbar icon — must be SVG; Konva nodes only work inside Stage/Layer. */
-export function ConeToolIcon({ size = 22 }: { size?: number }) {
+export function ConeToolIcon({
+  size = 28,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
   const baseH = 7;
   const baseW = CONE_W;
   const tipW = 2;
@@ -143,16 +149,19 @@ export function ConeToolIcon({ size = 22 }: { size?: number }) {
   const bodyBottom = CONE_H / 2 - baseH;
   const bodyH = bodyBottom - bodyTop;
   const stripeW = baseW - 3;
+  const scale = 22 / (CONE_H + 8);
 
   return (
-    <span className="cone-tool-icon" aria-hidden="true">
-      <svg
-        viewBox={`${-CONE_W / 2 - 2} ${-CONE_H / 2 - 1} ${CONE_W + 4} ${CONE_H + 4}`}
-        width={size}
-        height={size}
-        role="img"
-        focusable="false"
-      >
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      role="img"
+    >
+      <g transform={`translate(12 12) scale(${scale})`}>
         <ellipse
           cx={0}
           cy={CONE_H / 2 + 1}
@@ -210,7 +219,7 @@ export function ConeToolIcon({ size = 22 }: { size?: number }) {
           stroke="rgba(154,52,18,0.55)"
           strokeWidth={0.9}
         />
-      </svg>
-    </span>
+      </g>
+    </svg>
   );
 }

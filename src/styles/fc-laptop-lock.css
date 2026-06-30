@@ -1,0 +1,11 @@
+/* Laptop-lock: app routes always render at 1280px layout width (see viewport meta). */
+
+html[data-layout-mode="laptop-lock"] body {
+  min-width: var(--fc-design-width, 1280px);
+  overflow-x: auto;
+}
+
+html[data-layout-mode="laptop-lock"] #screen-organizer,
+html[data-layout-mode="laptop-lock"] #screen-designer {
+  min-width: var(--fc-design-width, 1280px);
+}

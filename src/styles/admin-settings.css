@@ -19,7 +19,7 @@
   min-height: 100dvh;
   background: linear-gradient(165deg, #f8fafc 0%, #eef2f7 48%, #f8fafc 100%);
   color: var(--od-modal-text);
-  font-family: var(--fc-app-font, system-ui, "Segoe UI", sans-serif);
+  font-family: var(--fc-app-font, inherit);
 }
 
 .fc-admin-settings .org-settings-overlay {
@@ -557,6 +557,23 @@
   color: var(--od-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.fc-admin-settings .admin-role-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.fc-admin-settings .admin-role-select {
+  width: 100%;
+  max-width: 280px;
+  padding: 8px 10px;
+  border: 1px solid var(--od-border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
 }
 
 .fc-admin-settings .admin-trial-days {
@@ -1191,11 +1208,38 @@
 .fc-admin-settings .org-settings-appearance-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
   flex: 1 1 0;
   min-height: 0;
   width: 100%;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-designer {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.fc-admin-settings .org-settings-line-colors-block {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-library {
+  grid-column: 2;
+  grid-row: 3;
+  overflow-y: auto;
+}
+
+.fc-admin-settings .org-settings-appearance-pane-theme {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  overflow-y: auto;
 }
 
 .fc-admin-settings .org-settings-appearance-pane {
@@ -1219,18 +1263,10 @@
   color: var(--od-modal-muted);
 }
 
-.fc-admin-settings .org-settings-line-colors-block {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  gap: 6px 10px;
-}
-
 .fc-admin-settings .org-settings-line-colors-block > .org-settings-appearance-pane-title,
 .fc-admin-settings .org-settings-line-colors-block > .org-settings-brand-help,
-.fc-admin-settings .org-settings-line-colors-block > .org-settings-line-colors-label,
-.fc-admin-settings .org-settings-line-colors-block > .org-settings-action-colors {
-  grid-column: 1 / -1;
+.fc-admin-settings .org-settings-line-colors-block > .org-settings-line-colors-label {
+  flex: 0 0 auto;
 }
 
 .fc-admin-settings .org-settings-brand-color-field input[type="color"] {
@@ -1242,21 +1278,50 @@
   cursor: pointer;
 }
 
-.fc-admin-settings .org-settings-action-colors {
-  flex: 1 1 0;
-  min-height: 0;
+.fc-admin-settings .org-settings-court-presets {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.fc-admin-settings .org-settings-court-preset {
+  width: 44px;
+  height: 28px;
+  border: 1px solid var(--od-border);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
   overflow: hidden;
 }
 
-.fc-admin-settings .action-colors-list {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-y: auto;
+.fc-admin-settings .org-settings-court-preset.is-active {
+  outline: 2px solid var(--od-accent, #16a34a);
+  outline-offset: 2px;
+}
+
+.fc-admin-settings .org-settings-court-preset-line {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.fc-admin-settings .org-settings-action-colors {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+}
+
+.fc-admin-settings .action-colors-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
 }
 
 .fc-admin-settings .action-color-row {
@@ -1308,7 +1373,6 @@
   grid-template-columns: 1fr 1fr;
   grid-auto-rows: auto;
   gap: 5px 10px;
-  overflow-y: auto;
 }
 
 .fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-appearance-pane-title,
@@ -1316,7 +1380,6 @@
 .fc-admin-settings .org-settings-appearance-pane-theme > .fc-header-appearance-preview,
 .fc-admin-settings .org-settings-appearance-pane-theme > .org-theme-toggle,
 .fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-sublabel,
-.fc-admin-settings .org-settings-appearance-pane-theme > .org-player-display-toggle,
 .fc-admin-settings .org-settings-appearance-pane-theme > .org-settings-check {
   grid-column: 1 / -1;
 }
@@ -1400,8 +1463,7 @@
   gap: 8px;
 }
 
-.fc-admin-settings .org-theme-btn,
-.fc-admin-settings .org-player-display-btn {
+.fc-admin-settings .org-theme-btn {
   flex: 1;
   padding: 8px 10px;
   border-radius: 8px;
@@ -1415,17 +1477,10 @@
   text-align: center;
 }
 
-.fc-admin-settings .org-theme-btn.active,
-.fc-admin-settings .org-player-display-btn.active {
+.fc-admin-settings .org-theme-btn.active {
   background: var(--od-accent);
   border-color: var(--od-accent-hover);
   color: #fff;
-}
-
-.fc-admin-settings .org-player-display-toggle {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
 }
 
 .fc-admin-settings .org-settings-check {
@@ -1794,8 +1849,38 @@ html[data-theme="dark"] body {
 
 @media (max-width: 900px) {
   .fc-admin-settings .org-settings-appearance-split {
+    display: flex;
+    flex-direction: column;
     grid-template-columns: 1fr;
     grid-template-rows: auto;
+  }
+
+  .fc-admin-settings .org-settings-appearance-pane-theme {
+    order: 1;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .fc-admin-settings .org-settings-appearance-pane-designer {
+    order: 2;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .fc-admin-settings .org-settings-line-colors-block {
+    order: 3;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .fc-admin-settings .org-settings-appearance-pane-library {
+    order: 4;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .fc-admin-settings .action-colors-list {
+    grid-template-columns: 1fr;
   }
 
   .fc-admin-settings .admin-billing-row {
@@ -1907,7 +1992,7 @@ html[data-theme="dark"] body {
 }
 
 .fc-hp-tab {
-  font-size: 10px;
+  font-size: var(--fc-preview-nav-tab-font-size, 10px);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.88);
   padding: 5px 10px;
@@ -1984,7 +2069,210 @@ html[data-theme="dark"] body {
   cursor: not-allowed;
 }
 
+.org-settings-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .fc-team-admin-settings .org-settings-content-panel,
 .fc-coach-settings .org-settings-content-panel {
   min-height: 360px;
 }
+
+.fc-admin-settings .org-settings-fields-details-section .org-settings-fields-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+  align-items: start;
+}
+
+.fc-admin-settings .org-settings-fields-column-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fc-admin-settings .org-settings-fields-column-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-clear-all {
+  border-color: #fecaca;
+  color: #b91c1c;
+  white-space: nowrap;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-clear-all:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-clear-all:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fc-admin-settings .org-settings-fields-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 280px;
+  padding: 14px;
+  border: 1px solid var(--fc-border, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.fc-admin-settings .org-settings-fields-category-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f172a;
+  margin: 0;
+}
+
+.fc-admin-settings .org-settings-fields-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fc-admin-settings .org-settings-fields-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: grab;
+}
+
+.fc-admin-settings .org-settings-fields-item.is-dragging {
+  opacity: 0.55;
+  cursor: grabbing;
+}
+
+.fc-admin-settings .org-settings-fields-item.is-drag-over {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.fc-admin-settings .org-settings-fields-item-drag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+}
+
+.fc-admin-settings .org-settings-fields-item-label {
+  flex: 1 1 auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.fc-admin-settings .org-settings-fields-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  cursor: default;
+}
+
+.fc-admin-settings .org-settings-fields-item-actions .org-settings-fields-action-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-add {
+  flex: 0 0 auto;
+  min-width: 64px;
+  border-color: #0f172a;
+  background: #0f172a;
+  color: #fff;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-add:hover {
+  background: #1e293b;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-delete {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn.is-delete:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.fc-admin-settings .org-settings-fields-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fc-admin-settings .org-settings-fields-empty {
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .fc-admin-settings .org-settings-fields-details-section .org-settings-fields-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .fc-admin-settings .org-settings-fields-column {
+    min-height: 0;
+  }
+}
+

@@ -14,6 +14,7 @@ interface InputDialogProps {
   placeholder?: string;
   submitLabel?: string;
   allowEmpty?: boolean;
+  multiline?: boolean;
   onClose: () => void;
   onSubmit: (value: string) => void | Promise<void>;
 }
@@ -34,19 +35,24 @@ function PracticeInputDialogBody({
   placeholder,
   submitLabel = "Save",
   allowEmpty = false,
+  multiline = false,
   onClose,
   onSubmit,
 }: InputDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { panelRef, titleId, fieldId } = useModalA11y(open, onClose);
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    const t = window.setTimeout(() => {
+      if (multiline) textareaRef.current?.focus();
+      else inputRef.current?.focus();
+    }, 0);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [multiline]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,17 +95,31 @@ function PracticeInputDialogBody({
           <div className="modal-field fc-playbook-dialog-field">
             <label htmlFor={fieldId}>
               <span className="fc-playbook-dialog-label">{label}</span>
-              <input
-                ref={inputRef}
-                id={fieldId}
-                type="text"
-                value={value}
-                placeholder={placeholder}
-                onChange={(e) => {
-                  setValue(e.target.value);
-                  if (error) setError("");
-                }}
-              />
+              {multiline ? (
+                <textarea
+                  ref={textareaRef}
+                  id={fieldId}
+                  rows={6}
+                  value={value}
+                  placeholder={placeholder}
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    if (error) setError("");
+                  }}
+                />
+              ) : (
+                <input
+                  ref={inputRef}
+                  id={fieldId}
+                  type="text"
+                  value={value}
+                  placeholder={placeholder}
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    if (error) setError("");
+                  }}
+                />
+              )}
             </label>
           </div>
           {error ? (

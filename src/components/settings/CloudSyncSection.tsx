@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  readLibraryCloudSyncedAt,
+  syncLibraryForUser,
+} from "@/lib/cloud/library-sync";
 import { isCloudEnabled } from "@/lib/supabase/client";
 import { getCloudConfigIssue } from "@/lib/supabase/env";
 import { persistSettingsForUser } from "@/lib/settings/user-settings-sync";
@@ -12,16 +16,24 @@ import { appNotice } from "@/stores/dialog-store";
 
 export function CloudSyncSection({ session }: { session: AuthSession }) {
   const cloudSyncedAt = useSettingsStore((s) => s.cloudSyncedAt);
-  const [syncing, setSyncing] = useState(false);
+  const [syncingSettings, setSyncingSettings] = useState(false);
+  const [syncingLibrary, setSyncingLibrary] = useState(false);
+  const [librarySyncedAt, setLibrarySyncedAt] = useState<string | null>(null);
   const cloud = isCloudEnabled();
   const cloudIssue = getCloudConfigIssue();
 
-  async function handleSyncNow() {
+  useEffect(() => {
+    if (session.cloud) {
+      setLibrarySyncedAt(readLibraryCloudSyncedAt(session.user.id));
+    }
+  }, [session.cloud, session.user.id]);
+
+  async function handleSyncSettings() {
     if (!session.cloud) {
       appNotice("Cloud sync", "Sign in with cloud mode to sync settings.");
       return;
     }
-    setSyncing(true);
+    setSyncingSettings(true);
     try {
       const state = useSettingsStore.getState();
       const scoped = loadScopedUserSettings(session.user.id);
@@ -47,9 +59,53 @@ export function CloudSyncSection({ session }: { session: AuthSession }) {
       useSettingsStore.setState({ cloudSyncedAt: new Date().toISOString() });
       appNotice("Cloud sync", "Settings saved to your account.");
     } finally {
-      setSyncing(false);
+      setSyncingSettings(false);
     }
   }
+
+  async function handleSyncLibrary() {
+    if (!session.cloud) {
+      appNotice("Library sync", "Sign in with cloud mode to sync your library.");
+      return;
+    }
+    setSyncingLibrary(true);
+    try {
+      const result = await syncLibraryForUser(session.user);
+      if (!result.ok) {
+        appNotice("Library sync", result.error);
+        return;
+      }
+      const {
+        playCount,
+        playbookCount,
+        practiceCount,
+        mergedFromCloud,
+        skippedLazy,
+        syncedAt,
+      } = result.result;
+      setLibrarySyncedAt(syncedAt);
+      const noticeParts = [
+        `${playCount} plays`,
+        `${playbookCount} playbooks`,
+        `${practiceCount} practice sessions`,
+      ].join(", ") + " synced.";
+      const extras: string[] = [];
+      if (mergedFromCloud > 0) {
+        extras.push(`${mergedFromCloud} item(s) pulled from cloud.`);
+      }
+      if (skippedLazy > 0) {
+        extras.push(`${skippedLazy} pending import(s) skipped.`);
+      }
+      appNotice(
+        "Library sync",
+        extras.length ? `${noticeParts} ${extras.join(" ")}` : noticeParts,
+      );
+    } finally {
+      setSyncingLibrary(false);
+    }
+  }
+
+  const busy = syncingSettings || syncingLibrary;
 
   return (
     <section
@@ -58,8 +114,9 @@ export function CloudSyncSection({ session }: { session: AuthSession }) {
     >
       <div className="org-settings-group-title">Cloud sync</div>
       <p className="org-settings-brand-help">
-        Appearance, branding, and preferences sync to your account when cloud mode
-        is on. Library plays stay on this device until full cloud library ships.
+        Appearance and preferences sync to your account. Plays, playbooks, practice
+        sessions, and organizer fields merge across devices — the newest version
+        wins. Deletions sync too. Library also syncs automatically when you sign in.
       </p>
 
       <dl className="admin-user-detail-grid">
@@ -78,19 +135,35 @@ export function CloudSyncSection({ session }: { session: AuthSession }) {
           </dd>
         </div>
         <div>
-          <dt>Library</dt>
-          <dd>IndexedDB on this device (Phase 4)</dd>
+          <dt>Last library sync</dt>
+          <dd>
+            {librarySyncedAt
+              ? new Date(librarySyncedAt).toLocaleString()
+              : session.cloud
+                ? "Not synced yet"
+                : "—"}
+          </dd>
         </div>
       </dl>
 
-      <button
-        type="button"
-        className="org-settings-btn"
-        disabled={!session.cloud || syncing}
-        onClick={() => void handleSyncNow()}
-      >
-        {syncing ? "Syncing…" : "Sync settings now"}
-      </button>
+      <div className="org-settings-btn-row">
+        <button
+          type="button"
+          className="org-settings-btn"
+          disabled={!session.cloud || busy}
+          onClick={() => void handleSyncSettings()}
+        >
+          {syncingSettings ? "Syncing…" : "Sync settings now"}
+        </button>
+        <button
+          type="button"
+          className="org-settings-btn"
+          disabled={!session.cloud || busy}
+          onClick={() => void handleSyncLibrary()}
+        >
+          {syncingLibrary ? "Syncing…" : "Sync library now"}
+        </button>
+      </div>
     </section>
   );
 }

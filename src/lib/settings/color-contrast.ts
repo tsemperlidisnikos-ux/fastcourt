@@ -60,6 +60,32 @@ export function contrastingTextOnBackground(
   return relativeLuminance(rgb) > threshold ? darkText : lightText;
 }
 
+function clampByte(n: number) {
+  return Math.max(0, Math.min(255, Math.round(n)));
+}
+
+function rgbToHex({ r, g, b }: Rgb): string {
+  const to = (n: number) => clampByte(n).toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+/** Mix two CSS hex/rgb colors; weight is the proportion of `mix` (0–1). */
+export function mixHexColors(base: string, mix: string, weight: number): string {
+  const a = parseCssColor(base);
+  const b = parseCssColor(mix);
+  if (!a || !b) return base;
+  const w = Math.max(0, Math.min(1, weight));
+  return rgbToHex({
+    r: a.r * (1 - w) + b.r * w,
+    g: a.g * (1 - w) + b.g * w,
+    b: a.b * (1 - w) + b.b * w,
+  });
+}
+
+export function darkenHex(hex: string, amount = 0.12): string {
+  return mixHexColors(hex, "#000000", amount);
+}
+
 export function resolveHeaderNavActiveTextColor(activeColor: string): string {
   return contrastingTextOnBackground(activeColor);
 }

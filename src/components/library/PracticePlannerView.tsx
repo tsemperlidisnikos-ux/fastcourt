@@ -6,17 +6,18 @@ import { PracticeAddModal } from "@/components/library/PracticeAddModal";
 import { PracticeAddPlaybookModal } from "@/components/library/PracticeAddPlaybookModal";
 import { PracticeItemRow } from "@/components/library/PracticeItemRow";
 import { PracticeLiveOverlay } from "@/components/library/PracticeLiveOverlay";
-import { PracticeTemplateModal } from "@/components/library/PracticeTemplateModal";
 import {
   buildPracticeShareItems,
   getPracticeSessionTotalMinutes,
   isPracticeBlockRunnable,
+  isPracticeItemMissing,
   resolvePracticeSessionItems,
 } from "@/lib/practice/practice-items";
 import { PracticePrintOverlay } from "@/components/library/PracticePrintOverlay";
 import {
   saveCustomPracticeTemplate,
   templateFromSession,
+  updateCustomPracticeTemplate,
 } from "@/lib/practice/templates";
 import { shareContentToPlayers } from "@/lib/players/share-to-players";
 import {
@@ -29,7 +30,7 @@ import {
   appNotice,
   appPrompt,
 } from "@/stores/dialog-store";
-import type { PracticeSession, PracticeTemplate } from "@/types/library-meta";
+import type { PracticeSession } from "@/types/library-meta";
 
 export function PracticePlannerView() {
   const router = useRouter();
@@ -39,9 +40,6 @@ export function PracticePlannerView() {
   const playbooks = useOrganizerStore((s) => s.playbooks);
   const teams = useOrganizerStore((s) => s.teams);
   const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
-  const createPracticeSessionFromTemplate = useOrganizerStore(
-    (s) => s.createPracticeSessionFromTemplate,
-  );
   const duplicatePracticeSession = useOrganizerStore((s) => s.duplicatePracticeSession);
   const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
   const deletePracticeSession = useOrganizerStore((s) => s.deletePracticeSession);
@@ -55,8 +53,8 @@ export function PracticePlannerView() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [replaceItemId, setReplaceItemId] = useState<string | null>(null);
   const [playbookOpen, setPlaybookOpen] = useState(false);
-  const [templateOpen, setTemplateOpen] = useState(false);
   const [liveSession, setLiveSession] = useState<PracticeSession | null>(null);
   const [printTarget, setPrintTarget] = useState<{
     session: PracticeSession;
@@ -64,6 +62,12 @@ export function PracticePlannerView() {
   } | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<{
+    id: string;
+    name: string;
+    createdAt?: string;
+    sessionId: string;
+  } | null>(null);
 
   useEffect(() => {
     const sessionId = searchParams.get("session");
@@ -85,6 +89,7 @@ export function PracticePlannerView() {
     [selected, playById],
   );
   const runnableCount = rows.filter(isPracticeBlockRunnable).length;
+  const missingCount = rows.filter(isPracticeItemMissing).length;
   const totalMin = getPracticeSessionTotalMinutes(selected);
   const existingPlayIds = useMemo(
     () => new Set(selected?.items.map((i) => i.playId).filter(Boolean) as string[]),
@@ -93,12 +98,15 @@ export function PracticePlannerView() {
 
   async function handleNewSession() {
     const session = await createPracticeSession();
+    setEditingTemplate(null);
     setSelectedId(session.id);
   }
 
-  async function handleFromTemplate(template: PracticeTemplate) {
-    const session = await createPracticeSessionFromTemplate(template);
-    setSelectedId(session.id);
+  function selectSession(id: string) {
+    setSelectedId(id);
+    if (editingTemplate && editingTemplate.sessionId !== id) {
+      setEditingTemplate(null);
+    }
   }
 
   function patchSession(patch: Partial<PracticeSession>) {
@@ -124,10 +132,62 @@ export function PracticePlannerView() {
     });
     if (name === null) return;
     await saveCustomPracticeTemplate(templateFromSession(selected, name));
+    setEditingTemplate(null);
     appNotice(
       "Template saved",
       `"${name}" was saved to your templates.`,
     );
+  }
+
+  async function handleUpdateTemplate() {
+    if (!selected || !editingTemplate) return;
+    if (!selected.items.length) {
+      appNotice(
+        "Nothing to save",
+        "Add at least one block before updating the template.",
+      );
+      return;
+    }
+    const name = await appPrompt({
+      title: "Update template",
+      subtitle: "Save changes to this saved template.",
+      label: "Template name",
+      initialValue: editingTemplate.name,
+      placeholder: "e.g. Monday offense template",
+      submitLabel: "Update template",
+    });
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (!trimmed) {
+      appNotice("Name required", "Enter a template name.");
+      return;
+    }
+    const template = templateFromSession(selected, trimmed, {
+      id: editingTemplate.id,
+      createdAt: editingTemplate.createdAt,
+    });
+    const ok = await updateCustomPracticeTemplate(template);
+    if (!ok) {
+      appNotice("Update failed", "Could not update this template.");
+      return;
+    }
+    setEditingTemplate({
+      id: template.id,
+      name: template.name,
+      createdAt: template.createdAt,
+      sessionId: editingTemplate.sessionId,
+    });
+    appNotice("Template updated", `"${trimmed}" was updated.`);
+  }
+
+  function handleReplaceMissingPlay(playIds: string[]) {
+    const playId = playIds[0];
+    if (!selected || !replaceItemId || !playId) return;
+    void updatePracticeItem(selected.id, replaceItemId, {
+      playId,
+      cueLabel: undefined,
+    });
+    setReplaceItemId(null);
   }
 
   function handleSendToPlayers() {
@@ -172,6 +232,7 @@ export function PracticePlannerView() {
     if (!selected) return;
     const copy = await duplicatePracticeSession(selected.id);
     if (!copy) return;
+    setEditingTemplate(null);
     setSelectedId(copy.id);
     appNotice("Session duplicated", `"${copy.title}" was created.`);
   }
@@ -211,35 +272,24 @@ export function PracticePlannerView() {
 
   return (
     <div className="org-practice-shell" id="org-practice-shell">
-      <div className="practice-toolbar fd-filter-bar">
+      <div className="practice-toolbar fd-filter-bar fc-organizer-section-toolbar">
         <div className="practice-toolbar-left">
           <h2 className="practice-toolbar-title">Practice planner</h2>
-          <p className="practice-toolbar-sub">
-            Plan sessions, drag to reorder blocks, use templates, and run live in
-            the gym.
-          </p>
         </div>
         <div className="practice-toolbar-actions">
           <button
             type="button"
-            className="org-export-all-btn fd-create-play-btn"
+            className="fc-organizer-create-btn"
             id="btn-practice-new-session"
             onClick={() => void handleNewSession()}
           >
-            + New session
-          </button>
-          <button
-            type="button"
-            className="org-export-all-btn"
-            id="btn-practice-from-template"
-            onClick={() => setTemplateOpen(true)}
-          >
-            📋 From template
+            ADD SESSION
           </button>
           <button
             type="button"
             className="org-export-all-btn practice-live-btn"
             id="btn-practice-start-live"
+            hidden
             disabled={!runnableCount}
             onClick={handleStartLive}
           >
@@ -249,19 +299,11 @@ export function PracticePlannerView() {
             type="button"
             className="org-export-all-btn"
             id="btn-practice-share-link"
+            hidden
             disabled={!runnableCount}
             onClick={() => void handleShareLink()}
           >
             🔗 Share plan
-          </button>
-          <button
-            type="button"
-            className="org-export-all-btn practice-export-btn"
-            id="btn-practice-export-pdf"
-            disabled={!runnableCount}
-            onClick={handleExportPdf}
-          >
-            📄 Session PDF
           </button>
         </div>
       </div>
@@ -284,7 +326,7 @@ export function PracticePlannerView() {
                     key={session.id}
                     type="button"
                     className={`practice-session-card${activeSessionId === session.id ? " active" : ""}`}
-                    onClick={() => setSelectedId(session.id)}
+                    onClick={() => selectSession(session.id)}
                   >
                     <div className="practice-session-card-date">{session.date}</div>
                     <div className="practice-session-card-title">
@@ -356,6 +398,24 @@ export function PracticePlannerView() {
                 />
               </label>
 
+              {editingTemplate && selected.id === editingTemplate.sessionId ? (
+                <div
+                  className="practice-editing-template-banner"
+                  id="practice-editing-template-banner"
+                >
+                  <span>
+                    Editing template: <strong>{editingTemplate.name}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className="practice-editing-template-cancel"
+                    onClick={() => setEditingTemplate(null)}
+                  >
+                    Done editing
+                  </button>
+                </div>
+              ) : null}
+
               <div className="practice-items-head">
                 <span className="practice-items-summary">
                   Plan · <strong id="practice-items-count">{selected.items.length}</strong>{" "}
@@ -391,6 +451,15 @@ export function PracticePlannerView() {
                   </button>
                 </div>
               </div>
+
+              {missingCount > 0 ? (
+                <div className="practice-missing-banner" id="practice-missing-banner">
+                  <span>
+                    {missingCount} block{missingCount !== 1 ? "s" : ""} missing from
+                    library — use <strong>Replace</strong> on each row to link a play.
+                  </span>
+                </div>
+              ) : null}
 
               <div className="practice-items-list" id="practice-items-list">
                 {!rows.length ? (
@@ -435,6 +504,11 @@ export function PracticePlannerView() {
                       onRemove={() =>
                         removePracticeItem(selected.id, row.item.id)
                       }
+                      onReplace={
+                        isPracticeItemMissing(row)
+                          ? () => setReplaceItemId(row.item.id)
+                          : undefined
+                      }
                     />
                   ))
                 )}
@@ -443,7 +517,7 @@ export function PracticePlannerView() {
               <div className="practice-editor-footer">
                 <button
                   type="button"
-                  className="practice-save-template-btn"
+                  className="practice-footer-btn"
                   id="btn-practice-duplicate-session"
                   onClick={() => void handleDuplicateSession()}
                 >
@@ -451,15 +525,25 @@ export function PracticePlannerView() {
                 </button>
                 <button
                   type="button"
-                  className="practice-save-template-btn"
+                  className="practice-footer-btn"
                   id="btn-practice-save-template"
                   onClick={handleOpenSaveTemplate}
                 >
                   Save as template
                 </button>
+                {editingTemplate && selected.id === editingTemplate.sessionId ? (
+                  <button
+                    type="button"
+                    className="practice-footer-btn"
+                    id="btn-practice-update-template"
+                    onClick={() => void handleUpdateTemplate()}
+                  >
+                    Update template
+                  </button>
+                ) : null}
                 <button
                   type="button"
-                  className="org-export-all-btn"
+                  className="practice-footer-btn"
                   id="btn-practice-share-players"
                   disabled={!selected.items.length}
                   onClick={handleSendToPlayers}
@@ -468,11 +552,20 @@ export function PracticePlannerView() {
                 </button>
                 <button
                   type="button"
-                  className="practice-delete-session-btn"
+                  className="practice-footer-btn"
                   id="btn-practice-delete-session"
                   onClick={() => void handleOpenDeleteSession()}
                 >
                   Delete session
+                </button>
+                <button
+                  type="button"
+                  className="practice-footer-btn"
+                  id="btn-practice-export-pdf"
+                  disabled={!runnableCount}
+                  onClick={handleExportPdf}
+                >
+                  Session PDF
                 </button>
               </div>
             </div>
@@ -490,6 +583,14 @@ export function PracticePlannerView() {
         }}
       />
 
+      <PracticeAddModal
+        open={replaceItemId != null}
+        mode="replace"
+        plays={plays}
+        onClose={() => setReplaceItemId(null)}
+        onConfirm={handleReplaceMissingPlay}
+      />
+
       <PracticeAddPlaybookModal
         open={playbookOpen}
         playbooks={playbooks}
@@ -497,12 +598,6 @@ export function PracticePlannerView() {
         onSelect={(playbookId) => {
           if (selected) void addPlaybookToSession(selected.id, playbookId);
         }}
-      />
-
-      <PracticeTemplateModal
-        open={templateOpen}
-        onClose={() => setTemplateOpen(false)}
-        onSelect={(template) => void handleFromTemplate(template)}
       />
 
       {liveSession ? (

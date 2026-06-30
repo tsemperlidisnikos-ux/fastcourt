@@ -1,8 +1,7 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  Arc,
   Group,
   Image as KonvaImage,
   Layer,
@@ -11,31 +10,49 @@ import {
   Stage,
 } from "react-konva";
 import type Konva from "konva";
-import { HALF_COURT_BASKET_NY } from "@/lib/designer/constants";
+import { isAnimActionActive } from "@/lib/designer/animation-engine";
 import {
   computeCourtViewLayout,
+  clampPlacementNorm,
   courtNormToStage,
-  stageToCourtNorm,
+  placementNormToStage,
+  stageToPlacementNorm,
+  type CourtCoordSpace,
 } from "@/lib/designer/court-view-layout";
 import {
   resolveActionStrokeWidth,
   translateDesignerAction,
 } from "@/lib/designer/action-geometry";
-import { dribbleMidFromFlat } from "@/lib/designer/freehand-geometry";
-import { findClosestActionLineEndpoint } from "@/lib/designer/line-chain-snap";
-import { closestPlayer, PLAYER_SNAP_NORM } from "@/lib/designer/player-snap";
+import {
+  curveMidFromFlat,
+  dribbleMidFromFlat,
+  isFreehandStroke,
+} from "@/lib/designer/freehand-geometry";
+import {
+  resolveLineDrawStart,
+  snapDribbleEndpoints,
+  snapHandoffEndpoints,
+} from "@/lib/designer/player-edge-snap";
 import { useCourtImage } from "@/lib/designer/use-court-image";
+import {
+  mergeCourtViewSettings,
+  resolvePlayCourtAppearance,
+} from "@/lib/designer/court-view-settings";
 import { ActionEditHandles } from "@/components/designer/ActionEditHandles";
 import { CourtActionShape } from "@/components/designer/CourtActionShape";
 import { useDesignerStore } from "@/stores/designer-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { PlayerMarker } from "@/components/designer/PlayerMarker";
+import { VectorCourtFloor } from "@/components/designer/VectorCourtFloor";
+import { WoodCourtCssUnderlay } from "@/components/designer/WoodCourtCssUnderlay";
 import { ShadowEditHandles } from "@/components/designer/ShadowEditHandles";
 import { ShadowMarker } from "@/components/designer/ShadowMarker";
 import { ZoneMarker } from "@/components/designer/ZoneMarker";
 import { shadowPlacementFromNormDrag } from "@/lib/designer/shadow-geometry";
 import { zonePlacementFromNormDrag } from "@/lib/designer/zone-geometry";
+import { tapMoveThreshold } from "@/lib/viewport/touch-targets";
 import type {
+  ActionType,
   CourtRect,
   DesignerAction,
   DesignerObject,
@@ -43,10 +60,12 @@ import type {
   ObjectKind,
 } from "@/types/designer";
 
-const TAP_MOVE_NORM = 0.025;
-
 function clampNorm(x: number, y: number) {
   return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) };
+}
+
+function isPlayerKind(kind: ObjectKind) {
+  return kind === "offense" || kind === "defense" || kind === "ball";
 }
 
 function isPlacementTool(tool: DesignerTool) {
@@ -61,56 +80,45 @@ function isPlacementTool(tool: DesignerTool) {
   );
 }
 
+function playerTokenInteractive(
+  tool: DesignerTool,
+  objectKind: ObjectKind,
+  whiteboardActive: boolean,
+  animActive: boolean,
+) {
+  if (whiteboardActive || animActive) return false;
+  if (tool === "select" || tool === "delete") return true;
+  if (tool === "offense" && objectKind === "offense") return true;
+  return false;
+}
+
 function isLineDrawingTool(tool: DesignerTool) {
   return tool === "line" || tool === "shoot";
 }
 
-function FallbackCourtFloor({
-  court,
-  courtType,
-}: {
-  court: CourtRect;
-  courtType: "half" | "full";
-}) {
-  const midX = court.x + court.width / 2;
-  const hoopY = court.y + court.height * HALF_COURT_BASKET_NY;
-  const arcRadius = Math.min(court.width, court.height) * 0.12;
+/** Pass uses click-drag with mouse; curved actions use freehand (same as pen). */
+function prefersClickDragLine(
+  e: Konva.KonvaEventObject<MouseEvent | TouchEvent>,
+  lineActionType: ActionType,
+) {
+  const evt = e.evt as PointerEvent;
+  return evt.pointerType === "mouse" && lineActionType === "pass";
+}
 
-  return (
-    <Group listening={false}>
-      <Rect
-        x={court.x}
-        y={court.y}
-        width={court.width}
-        height={court.height}
-        fill="#fffaf5"
-        stroke="#1e293b"
-        strokeWidth={2.5}
-      />
-      <Line
-        points={[midX, court.y, midX, court.y + court.height]}
-        stroke="#94a3b8"
-        strokeWidth={1.5}
-        dash={courtType === "full" ? undefined : [8, 6]}
-      />
-      <Arc
-        x={midX}
-        y={hoopY}
-        innerRadius={0}
-        outerRadius={arcRadius}
-        angle={180}
-        rotation={0}
-        stroke="#64748b"
-        strokeWidth={2}
-      />
-    </Group>
-  );
+const PLACE_GUARD_MS = 80;
+
+function nextPlaceGuardTimestamp(lastAt: number, windowMs = PLACE_GUARD_MS) {
+  const now = Date.now();
+  if (now - lastAt < windowMs) return null;
+  return now;
 }
 
 function PlayerToken({
   object,
   court,
   courtType,
+  viewLayout,
+  courtCoords,
   tool,
   onRemove,
   onAssignBall,
@@ -124,6 +132,8 @@ function PlayerToken({
   object: DesignerObject;
   court: CourtRect;
   courtType: "half" | "full";
+  viewLayout: ReturnType<typeof computeCourtViewLayout>;
+  courtCoords: CourtCoordSpace;
   tool: DesignerTool;
   onRemove: (id: string) => void;
   onAssignBall: (id: string) => void;
@@ -134,7 +144,13 @@ function PlayerToken({
   draggable: boolean;
   selected?: boolean;
 }) {
-  const pos = courtNormToStage(court, courtType, object.x, object.y);
+  const pos = placementNormToStage(
+    viewLayout,
+    courtType,
+    object.x,
+    object.y,
+    courtCoords,
+  );
   const radius = Math.max(12, court.width * 0.028);
 
   return (
@@ -149,8 +165,20 @@ function PlayerToken({
       listening={interactive}
       draggable={draggable}
       onDragEnd={(stageX, stageY) => {
-        const norm = stageToCourtNorm(court, courtType, stageX, stageY);
-        const c = clampNorm(norm.x, norm.y);
+        const norm = stageToPlacementNorm(
+          viewLayout,
+          courtType,
+          stageX,
+          stageY,
+          courtCoords,
+        );
+        const c = clampPlacementNorm(
+          viewLayout,
+          courtType,
+          norm.x,
+          norm.y,
+          courtCoords,
+        );
         onMove(object.id, c.x, c.y);
       }}
       onPointerUp={() => {
@@ -174,14 +202,16 @@ function FreehandPreview({
   points,
   court,
   courtType,
+  courtCoords = "raster",
 }: {
   points: number[];
   court: CourtRect;
   courtType: "half" | "full";
+  courtCoords?: CourtCoordSpace;
 }) {
   const stagePts: number[] = [];
   for (let i = 0; i < points.length; i += 2) {
-    const p = courtNormToStage(court, courtType, points[i], points[i + 1]);
+    const p = courtNormToStage(court, courtType, points[i], points[i + 1], courtCoords);
     stagePts.push(p.x, p.y);
   }
   const strokeWidth = resolveActionStrokeWidth(2, court, courtType);
@@ -200,7 +230,10 @@ function FreehandPreview({
 
 export type CourtCanvasHandle = {
   exportPng: () => string | null;
+  blitToCanvas: (target: HTMLCanvasElement) => boolean;
 };
+
+const EXPORT_PIXEL_RATIO = 2;
 
 const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -217,6 +250,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   const freehandDraft = useDesignerStore((s) => s.freehandDraft);
   const lineDraft = useDesignerStore((s) => s.lineDraft);
   const lineThickness = useDesignerStore((s) => s.lineThickness);
+  const lineColor = useDesignerStore((s) => s.lineColor);
   const selectedActionId = useDesignerStore((s) => s.selectedActionId);
   const selectedObjectId = useDesignerStore((s) => s.selectedObjectId);
   const placeObject = useDesignerStore((s) => s.placeObject);
@@ -238,6 +272,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   const beginFreehandDraft = useDesignerStore((s) => s.beginFreehandDraft);
   const appendFreehandDraftPoint = useDesignerStore((s) => s.appendFreehandDraftPoint);
   const finishFreehandDraft = useDesignerStore((s) => s.finishFreehandDraft);
+  const setCourtSnapWidthPx = useDesignerStore((s) => s.setCourtSnapWidthPx);
   const activeShadowType = useDesignerStore((s) => s.activeShadowType);
   const shadowDraft = useDesignerStore((s) => s.shadowDraft);
   const beginShadowDraft = useDesignerStore((s) => s.beginShadowDraft);
@@ -254,7 +289,20 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   );
 
   useImperativeHandle(ref, () => ({
-    exportPng: () => stageRef.current?.toDataURL({ pixelRatio: 2 }) ?? null,
+    exportPng: () =>
+      stageRef.current?.toDataURL({ pixelRatio: EXPORT_PIXEL_RATIO }) ?? null,
+    blitToCanvas: (target) => {
+      const stage = stageRef.current;
+      if (!stage) return false;
+      stage.batchDraw();
+      const frameCanvas = stage.toCanvas({ pixelRatio: EXPORT_PIXEL_RATIO });
+      target.width = frameCanvas.width;
+      target.height = frameCanvas.height;
+      const ctx = target.getContext("2d");
+      if (!ctx) return false;
+      ctx.drawImage(frameCanvas, 0, 0);
+      return true;
+    },
   }));
 
   const animRuntime = useDesignerStore((s) => s.animRuntime);
@@ -266,10 +314,6 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   const animActive = !!animRuntime?.active;
   const shapeInteractive =
     !whiteboardActive && !animActive && (tool === "select" || tool === "delete");
-  const playerInteractive =
-    !whiteboardActive &&
-    !animActive &&
-    (tool === "select" || tool === "delete" || tool === "offense");
   const objectDraggable = tool === "select" && !animActive;
   const actionDraggable = objectDraggable;
 
@@ -288,36 +332,71 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let active = true;
     const observer = new ResizeObserver((entries) => {
+      if (!active) return;
       const entry = entries[0];
       if (!entry) return;
       const { width, height } = entry.contentRect;
       if (width > 0 && height > 0) {
-        setSize({ width: Math.floor(width), height: Math.floor(height) });
+        const nextW = Math.floor(width);
+        const nextH = Math.floor(height);
+        setSize((prev) =>
+          prev.width === nextW && prev.height === nextH
+            ? prev
+            : { width: nextW, height: nextH },
+        );
       }
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
   }, []);
+
+  const courtViewRaw = useDesignerStore((s) => s.play.courtView);
+  const courtView = useMemo(
+    () => mergeCourtViewSettings(courtViewRaw),
+    [courtViewRaw],
+  );
 
   const viewLayout = useMemo(
     () =>
-      computeCourtViewLayout(size.width, size.height, play.courtType, {
-        oob: "none",
-      }),
-    [size.width, size.height, play.courtType],
+      computeCourtViewLayout(
+        size.width,
+        size.height,
+        play.courtType,
+        {
+          oob: courtView.sidelinesFt > 0 ? "sideline-both" : "none",
+          sidelinesFt: courtView.sidelinesFt,
+        },
+        courtView.template,
+      ),
+    [
+      courtView.sidelinesFt,
+      courtView.template,
+      size.width,
+      size.height,
+      play.courtType,
+    ],
   );
+
+  useLayoutEffect(() => {
+    setCourtSnapWidthPx(Math.round(viewLayout.court.width));
+  }, [viewLayout.court.width, setCourtSnapWidthPx]);
 
   function pointerNorm(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) {
     const stage = e.target.getStage();
     if (!stage) return null;
     const pointer = stage.getPointerPosition();
     if (!pointer) return null;
-    return stageToCourtNorm(
-      viewLayout.court,
+    return stageToPlacementNorm(
+      viewLayout,
       play.courtType,
       pointer.x,
       pointer.y,
+      courtCoords,
     );
   }
 
@@ -337,21 +416,46 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
 
   function resolveDrawStart(x: number, y: number) {
     if (!frame) return { x, y };
-    const chain =
-      lineActionType === "pass"
-        ? findClosestActionLineEndpoint(x, y, frame.actions, { types: ["dribble"] })
-        : findClosestActionLineEndpoint(x, y, frame.actions, {
-            types: ["dribble", "cut", "curl"],
-          });
-    if (chain) return { x: chain.x, y: chain.y };
-    return { x, y };
+    return resolveLineDrawStart(
+      x,
+      y,
+      frame.objects,
+      frame.actions,
+      lineActionType,
+      viewLayout.court.width,
+    );
+  }
+
+  function clampPlacement(x: number, y: number) {
+    return clampPlacementNorm(
+      viewLayout,
+      play.courtType,
+      x,
+      y,
+      courtCoords,
+    );
+  }
+
+  function placeCourtObject(kind: ObjectKind, x: number, y: number) {
+    const c = isPlayerKind(kind) ? clampPlacement(x, y) : clampNorm(x, y);
+    placeObject(kind, c.x, c.y);
   }
 
   function placeOnce(kind: ObjectKind, x: number, y: number) {
-    const now = Date.now();
-    if (now - placeGuardRef.current < 80) return;
+    const now = nextPlaceGuardTimestamp(placeGuardRef.current);
+    if (now === null) return;
     placeGuardRef.current = now;
-    placeObject(kind, x, y);
+    placeCourtObject(kind, x, y);
+  }
+
+  function handleDefensePlacement(
+    e: Konva.KonvaEventObject<MouseEvent | TouchEvent>,
+  ) {
+    e.cancelBubble = true;
+    if (isFingerBlocked(e)) return;
+    const norm = pointerNorm(e);
+    if (!norm) return;
+    placeOnce("defense", norm.x, norm.y);
   }
 
   function isStageBackground(
@@ -367,6 +471,19 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   const highContrastCourt = useSettingsStore(
     (s) => s.appearance.highContrastCourt,
   );
+  const appearance = useSettingsStore((s) => s.appearance);
+  const courtAppearance = useMemo(
+    () => resolvePlayCourtAppearance(courtViewRaw, appearance),
+    [courtViewRaw, appearance],
+  );
+  const courtRenderMode = appearance.courtRenderMode;
+  const useRasterCourt =
+    courtRenderMode === "image" && image && !failed;
+  const woodFloorViaCss =
+    !useRasterCourt &&
+    courtAppearance.showWoodTiles &&
+    !courtView.angle;
+  const courtCoords: CourtCoordSpace = useRasterCourt ? "raster" : "vector";
 
   function isFingerBlocked(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) {
     if (allowFingerDraw) return false;
@@ -404,7 +521,11 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
       drawingRef.current = true;
       tapRef.current = null;
       const start = resolveDrawStart(norm.x, norm.y);
-      beginFreehandDraft(start.x, start.y);
+      if (prefersClickDragLine(e, lineActionType)) {
+        beginLineDraft(start.x, start.y);
+      } else {
+        beginFreehandDraft(start.x, start.y);
+      }
       return;
     }
 
@@ -430,11 +551,15 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
       return;
     }
 
-    if (isPlacementTool(tool) && isOnCourt(norm)) {
+    if (isPlacementTool(tool)) {
+      const c =
+        tool === "offense" || tool === "defense" || tool === "ball"
+          ? clampPlacement(norm.x, norm.y)
+          : clampNorm(norm.x, norm.y);
       tapRef.current = {
         pointerId: pointerId(e),
-        x: norm.x,
-        y: norm.y,
+        x: c.x,
+        y: c.y,
       };
     }
   }
@@ -458,6 +583,11 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
         if (Math.hypot(c.x - lx, c.y - ly) > 0.002) {
           setWhiteboardPreview([...pts, c.x, c.y]);
         }
+      } else if (tool === "line" && lineDraft) {
+        const norm = pointerNorm(e);
+        if (!norm) return;
+        const c = clampNorm(norm.x, norm.y);
+        updateLineDraft(c.x, c.y);
       } else if (tool === "line" && freehandDraft) {
         const norm = pointerNorm(e);
         if (!norm) return;
@@ -486,7 +616,8 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     const norm = pointerNorm(e);
     if (!norm) return;
     const dist = Math.hypot(norm.x - tapRef.current.x, norm.y - tapRef.current.y);
-    if (dist > TAP_MOVE_NORM) {
+    const moveThreshold = tapMoveThreshold((e.evt as PointerEvent).pointerType);
+    if (dist > moveThreshold) {
       tapRef.current = null;
     }
   }
@@ -502,7 +633,10 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
         tool === "zone")
     ) {
       drawingRef.current = false;
-      if (tool === "line") finishFreehandDraft();
+      if (tool === "line") {
+        if (lineDraft) commitLineDraft();
+        else finishFreehandDraft();
+      }
       if (tool === "shoot") commitLineDraft();
       if (tool === "shadow") commitShadowDraft();
       if (tool === "zone") commitZoneDraft();
@@ -525,21 +659,6 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     }
 
     const norm = pointerNorm(e);
-    if (norm && frame && tool === "offense") {
-      const offenseOnly = frame.objects.filter((o) => o.kind === "offense");
-      const tapped = closestPlayer(
-        norm.x,
-        norm.y,
-        offenseOnly,
-        [],
-        PLAYER_SNAP_NORM * 1.5,
-      );
-      if (tapped) {
-        assignPlayerBall(tapped.id);
-        tapRef.current = null;
-        return;
-      }
-    }
 
     const pending = tapRef.current;
     tapRef.current = null;
@@ -553,25 +672,10 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
 
     if (pointerId(e) !== pending.pointerId && pending.pointerId !== -1) return;
 
-    if (!norm || !isOnCourt(norm)) return;
+    if (!norm) return;
 
     const dist = Math.hypot(norm.x - pending.x, norm.y - pending.y);
-    if (dist > TAP_MOVE_NORM) return;
-
-    if (tool === "offense" || tool === "defense") {
-      const sameKind = frame?.objects.filter((o) => o.kind === tool) ?? [];
-      const existing = closestPlayer(
-        norm.x,
-        norm.y,
-        sameKind,
-        [],
-        PLAYER_SNAP_NORM * 1.2,
-      );
-      if (existing?.kind === "offense" && tool === "offense") {
-        assignPlayerBall(existing.id);
-        return;
-      }
-    }
+    if (dist > tapMoveThreshold((e.evt as PointerEvent).pointerType)) return;
 
     placeOnce(tool, norm.x, norm.y);
   }
@@ -584,10 +688,11 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     (selectedObject.kind === "shadow" || selectedObject.kind === "zone");
 
   const previewDraft =
-    lineDraft && tool === "shoot"
+    lineDraft && (tool === "shoot" || tool === "line")
       ? {
           ...lineDraft,
           strokeWidth: lineThickness,
+          color: lineColor,
         }
       : lineDraft;
 
@@ -595,11 +700,60 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     tool === "line" &&
     freehandDraft &&
     freehandDraft.length >= 4 &&
+    frame &&
     (lineActionType === "dribble" || lineActionType === "handoff")
       ? (() => {
+          const rawX1 = freehandDraft[0]!;
+          const rawY1 = freehandDraft[1]!;
+          const rawX2 = freehandDraft[freehandDraft.length - 2]!;
+          const rawY2 = freehandDraft[freehandDraft.length - 1]!;
+          const snapped =
+            lineActionType === "dribble"
+              ? snapDribbleEndpoints(
+                  rawX1,
+                  rawY1,
+                  rawX2,
+                  rawY2,
+                  frame.objects,
+                  frame.actions,
+                  viewLayout.court.width,
+                )
+              : snapHandoffEndpoints(
+                  rawX1,
+                  rawY1,
+                  rawX2,
+                  rawY2,
+                  frame.objects,
+                  frame.actions,
+                  viewLayout.court.width,
+                );
           const mid = dribbleMidFromFlat(freehandDraft);
           return {
             id: "dribble-draft",
+            type: lineActionType,
+            x1: snapped.x1,
+            y1: snapped.y1,
+            x2: snapped.x2,
+            y2: snapped.y2,
+            midX: mid.midX,
+            midY: mid.midY,
+            strokeWidth: lineThickness,
+            color: lineColor,
+          };
+        })()
+      : null;
+
+  const curvedArrowPreviewDraft =
+    tool === "line" &&
+    freehandDraft &&
+    isFreehandStroke(freehandDraft) &&
+    (lineActionType === "cut" ||
+      lineActionType === "curl" ||
+      lineActionType === "screen")
+      ? (() => {
+          const mid = curveMidFromFlat(freehandDraft, lineActionType);
+          return {
+            id: "curve-draft",
             type: lineActionType,
             x1: freehandDraft[0],
             y1: freehandDraft[1],
@@ -607,7 +761,12 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
             y2: freehandDraft[freehandDraft.length - 1],
             midX: mid.midX,
             midY: mid.midY,
+            c1x: mid.c1x,
+            c1y: mid.c1y,
+            c2x: mid.c2x,
+            c2y: mid.c2y,
             strokeWidth: lineThickness,
+            color: lineColor,
           };
         })()
       : null;
@@ -616,8 +775,22 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     <div
       ref={containerRef}
       id="court-container"
-      className={`h-full w-full${highContrastCourt ? " court-high-contrast" : ""}`}
+      className={`relative h-full w-full${highContrastCourt ? " court-high-contrast" : ""}`}
     >
+      {woodFloorViaCss ? (
+        <WoodCourtCssUnderlay
+          x={viewLayout.total.x}
+          y={viewLayout.total.y}
+          width={viewLayout.total.width}
+          height={viewLayout.total.height}
+          woodTextureId={courtAppearance.woodTextureId}
+          floorColor={courtAppearance.floorColor}
+        />
+      ) : null}
+      <div
+        className={woodFloorViaCss ? "fc-court-stage-overlay" : "h-full w-full"}
+        style={woodFloorViaCss ? { position: "absolute", inset: 0 } : undefined}
+      >
       <Stage
         ref={stageRef}
         width={size.width}
@@ -629,30 +802,44 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
         style={{ touchAction: "none" }}
       >
         <Layer listening={false}>
-          {viewLayout.oobRects.map((rect, i) => (
-            <Rect
-              key={`oob-${i}`}
-              x={rect.x}
-              y={rect.y}
-              width={rect.width}
-              height={rect.height}
-              fill="#e2e8f0"
-              stroke="#cbd5e1"
-              strokeWidth={1}
-            />
-          ))}
-          {image && !failed ? (
+          {useRasterCourt
+            ? viewLayout.oobRects.map((rect, i) => (
+                <Rect
+                  key={`oob-${i}`}
+                  x={rect.x}
+                  y={rect.y}
+                  width={rect.width}
+                  height={rect.height}
+                  fill="#e2e8f0"
+                  stroke="#cbd5e1"
+                  strokeWidth={1}
+                />
+              ))
+            : null}
+          {useRasterCourt ? (
             <KonvaImage
               image={image}
               x={viewLayout.court.x}
               y={viewLayout.court.y}
               width={viewLayout.court.width}
               height={viewLayout.court.height}
+              listening={false}
             />
           ) : (
-            <FallbackCourtFloor
+            <VectorCourtFloor
               court={viewLayout.court}
+              floorExtent={viewLayout.total}
               courtType={play.courtType}
+              template={courtView.template}
+              floorColor={courtAppearance.floorColor}
+              lineColor={courtAppearance.lineColor}
+              showWoodTiles={courtAppearance.showWoodTiles}
+              woodFloorViaCss={woodFloorViaCss}
+              woodTextureId={courtAppearance.woodTextureId}
+              featureFilters={courtView.featureFilters}
+              showBaskets={courtView.showBaskets}
+              angle={courtView.angle}
+              sidelinesFt={courtView.sidelinesFt}
             />
           )}
         </Layer>
@@ -660,14 +847,16 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
           {(frame?.actions ?? []).map((action) => {
             if (animActive) {
               const revealed = animRuntime!.revealedActionIds.includes(action.id);
-              const active = animRuntime!.activeActionId === action.id;
+              const active = isAnimActionActive(animRuntime!, action.id);
               if (!revealed && !active) return null;
+              if (active && animRuntime!.showActiveLine === false) return null;
               return (
                 <CourtActionShape
                   key={action.id}
                   action={action}
                   court={viewLayout.court}
                   courtType={play.courtType}
+                  courtCoords={courtCoords}
                   selected={active}
                   revealProgress={active ? animRuntime!.lineProgress : 1}
                   interactive={false}
@@ -680,6 +869,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
                 action={action}
                 court={viewLayout.court}
                 courtType={play.courtType}
+                courtCoords={courtCoords}
                 selected={selectedActionId === action.id}
                 interactive={shapeInteractive}
                 draggable={actionDraggable}
@@ -695,6 +885,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
               action={previewDraft}
               court={viewLayout.court}
               courtType={play.courtType}
+              courtCoords={courtCoords}
               preview
               interactive={false}
             />
@@ -704,6 +895,16 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
               action={dribblePreviewDraft}
               court={viewLayout.court}
               courtType={play.courtType}
+              courtCoords={courtCoords}
+              preview
+              interactive={false}
+            />
+          ) : curvedArrowPreviewDraft ? (
+            <CourtActionShape
+              action={curvedArrowPreviewDraft}
+              court={viewLayout.court}
+              courtType={play.courtType}
+              courtCoords={courtCoords}
               preview
               interactive={false}
             />
@@ -712,6 +913,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
               points={freehandDraft}
               court={viewLayout.court}
               courtType={play.courtType}
+              courtCoords={courtCoords}
             />
           ) : null}
           {zoneDraft && tool === "zone" ? (
@@ -729,6 +931,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
                 play.courtType,
                 placement.x,
                 placement.y,
+                courtCoords,
               );
               return (
                 <Group x={pos.x} y={pos.y} listening={false} opacity={0.72}>
@@ -757,6 +960,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
                 play.courtType,
                 placement.x,
                 placement.y,
+                courtCoords,
               );
               return (
                 <Group x={pos.x} y={pos.y} listening={false} opacity={0.72}>
@@ -772,21 +976,26 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
           ) : null}
         </Layer>
         <Layer>
-          {displayObjects
-            .filter((object) => object.kind !== "ball")
-            .map((object) => (
+          {displayObjects.map((object) => (
             <PlayerToken
               key={object.id}
               object={object}
               court={viewLayout.court}
               courtType={play.courtType}
+              viewLayout={viewLayout}
+              courtCoords={courtCoords}
               tool={tool}
               onRemove={removeObject}
               onAssignBall={assignPlayerBall}
               onMove={moveObject}
               onSelect={tool === "select" ? selectObject : undefined}
               removable={removable}
-              interactive={playerInteractive}
+              interactive={playerTokenInteractive(
+                tool,
+                object.kind,
+                whiteboardActive,
+                animActive,
+              )}
               draggable={objectDraggable}
               selected={selectedObjectId === object.id}
             />
@@ -801,6 +1010,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
                 play.courtType,
                 stroke.points[j],
                 stroke.points[j + 1],
+                courtCoords,
               );
               stagePts.push(p.x, p.y);
             }
@@ -827,6 +1037,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
                     play.courtType,
                     whiteboardPreview[j],
                     whiteboardPreview[j + 1],
+                    courtCoords,
                   );
                   stagePts.push(p.x, p.y);
                 }
@@ -847,6 +1058,7 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
               action={selectedAction}
               court={viewLayout.court}
               courtType={play.courtType}
+              courtCoords={courtCoords}
             />
           </Layer>
         ) : null}
@@ -859,7 +1071,22 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
             />
           </Layer>
         ) : null}
+        {tool === "defense" && !whiteboardActive && !animActive ? (
+          <Layer>
+            <Rect
+              x={0}
+              y={0}
+              width={size.width}
+              height={size.height}
+              fill="#ffffff"
+              opacity={0.01}
+              listening
+              onTap={handleDefensePlacement}
+            />
+          </Layer>
+        ) : null}
       </Stage>
+      </div>
     </div>
   );
 });

@@ -1,0 +1,12 @@
+node_modules
+.next
+dist-electron
+backups
+.cursor
+test-results
+reports
+playwright-report
+coverage
+.git
+*.zip
+*.bundle

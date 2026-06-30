@@ -74,6 +74,14 @@ describe("public assets", () => {
     assert.ok(exists("public/manifest.webmanifest") || exists("public/manifest.json"));
   });
 
+  it("PWA service worker and offline shell exist", () => {
+    assert.ok(exists("public/sw.js"), "Run npm run postinstall or node scripts/generate-sw.mjs");
+    assert.ok(exists("public/offline.html"));
+    const sw = fs.readFileSync(path.join(ROOT, "public/sw.js"), "utf8");
+    assert.match(sw, /fastcourt-shell-/);
+    assert.match(sw, /offline\.html/);
+  });
+
   it("app icon exists", () => {
     assert.ok(
       exists("public/icon.svg") ||

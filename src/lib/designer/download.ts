@@ -14,3 +14,12 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
   link.download = filename;
   link.click();
 }
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  try {
+    downloadDataUrl(url, filename);
+  } finally {
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+}

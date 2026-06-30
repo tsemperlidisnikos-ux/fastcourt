@@ -49,6 +49,8 @@ export function isTrialWarning(user: SessionUser): boolean {
 
 export function isTrialExpired(user: SessionUser): boolean {
   if (hasOrganizationSubscriptionAccess(user)) return false;
+  if (user.accessType === "subscription") return false;
+  if (!user.expiresAt && user.accessType === "trial") return true;
   const days = getDaysRemaining(user.expiresAt);
   return days !== null && days <= 0 && !hasFullAccess(user);
 }

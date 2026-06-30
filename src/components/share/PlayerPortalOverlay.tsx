@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
+import { VideoEmbed } from "@/components/library/VideoEmbed";
+import { VideoWatchButton } from "@/components/library/VideoWatchButton";
+import { canInlineEmbedVideo } from "@/lib/library/video-url";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import {
   defaultRosterTeam,
@@ -409,6 +412,15 @@ export function PlayerPortalOverlay() {
                       size="sm"
                     />
                   </div>
+                  {selectedPlay.videoUrl && canInlineEmbedVideo(selectedPlay.videoUrl) ? (
+                    <div className="player-portal-preview-video">
+                      <VideoEmbed
+                        videoUrl={selectedPlay.videoUrl}
+                        title={selectedPlay.title}
+                        compact
+                      />
+                    </div>
+                  ) : null}
                   <div className="player-portal-preview-actions player-portal-preview-actions-sticky">
                     {!shareMode ? (
                       <button
@@ -431,15 +443,12 @@ export function PlayerPortalOverlay() {
                       ▶ Present
                     </button>
                     {selectedPlay.videoUrl ? (
-                      <a
+                      <VideoWatchButton
+                        videoUrl={selectedPlay.videoUrl}
+                        title={selectedPlay.title}
                         className="player-portal-btn player-portal-video-btn"
                         id="btn-player-portal-video"
-                        href={selectedPlay.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        ▶ Watch video
-                      </a>
+                      />
                     ) : null}
                   </div>
                 </div>

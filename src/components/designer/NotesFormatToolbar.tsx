@@ -112,25 +112,6 @@ export function NotesFormatToolbar({ editorRef, onChange }: Props) {
       >
         <span className="notes-fmt-align-icon align-justify" />
       </button>
-      <span className="notes-fmt-sep" aria-hidden="true" />
-      <button
-        type="button"
-        className="notes-fmt-btn"
-        data-cmd="insertUnorderedList"
-        title="Bullet list"
-        onClick={() => runCommand("insertUnorderedList")}
-      >
-        <span className="notes-fmt-list-icon">•≡</span>
-      </button>
-      <button
-        type="button"
-        className="notes-fmt-btn"
-        data-cmd="insertOrderedList"
-        title="Numbered list"
-        onClick={() => runCommand("insertOrderedList")}
-      >
-        <span className="notes-fmt-list-icon">1.</span>
-      </button>
     </div>
   );
 }
