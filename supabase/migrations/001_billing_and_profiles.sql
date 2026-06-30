@@ -134,6 +134,25 @@ GRANT EXECUTE ON FUNCTION public.redeem_license_key(text) TO authenticated;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.license_keys ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.is_profile_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_profile_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_profile_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_profile_admin() TO service_role;
+
 -- Profiles: users read/update own row
 DROP POLICY IF EXISTS profiles_select_own ON public.profiles;
 CREATE POLICY profiles_select_own ON public.profiles
@@ -155,24 +174,12 @@ CREATE POLICY profiles_insert_own ON public.profiles
 DROP POLICY IF EXISTS profiles_select_admin ON public.profiles;
 CREATE POLICY profiles_select_admin ON public.profiles
   FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles admin_row
-      WHERE admin_row.id = auth.uid()
-        AND admin_row.role = 'admin'
-    )
-  );
+  USING (public.is_profile_admin());
 
 DROP POLICY IF EXISTS profiles_update_admin ON public.profiles;
 CREATE POLICY profiles_update_admin ON public.profiles
   FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles admin_row
-      WHERE admin_row.id = auth.uid()
-        AND admin_row.role = 'admin'
-    )
-  );
+  USING (public.is_profile_admin());
 
 -- License keys: no direct client access (RPC only)
 DROP POLICY IF EXISTS license_keys_deny_all ON public.license_keys;

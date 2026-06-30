@@ -1,5 +1,5 @@
--- FastCourt combined schema - run once in Supabase SQL Editor
--- Generated: 2026-06-22 01:11
+﻿-- FastCourt combined schema - run once in Supabase SQL Editor
+-- Generated: 2026-07-01 00:49
 
 -- ---------------------------------------------------------------------------
 -- 001_billing_and_profiles.sql
@@ -140,6 +140,25 @@ GRANT EXECUTE ON FUNCTION public.redeem_license_key(text) TO authenticated;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.license_keys ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.is_profile_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_profile_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_profile_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_profile_admin() TO service_role;
+
 -- Profiles: users read/update own row
 DROP POLICY IF EXISTS profiles_select_own ON public.profiles;
 CREATE POLICY profiles_select_own ON public.profiles
@@ -255,36 +274,17 @@ CREATE POLICY user_settings_update_own ON public.user_settings
 DROP POLICY IF EXISTS profiles_delete_admin ON public.profiles;
 CREATE POLICY profiles_delete_admin ON public.profiles
   FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles admin_row
-      WHERE admin_row.id = auth.uid()
-        AND admin_row.role = 'admin'
-    )
-  );
+  USING (public.is_profile_admin());
 
 DROP POLICY IF EXISTS user_settings_delete_admin ON public.user_settings;
 CREATE POLICY user_settings_delete_admin ON public.user_settings
   FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles admin_row
-      WHERE admin_row.id = auth.uid()
-        AND admin_row.role = 'admin'
-    )
-  );
+  USING (public.is_profile_admin());
 
 DROP POLICY IF EXISTS user_settings_select_admin ON public.user_settings;
 CREATE POLICY user_settings_select_admin ON public.user_settings
   FOR SELECT
-  USING (
-    auth.uid() = user_id
-    OR EXISTS (
-      SELECT 1 FROM public.profiles admin_row
-      WHERE admin_row.id = auth.uid()
-        AND admin_row.role = 'admin'
-    )
-  );
+  USING (auth.uid() = user_id OR public.is_profile_admin());
 
 
 -- ---------------------------------------------------------------------------
@@ -403,6 +403,56 @@ DROP POLICY IF EXISTS user_library_delete_own ON public.user_library;
 CREATE POLICY user_library_delete_own ON public.user_library
   FOR DELETE
   USING (auth.uid() = user_id);
+
+
+-- ---------------------------------------------------------------------------
+-- 008_fix_profiles_rls_recursion.sql
+-- ---------------------------------------------------------------------------
+-- Fix infinite recursion in profiles RLS (admin policies queried profiles again).
+
+CREATE OR REPLACE FUNCTION public.is_profile_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_profile_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_profile_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_profile_admin() TO service_role;
+
+DROP POLICY IF EXISTS profiles_select_admin ON public.profiles;
+CREATE POLICY profiles_select_admin ON public.profiles
+  FOR SELECT
+  USING (public.is_profile_admin());
+
+DROP POLICY IF EXISTS profiles_update_admin ON public.profiles;
+CREATE POLICY profiles_update_admin ON public.profiles
+  FOR UPDATE
+  USING (public.is_profile_admin());
+
+DROP POLICY IF EXISTS profiles_delete_admin ON public.profiles;
+CREATE POLICY profiles_delete_admin ON public.profiles
+  FOR DELETE
+  USING (public.is_profile_admin());
+
+DROP POLICY IF EXISTS user_settings_delete_admin ON public.user_settings;
+CREATE POLICY user_settings_delete_admin ON public.user_settings
+  FOR DELETE
+  USING (public.is_profile_admin());
+
+DROP POLICY IF EXISTS user_settings_select_admin ON public.user_settings;
+CREATE POLICY user_settings_select_admin ON public.user_settings
+  FOR SELECT
+  USING (auth.uid() = user_id OR public.is_profile_admin());
 
 
 

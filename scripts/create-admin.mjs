@@ -6,6 +6,7 @@
  *   node scripts/create-admin.mjs
  *   node scripts/create-admin.mjs --email you@club.com --name "Your Name"
  *   node scripts/create-admin.mjs --email you@club.com --password "Secret123!" --cloud
+ *   node scripts/create-admin.mjs --email you@club.com --password "Secret123!" --cloud --reset
  *
  * Local mode (no Supabase): adds email to .env.local and prints signup steps.
  * Cloud mode (--cloud): creates auth user + admin profile when service role is set.
@@ -32,6 +33,7 @@ const email = (readArg("--email", "admin@fastcourt.eu") || "")
 const displayName = readArg("--name", "Platform Administrator").trim();
 const password = readArg("--password", "FastCourt-Admin-2026!");
 const useCloud = args.includes("--cloud");
+const forceReset = args.includes("--reset");
 
 if (!email.includes("@")) {
   console.error("Provide a valid --email");
@@ -95,34 +97,7 @@ function upsertEnvLocal() {
   return current;
 }
 
-async function createCloudAdmin(env) {
-  const url = env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (!url || !serviceKey || url.includes("YOUR_PROJECT")) {
-    console.error(
-      "Cloud mode requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local",
-    );
-    process.exit(1);
-  }
-
-  const { createClient } = await import("@supabase/supabase-js");
-  const admin = createClient(url, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { display_name: displayName },
-  });
-
-  if (createError || !created.user) {
-    console.error("Supabase createUser failed:", createError?.message ?? "unknown");
-    process.exit(1);
-  }
-
-  const userId = created.user.id;
+async function upsertAdminProfile(admin, userId) {
   const now = new Date().toISOString();
   const { error: profileError } = await admin.from("profiles").upsert(
     {
@@ -142,10 +117,108 @@ async function createCloudAdmin(env) {
 
   if (profileError) {
     console.error("Profile upsert failed:", profileError.message);
-    process.exit(1);
+    process.exitCode = 1;
+    return false;
   }
 
-  return userId;
+  return true;
+}
+
+async function findUserByEmail(admin) {
+  let page = 1;
+  while (page <= 20) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) {
+      console.error("Supabase listUsers failed:", error.message);
+      process.exitCode = 1;
+      return null;
+    }
+
+    const match = data.users.find(
+      (user) => (user.email ?? "").trim().toLowerCase() === email,
+    );
+    if (match) return match;
+
+    if (data.users.length < 200) break;
+    page += 1;
+  }
+
+  return null;
+}
+
+async function resetCloudAdmin(admin, userId) {
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
+    password,
+    email_confirm: true,
+    user_metadata: { display_name: displayName },
+  });
+
+  if (updateError) {
+    console.error("Supabase updateUser failed:", updateError.message);
+    process.exitCode = 1;
+    return false;
+  }
+
+  return upsertAdminProfile(admin, userId);
+}
+
+async function createCloudAdmin(env) {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!url || !serviceKey || url.includes("YOUR_PROJECT")) {
+    console.error(
+      "Cloud mode requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local",
+    );
+    process.exitCode = 1;
+    return null;
+  }
+
+  const { createClient } = await import("@supabase/supabase-js");
+  const admin = createClient(url, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  if (forceReset) {
+    const existing = await findUserByEmail(admin);
+    if (!existing) {
+      console.error(`No Supabase user found for ${email}`);
+      process.exitCode = 1;
+      return null;
+    }
+
+    const ok = await resetCloudAdmin(admin, existing.id);
+    return ok ? existing.id : null;
+  }
+
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { display_name: displayName },
+  });
+
+  if (createError?.message?.includes("already been registered")) {
+    console.log(`User already exists for ${email}; resetting password and admin profile...`);
+    const existing = await findUserByEmail(admin);
+    if (!existing) {
+      console.error("Could not find existing user after duplicate-email error.");
+      process.exitCode = 1;
+      return null;
+    }
+
+    const ok = await resetCloudAdmin(admin, existing.id);
+    return ok ? existing.id : null;
+  }
+
+  if (createError || !created.user) {
+    console.error("Supabase createUser failed:", createError?.message ?? "unknown");
+    process.exitCode = 1;
+    return null;
+  }
+
+  const userId = created.user.id;
+  const ok = await upsertAdminProfile(admin, userId);
+  return ok ? userId : null;
 }
 
 function printLocalInstructions() {
@@ -168,7 +241,8 @@ async function main() {
 
   if (useCloud) {
     const userId = await createCloudAdmin(env);
-    console.log("\n=== Cloud admin created ===\n");
+    if (!userId) return;
+    console.log("\n=== Cloud admin ready ===\n");
     console.log(`Email:    ${email}`);
     console.log(`Password: ${password}`);
     console.log(`User ID:  ${userId}`);
@@ -181,5 +255,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  process.exitCode = 1;
 });

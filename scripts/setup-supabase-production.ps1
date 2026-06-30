@@ -121,12 +121,12 @@ Write-EnvLocal $envMap
 Write-Host "Updated $EnvLocal" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "Supabase dashboard — Authentication -> URL configuration:" -ForegroundColor Yellow
-Write-Host "  Site URL: https://fastcourt-next.vercel.app"
-Write-Host "  Redirect URLs:"
-Write-Host "    https://fastcourt-next.vercel.app/auth/callback"
-Write-Host "    http://localhost:3000/auth/callback"
-Write-Host "  (Add https://fastcourt.eu/auth/callback when domain is live)"
+Write-Host 'Supabase dashboard - Authentication -> URL configuration:' -ForegroundColor Yellow
+Write-Host '  Site URL: https://fastcourt.eu'
+Write-Host '  Redirect URLs:'
+Write-Host '    https://fastcourt.eu/auth/callback'
+Write-Host '    https://fastcourt-next.vercel.app/auth/callback'
+Write-Host '    http://localhost:3000/auth/callback'
 Write-Host ""
 Write-Host "Run SQL migrations in Supabase SQL Editor:" -ForegroundColor Yellow
 Write-Host "  scripts\build-supabase-schema.ps1  ->  supabase\schema-combined.sql"
@@ -164,4 +164,4 @@ if (-not $SkipRedeploy) {
 }
 
 Write-Host ""
-Write-Host "Done. Test: https://fastcourt-next.vercel.app/login" -ForegroundColor Green
+Write-Host 'Done. Test: https://fastcourt.eu/login' -ForegroundColor Green
