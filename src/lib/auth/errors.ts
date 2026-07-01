@@ -15,6 +15,9 @@ export function friendlyAuthError(msg: string) {
   if (/user cancelled|access_denied|popup closed/i.test(m)) {
     return "Sign-in was cancelled.";
   }
+  if (/pkce|code verifier/i.test(m)) {
+    return "Open the email link in the same browser where you signed up, or log in with your password. If you already confirmed, use Log in.";
+  }
   if (/failed to fetch|networkerror|network error/i.test(m)) {
     return "Cannot reach Supabase. Check NEXT_PUBLIC_SUPABASE_URL in .env (must be https://YOUR_REF.supabase.co) and your internet connection.";
   }
