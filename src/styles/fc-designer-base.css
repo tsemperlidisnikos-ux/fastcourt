@@ -125,9 +125,9 @@
 }
 
 #screen-designer .ds-tool-item.active {
-  background: #e8eaed;
-  border-color: #9ca3af;
-  color: #111827;
+  background: var(--fc-tool-active-bg, #e5e7eb);
+  border-color: var(--fc-tool-active-border, #9ca3af);
+  color: var(--fc-tool-active-text, #111827);
 }
 
 /* Frame strip thumb layout: fastdraw-editor-ui.css (#frames-container .ds-thumb-*) */
@@ -809,13 +809,52 @@
   margin-bottom: 6px;
 }
 
+.action-timeline-dock-frame {
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
 .action-timeline--dock .action-timeline-list {
   max-height: min(28vh, 200px);
   gap: 0;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border: none;
+  border-radius: 0;
   overflow: auto;
   background: #fff;
+}
+
+.action-timeline--dock .action-timeline-dock-progress {
+  display: block !important;
+  width: 100%;
+  border: none;
+  border-top: 1px solid #d1d5db;
+  border-radius: 0;
+  height: 12px;
+  min-height: 12px;
+  background: #cbd5e1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.action-timeline--dock .action-timeline-dock-progress .ds-court-playback-progress-fill {
+  background: #475569;
+  min-height: 12px;
+}
+
+.action-timeline-dock-controls {
+  width: 100%;
+  min-height: 0;
+  padding: 8px 0 0;
+}
+
+.action-timeline-dock-controls .ds-court-playback-phase {
+  font-size: 13px;
+}
+
+.action-timeline--dock .action-timeline-dock-progress.is-scrubbing .ds-court-playback-progress-fill {
+  transition: none;
 }
 
 .action-timeline--dock .action-timeline-item {
@@ -878,8 +917,17 @@
 
 .ds-court-playback-bar {
   flex-shrink: 0;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
+  background: transparent;
+  border-top: none;
+  margin-top: 8px;
+}
+
+#screen-designer .ds-court-playback-bar .ds-court-playback-progress {
+  display: none !important;
+}
+
+.ds-court-playback-bar .ds-court-playback-controls {
+  padding-top: 12px;
 }
 
 .ds-court-playback-progress {
@@ -937,15 +985,21 @@
   flex-shrink: 0;
   width: 34px;
   height: 34px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #000;
   border-radius: 999px;
   background: #fff;
-  color: #111;
+  color: #000;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   padding: 0;
+}
+
+.ds-court-playback-btn:hover:not(:disabled) {
+  border-color: #000;
+  color: #000;
+  background: #f9fafb;
 }
 
 .ds-court-playback-btn:disabled {

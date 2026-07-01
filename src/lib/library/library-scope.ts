@@ -4,6 +4,7 @@ import {
   setLibraryDbScopeId,
 } from "@/lib/library/idb-scope";
 import { resetLibraryDbConnection } from "@/lib/library/idb";
+import { resetFilmRoomDbConnection } from "@/lib/film-room/film-room-idb";
 import type { SessionUser } from "@/types/auth";
 
 let activeSessionUserId: string | null = null;
@@ -51,6 +52,7 @@ export function activateLibraryScope(
   const scopeChanged = getLibraryDbScopeId() !== libraryOwnerUserId;
   if (scopeChanged) {
     resetLibraryDbConnection();
+    resetFilmRoomDbConnection();
   }
   setLibraryDbScopeId(libraryOwnerUserId);
   activeSessionUserId = sessionUserId;
@@ -69,4 +71,5 @@ export function deactivateLibraryScope(): void {
   activeSessionUser = null;
   clearLibraryDbScope();
   resetLibraryDbConnection();
+  resetFilmRoomDbConnection();
 }

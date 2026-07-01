@@ -16,7 +16,6 @@ import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { blockNativeContextMenu } from "@/lib/ui/context-menu-policy";
 import { ActionSequencePanel } from "@/components/designer/ActionSequencePanel";
 import { ActionTimeline } from "@/components/designer/ActionTimeline";
-import { CourtAnimationPlaybackBar } from "@/components/designer/CourtAnimationPlaybackBar";
 import { CourtWhiteboardToolbar } from "@/components/designer/CourtWhiteboardToolbar";
 import { NotesFormatToolbar } from "@/components/designer/NotesFormatToolbar";
 import { LineColorControl } from "@/components/designer/LineColorControl";
@@ -231,8 +230,6 @@ export function DesignerScreen() {
   );
   const showLineTypeBar =
     currentTool === "line" || (currentTool === "select" && !!selectedAction);
-  const showActionTimelineDock =
-    showLineTypeBar || (currentFrame?.actions.length ?? 0) > 0;
   const thumbnailFrames = useMemo(
     () => framesForDesignerThumbnails(play.frames),
     [play.frames],
@@ -899,10 +896,6 @@ export function DesignerScreen() {
                     <CourtCanvas ref={courtRef} />
                   </div>
                 </div>
-                <CourtAnimationPlaybackBar
-                  playback={animationPlayback}
-                  disabled={!playHasExportableAnimation(play)}
-                />
               </div>
               <div className="ds-fd-court-toolbar-stack">
               <div className="ds-fd-court-toolbar" aria-label="Court tools">
@@ -1078,33 +1071,34 @@ export function DesignerScreen() {
                     setFrameNotes(notesRef.current?.innerHTML ?? "");
                   }}
                 />
-                {showActionTimelineDock ? (
-                  <>
-                    <div
-                      className={`ds-notes-line-options-dock${showLineTypeBar ? "" : " is-slot-reserved"}`}
-                      aria-label="Line options"
-                      aria-hidden={!showLineTypeBar}
-                    >
-                      <LineTypeBar
-                        value={
-                          currentTool === "select" && selectedAction
-                            ? selectedAction.type
-                            : lineActionType
+                {showLineTypeBar ? (
+                  <div
+                    className="ds-notes-line-options-dock"
+                    aria-label="Line options"
+                  >
+                    <LineTypeBar
+                      value={
+                        currentTool === "select" && selectedAction
+                          ? selectedAction.type
+                          : lineActionType
+                      }
+                      onChange={(type) => {
+                        if (currentTool === "select" && selectedActionId) {
+                          changeActionType(selectedActionId, type);
+                          return;
                         }
-                        onChange={(type) => {
-                          if (currentTool === "select" && selectedActionId) {
-                            changeActionType(selectedActionId, type);
-                            return;
-                          }
-                          setLineActionType(type);
-                        }}
-                      />
-                    </div>
-                    <div className="ds-notes-phase-dock" aria-label="Frame animation">
-                      <ActionTimeline variant="dock" />
-                    </div>
-                  </>
+                        setLineActionType(type);
+                      }}
+                    />
+                  </div>
                 ) : null}
+              </div>
+              <div className="ds-notes-phase-dock" aria-label="Frame animation">
+                <ActionTimeline
+                  variant="dock"
+                  playback={animationPlayback}
+                  playbackDisabled={!playHasExportableAnimation(play)}
+                />
               </div>
             </div>
           </div>

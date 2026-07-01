@@ -13,3 +13,8 @@ export function useCloudEnabled() {
 
   return enabled;
 }
+
+/** Authoritative cloud check at call time — use for auth actions, not OAuth button visibility. */
+export function isCloudAuthEnabled(): boolean {
+  return typeof window !== "undefined" && isCloudEnabled();
+}

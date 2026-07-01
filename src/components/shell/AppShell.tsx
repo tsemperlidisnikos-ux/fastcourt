@@ -6,6 +6,7 @@ import { TrialExpiredGate } from "@/components/billing/TrialExpiredGate";
 import { AppNav } from "@/components/shell/AppNav";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
+import { AppBootLoading } from "@/components/ui/AppBootLoading";
 import {
   getAuthHydratedSnapshot,
   subscribeAuthHydration,
@@ -65,6 +66,7 @@ function AppGate({ children }: { children: React.ReactNode }) {
   const fullBleed =
     pathname.startsWith("/library") ||
     pathname.startsWith("/designer") ||
+    pathname.startsWith("/film-room") ||
     pathname.startsWith("/settings");
 
   if (cloud) {
@@ -77,19 +79,11 @@ function AppGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!hydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-fc-body text-fc-muted">
-        Loading…
-      </div>
-    );
+    return <AppBootLoading />;
   }
 
   if (!session && !playerShareActive) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-fc-body text-fc-muted">
-        Redirecting to login…
-      </div>
-    );
+    return <AppBootLoading label="Redirecting to login…" />;
   }
 
   if (playerShareActive && !session) {

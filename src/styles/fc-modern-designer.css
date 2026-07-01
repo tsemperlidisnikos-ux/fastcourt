@@ -4,6 +4,9 @@
   --fd-editor-active-bg: #000000;
   --fd-editor-active-border: #000000;
   --fd-editor-active-text: #ffffff;
+  --fc-tool-active-bg: #e5e7eb;
+  --fc-tool-active-border: #9ca3af;
+  --fc-tool-active-text: #111827;
   --fc-clipboard-bg: #ffffff;
   --fc-clipboard-text: #000000;
   --fc-clipboard-border: #000000;
@@ -111,11 +114,22 @@
 
 #screen-designer .ds-tool-item.active,
 #screen-designer .ds-left-panel .ds-tool-item.active {
-  background: #e8eaed !important;
-  border: 1px solid #cbd5e1 !important;
-  border-bottom: 1px solid #cbd5e1 !important;
-  color: #111827 !important;
+  background: var(--fc-tool-active-bg) !important;
+  border: 1px solid var(--fc-tool-active-border) !important;
+  border-bottom: 1px solid var(--fc-tool-active-border) !important;
+  color: var(--fc-tool-active-text) !important;
   box-shadow: none;
+}
+
+#screen-designer .ds-tool-item:focus,
+#screen-designer .ds-tool-item:focus-visible {
+  outline: none;
+}
+
+#screen-designer .ds-tool-item.active:focus,
+#screen-designer .ds-tool-item.active:focus-visible {
+  background: var(--fc-tool-active-bg) !important;
+  border-color: var(--fc-tool-active-border) !important;
 }
 
 #screen-designer .ds-tool-group-toggle {

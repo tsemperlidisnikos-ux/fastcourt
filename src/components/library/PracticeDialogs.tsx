@@ -200,7 +200,7 @@ function PracticeConfirmDialogBody({
         <div className="modal-title" id={titleId}>
           {title}
         </div>
-        <p className="modal-subtitle">{message}</p>
+        {message ? <p className="modal-subtitle">{message}</p> : null}
         <div className="modal-actions">
           <button
             type="button"

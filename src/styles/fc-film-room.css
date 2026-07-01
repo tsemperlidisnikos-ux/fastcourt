@@ -1,0 +1,641 @@
+#screen-organizer .org-body .fc-film-room-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+#screen-organizer .fc-film-room-screen,
+#screen-film-room.fc-film-room-screen {
+  --fc-film-sidebar-w: 300px;
+  display: flex;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+#screen-film-room .fc-film-sidebar {
+  width: var(--fc-film-sidebar-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px;
+  border-right: 1px solid #dbe3ef;
+  background: #fff;
+  overflow: auto;
+}
+
+#screen-film-room .fc-film-sidebar-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+#screen-film-room .fc-film-sidebar-sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-new-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+#screen-film-room .fc-film-new-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#screen-film-room .fc-film-new-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+#screen-film-room .fc-film-new-tabs button {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-new-tabs button.is-active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
+#screen-film-room .fc-film-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+#screen-film-room .fc-film-field input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#screen-film-room .fc-film-file-input {
+  display: none;
+}
+
+#screen-film-room .fc-film-sidebar-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-sidebar-btn-primary {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
+#screen-film-room .fc-film-sidebar-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+#screen-film-room .fc-film-upload-note {
+  margin: 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-error {
+  margin: 0;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+#screen-film-room .fc-film-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#screen-film-room .fc-film-session-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+#screen-film-room .fc-film-session-row.is-active {
+  border-color: #111827;
+  box-shadow: 0 0 0 1px #111827;
+}
+
+#screen-film-room .fc-film-session-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-session-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+#screen-film-room .fc-film-session-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-session-delete {
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-session-delete:hover {
+  color: #dc2626;
+}
+
+#screen-film-room .fc-film-empty {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: auto;
+}
+
+#screen-film-room .fc-film-main-empty {
+  margin: auto;
+  max-width: 480px;
+  text-align: center;
+  color: #475569;
+}
+
+#screen-film-room .fc-film-main-empty h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+}
+
+#screen-film-room .fc-film-annotator {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+#screen-film-room .fc-film-annotator-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+#screen-film-room .fc-film-annotator-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-markup-toolbar,
+#screen-organizer .fc-film-markup-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #3a3a3c;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 10px 28px rgba(15, 23, 42, 0.22);
+  min-height: 58px;
+}
+
+#screen-film-room .fc-film-markup-history,
+#screen-organizer .fc-film-markup-history {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#screen-film-room .fc-film-markup-history-btn,
+#screen-organizer .fc-film-markup-history-btn {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: #48484a;
+  color: #f2f2f7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+#screen-film-room .fc-film-markup-history-btn:hover:not(:disabled),
+#screen-organizer .fc-film-markup-history-btn:hover:not(:disabled) {
+  background: #5a5a5c;
+}
+
+#screen-film-room .fc-film-markup-history-btn:disabled,
+#screen-organizer .fc-film-markup-history-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+#screen-film-room .fc-film-markup-tools,
+#screen-organizer .fc-film-markup-tools {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+#screen-film-room .fc-film-markup-tool,
+#screen-organizer .fc-film-markup-tool {
+  width: 42px;
+  height: 52px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 4px;
+  cursor: pointer;
+  transition: transform 0.16s ease;
+}
+
+#screen-film-room .fc-film-markup-tool:hover,
+#screen-organizer .fc-film-markup-tool:hover {
+  transform: translateY(-2px);
+}
+
+#screen-film-room .fc-film-markup-tool.is-active,
+#screen-organizer .fc-film-markup-tool.is-active {
+  transform: translateY(-8px);
+}
+
+#screen-film-room .fc-film-markup-glyph,
+#screen-organizer .fc-film-markup-glyph {
+  display: block;
+  width: 26px;
+  height: auto;
+  max-height: 46px;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+}
+
+#screen-film-room .fc-film-markup-clear,
+#screen-organizer .fc-film-markup-clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #5a5a5c;
+  color: #d1d1d6;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+#screen-film-room .fc-film-markup-clear:hover,
+#screen-organizer .fc-film-markup-clear:hover {
+  background: #6e6e73;
+}
+
+#screen-film-room .fc-film-markup-clear span,
+#screen-organizer .fc-film-markup-clear span {
+  white-space: nowrap;
+}
+
+#screen-film-room .fc-film-stage,
+#screen-organizer .fc-film-stage {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+}
+
+#screen-film-room .fc-film-player-shell,
+#screen-organizer .fc-film-player-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#screen-film-room .fc-film-player-shell:fullscreen,
+#screen-organizer .fc-film-player-shell:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #0f172a;
+  gap: 10px;
+  outline: none;
+}
+
+#screen-film-room .fc-film-player-shell:fullscreen .fc-film-stage,
+#screen-organizer .fc-film-player-shell:fullscreen .fc-film-stage {
+  flex: 1;
+  min-height: 0;
+}
+
+#screen-film-room .fc-film-player-shell:fullscreen .fc-film-video-stack,
+#screen-organizer .fc-film-player-shell:fullscreen .fc-film-video-stack {
+  max-height: none;
+  height: 100%;
+  border-radius: 8px;
+}
+
+#screen-film-room .fc-film-player-shell:fullscreen .fc-film-markup-toolbar,
+#screen-organizer .fc-film-player-shell:fullscreen .fc-film-markup-toolbar {
+  flex-shrink: 0;
+}
+
+#screen-film-room .fc-film-video-stack,
+#screen-organizer .fc-film-video-stack {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: calc(100vh - 280px);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+}
+
+#screen-film-room .fc-film-video-surface {
+  position: absolute;
+  inset: 0;
+}
+
+#screen-film-room .fc-film-native-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+#screen-film-room .fc-film-video-youtube,
+#screen-film-room .fc-film-youtube-host {
+  width: 100%;
+  height: 100%;
+}
+
+#screen-film-room .fc-film-youtube-host iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#screen-film-room .fc-film-video-missing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+#screen-film-room .fc-film-video-duration-badge,
+#screen-organizer .fc-film-video-duration-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+#screen-film-room .fc-film-video-stack:has(.fc-film-video-controls-dim) .fc-film-video-duration-badge,
+#screen-organizer .fc-film-video-stack:has(.fc-film-video-controls-dim) .fc-film-video-duration-badge {
+  display: none;
+}
+
+#screen-film-room .fc-film-annotation-canvas,
+#screen-organizer .fc-film-annotation-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  touch-action: none;
+}
+
+#screen-film-room .fc-film-annotation-canvas.is-drawing,
+#screen-organizer .fc-film-annotation-canvas.is-drawing {
+  cursor: crosshair;
+}
+
+/* Dimmed playback bar overlaid on the video */
+#screen-film-room .fc-film-video-controls-dim,
+#screen-organizer .fc-film-video-controls-dim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 14px 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.45) 35%,
+    rgba(0, 0, 0, 0.78) 100%
+  );
+  pointer-events: auto;
+  opacity: 0.72;
+  transition: opacity 0.2s ease;
+}
+
+#screen-film-room .fc-film-video-stack:hover .fc-film-video-controls-dim,
+#screen-film-room .fc-film-video-controls-dim:focus-within,
+#screen-organizer .fc-film-video-stack:hover .fc-film-video-controls-dim,
+#screen-organizer .fc-film-video-controls-dim:focus-within {
+  opacity: 1;
+}
+
+#screen-film-room .fc-film-video-controls-play,
+#screen-organizer .fc-film-video-controls-play {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-video-controls-play:hover,
+#screen-organizer .fc-film-video-controls-play:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+#screen-film-room .fc-film-video-controls-fullscreen,
+#screen-organizer .fc-film-video-controls-fullscreen {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-video-controls-fullscreen:hover,
+#screen-organizer .fc-film-video-controls-fullscreen:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+#screen-film-room .fc-film-video-controls-time,
+#screen-organizer .fc-film-video-controls-time {
+  flex-shrink: 0;
+  min-width: 38px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+#screen-film-room .fc-film-video-controls-track-wrap,
+#screen-organizer .fc-film-video-controls-track-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+#screen-film-room .fc-film-video-controls-scrub,
+#screen-organizer .fc-film-video-controls-scrub {
+  width: 100%;
+  margin: 0;
+  accent-color: #fff;
+}
+
+#screen-film-room .fc-film-video-controls-markers,
+#screen-organizer .fc-film-video-controls-markers {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  pointer-events: none;
+}
+
+#screen-film-room .fc-film-video-controls-marker,
+#screen-organizer .fc-film-video-controls-marker {
+  position: absolute;
+  top: -4px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 999px;
+  background: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+#screen-film-room .fc-film-hint,
+#screen-organizer .fc-film-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+  #screen-film-room.fc-film-room-screen {
+    flex-direction: column;
+  }
+
+  #screen-film-room .fc-film-sidebar {
+    width: 100%;
+    max-height: 42vh;
+    border-right: 0;
+    border-bottom: 1px solid #dbe3ef;
+  }
+
+  #screen-film-room .fc-film-markup-toolbar,
+  #screen-organizer .fc-film-markup-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  #screen-film-room .fc-film-markup-tools,
+  #screen-organizer .fc-film-markup-tools {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  #screen-film-room .fc-film-markup-clear span,
+  #screen-organizer .fc-film-markup-clear span {
+    display: none;
+  }
+}

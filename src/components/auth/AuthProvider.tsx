@@ -14,6 +14,7 @@ import {
 import { activateLibraryScope, isLibraryScopeReady } from "@/lib/library/library-scope";
 import { kickAuthRehydrate } from "@/lib/auth/hydration";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
+import { AppBootLoading } from "@/components/ui/AppBootLoading";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
   const signOut = useAuthStore((s) => s.signOut);
-  const [ready, setReady] = useState(() => !isCloudEnabled());
+  const [booted, setBooted] = useState(false);
 
   useEffect(() => {
     if (!isCloudEnabled()) {
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       kickAuthRehydrate();
       syncLocalLibraryScope();
+      setBooted(true);
       return useAuthStore.subscribe(syncLocalLibraryScope);
     }
 
@@ -139,34 +141,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const client = supabase;
       if (!client) return;
 
+      kickAuthRehydrate();
+
       try {
         const {
-          data: { user },
-        } = await withTimeout(client.auth.getUser(), AUTH_BOOTSTRAP_MS, "getUser");
+          data: { session },
+        } = await client.auth.getSession();
         if (!active) return;
 
-        if (user) {
+        const userId = session?.user?.id ?? useAuthStore.getState().session?.user?.id;
+
+        if (userId) {
           const ok = await withTimeout(
-            establishSession(client, user.id),
+            establishSession(client, userId),
             AUTH_BOOTSTRAP_MS,
             "establishSession",
           );
           if (ok && active) {
-            void enrichSession(client, user.id, false).catch((err) => {
+            void enrichSession(client, userId, false).catch((err) => {
               console.error("FastCourt session enrichment failed:", err);
             });
           }
-        } else {
+        } else if (!useAuthStore.getState().session) {
           signOut();
         }
       } catch (err) {
         console.error("FastCourt auth bootstrap failed:", err);
-        signOut();
+        if (!useAuthStore.getState().session) {
+          signOut();
+        }
       }
     }
 
     void bootstrap().finally(() => {
-      if (active) setReady(true);
+      if (active) setBooted(true);
     });
 
     if (!supabase) {
@@ -186,7 +194,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         if (authSession?.user) {
-          await syncFromUser(authSession.user.id, event === "SIGNED_IN");
+          const syncLibrary = event === "SIGNED_IN";
+          if (syncLibrary) {
+            void syncFromUser(authSession.user.id, false).catch((err) => {
+              console.error("FastCourt auth state sync failed:", err);
+            });
+          } else {
+            await syncFromUser(authSession.user.id, false);
+          }
         }
       } catch (err) {
         console.error("FastCourt auth state sync failed:", err);
@@ -199,12 +214,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router, setSession, signOut]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-fc-body text-fc-muted">
-        Loading session…
-      </div>
-    );
+  if (!booted) {
+    return <AppBootLoading />;
   }
 
   return children;

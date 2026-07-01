@@ -1,14 +1,14 @@
 import { loadAdminUsers } from "@/lib/auth/admin-users";
 import { fetchCloudAdminUsers } from "@/lib/auth/profiles-cloud";
 import { findOrganizationMembership } from "@/lib/auth/org-access";
-import { isAdminUser, isTeamAdminUser } from "@/lib/auth/roles";
+import { isAdminUser } from "@/lib/auth/roles";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import type { SessionUser } from "@/types/auth";
 import type { LibraryItem } from "@/types/library";
 
+/** Show for all signed-in coaches (solo, team admin, platform admin). */
 export function canShowLibraryCreatedByColumn(user: SessionUser | null | undefined) {
-  if (!user) return false;
-  return isAdminUser(user) || isTeamAdminUser(user);
+  return !!user;
 }
 
 export function resolvePlayCreatorLabel(
@@ -35,9 +35,14 @@ export async function loadCreatorNameIndex(
   sessionUser: SessionUser | null | undefined,
 ): Promise<Map<string, string>> {
   const map = buildLocalCreatorNameIndex();
-  if (!sessionUser || !isCloudEnabled() || !canShowLibraryCreatedByColumn(sessionUser)) {
-    return map;
-  }
+  if (!sessionUser) return map;
+
+  map.set(
+    sessionUser.id,
+    sessionUser.displayName?.trim() || sessionUser.email,
+  );
+
+  if (!isCloudEnabled()) return map;
 
   const supabase = createClient();
   if (!supabase) return map;

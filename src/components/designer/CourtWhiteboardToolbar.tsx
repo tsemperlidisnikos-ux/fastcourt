@@ -1,5 +1,6 @@
 "use client";
 
+import { EditDrawToolbarIcon } from "@/components/designer/EditDrawToolbarIcon";
 import { WHITEBOARD_INK_COLORS } from "@/lib/designer/constants";
 import { useDesignerStore } from "@/stores/designer-store";
 import { appConfirm } from "@/stores/dialog-store";
@@ -35,10 +36,9 @@ export function CourtWhiteboardToolbar({ inline }: Props) {
         aria-pressed={whiteboardActive}
         onClick={toggleWhiteboard}
       >
-        <span
-          className="ds-fd-tb-icon ds-whiteboard-icon fc-glyph-whiteboard"
-          aria-hidden="true"
-        />
+        <span className="ds-fd-tb-icon ds-whiteboard-icon" aria-hidden="true">
+          <EditDrawToolbarIcon />
+        </span>
       </button>
       <div
         className={`ds-fd-whiteboard-colors${whiteboardActive ? " is-visible" : ""}`}

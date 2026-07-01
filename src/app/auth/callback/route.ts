@@ -24,6 +24,14 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
+    if (/pkce|code verifier/i.test(error.message)) {
+      const confirmUrl = new URL(`${origin}/auth/confirm`);
+      confirmUrl.searchParams.set("code", code);
+      if (recovery) confirmUrl.searchParams.set("recovery", "1");
+      const nextParam = searchParams.get("next");
+      if (nextParam) confirmUrl.searchParams.set("next", nextParam);
+      return NextResponse.redirect(confirmUrl.toString());
+    }
     return NextResponse.redirect(
       `${origin}/login?error=${encodeURIComponent(error.message)}`,
     );

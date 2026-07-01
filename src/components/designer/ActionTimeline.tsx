@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CourtAnimationProgressBar } from "@/components/designer/CourtAnimationProgressBar";
+import { AnimationPlaybackControls } from "@/components/designer/AnimationPlaybackControls";
 import { formatActionTimelineLabel } from "@/lib/designer/action-timeline-label";
+import type { useFrameAnimationPlayback } from "@/hooks/useFrameAnimationPlayback";
 import { useDesignerStore } from "@/stores/designer-store";
 import type { ActionTiming } from "@/types/designer";
 
@@ -14,11 +17,15 @@ function timingClass(timing: ActionTiming | undefined) {
 interface Props {
   variant?: "dock" | "sidebar";
   showHeading?: boolean;
+  playback?: ReturnType<typeof useFrameAnimationPlayback>;
+  playbackDisabled?: boolean;
 }
 
 export function ActionTimeline({
   variant = "sidebar",
   showHeading = true,
+  playback,
+  playbackDisabled = false,
 }: Props) {
   const frameIndex = useDesignerStore((s) => s.currentFrameIndex);
   const play = useDesignerStore((s) => s.play);
@@ -48,7 +55,7 @@ export function ActionTimeline({
 
   return (
     <div
-      className={`action-timeline${variant === "dock" ? " action-timeline--dock" : ""}`}
+      className={`action-timeline${variant === "dock" ? " action-timeline--dock" : ""}${playback && variant === "dock" ? " action-timeline--dock-has-progress" : ""}`}
       id="action-timeline"
     >
       {showHeading ? (
@@ -62,6 +69,7 @@ export function ActionTimeline({
           during playback.
         </p>
       ) : null}
+      <div className={variant === "dock" ? "action-timeline-dock-frame" : undefined}>
       <ul className="action-sequence-list action-timeline-list" id="action-sequence-list">
         {entries.length === 0 ? (
           <li className="action-sequence-empty">No actions on this frame.</li>
@@ -120,6 +128,20 @@ export function ActionTimeline({
           })
         )}
       </ul>
+      {playback && variant === "dock" ? (
+        <CourtAnimationProgressBar
+          playback={playback}
+          disabled={playbackDisabled}
+          className="action-timeline-dock-progress"
+        />
+      ) : null}
+      </div>
+      {playback && variant === "dock" ? (
+        <AnimationPlaybackControls
+          playback={playback}
+          disabled={playbackDisabled}
+        />
+      ) : null}
     </div>
   );
 }

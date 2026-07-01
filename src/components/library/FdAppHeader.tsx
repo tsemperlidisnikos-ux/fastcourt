@@ -92,7 +92,7 @@ export function FdAppHeader({ activeTab = "draw" }: { activeTab?: TabId }) {
             <nav className="fd-main-tabs org-main-tabs" aria-label="Library sections">
               {TABS.map((tab) => {
                 const active =
-                  pathname === "/library" && activeTab === tab.id;
+                  pathname.startsWith("/library") && activeTab === tab.id;
                 return (
                   <Link
                     key={tab.id}
@@ -113,6 +113,17 @@ export function FdAppHeader({ activeTab = "draw" }: { activeTab?: TabId }) {
                 );
               })}
             </nav>
+            <div className="fd-main-tabs-film-room-slot">
+              <Link
+                href="/film-room"
+                className={`fd-main-tab org-main-tab fd-main-tab-film-room${
+                  pathname.startsWith("/film-room") ? " active" : ""
+                }`}
+                data-fd-tab="film-room"
+              >
+                FILM ROOM
+              </Link>
+            </div>
             <div
               className="fd-main-tabs-actions"
               id="fd-main-tabs-actions"

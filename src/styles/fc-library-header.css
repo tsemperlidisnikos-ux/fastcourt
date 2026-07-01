@@ -88,10 +88,7 @@
   margin-right: 0;
   padding-left: 0;
   padding-right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
   width: 100%;
   min-height: var(--fd-main-tabs-height);
   margin-top: 2px;
@@ -270,7 +267,8 @@
 #screen-organizer .fd-app-header .fd-main-tabs {
   justify-content: flex-start;
   gap: 0;
-  flex: 1 1 auto;
+  flex: none;
+  width: 100%;
   min-width: 0;
   flex-shrink: 1;
   min-height: 0;
@@ -284,10 +282,39 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scroll-padding-inline: 12px;
+  padding-right: 148px;
+  padding-left: 4px;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-film-room-slot {
+  position: absolute;
+  top: 0;
+  right: -14px;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+  padding-left: 28px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.92) 22px,
+    #000 100%
+  );
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-film-room-slot .fd-main-tab-film-room {
+  pointer-events: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-right: 0;
 }
 
 #screen-organizer .fd-app-header .fd-main-tabs-actions {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
@@ -297,9 +324,25 @@
   align-self: stretch;
 }
 
+#screen-organizer .fd-app-header .fd-main-tabs-actions:not(:empty) {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 148px;
+  bottom: 0;
+  z-index: 3;
+  padding-right: 8px;
+  background: #000;
+}
+
 #screen-organizer .fd-app-header .fd-main-tabs-actions .fc-playbooks-settings-btn,
 #screen-organizer .fd-app-header .fd-main-tabs-actions .fc-playbooks-preview-btn {
   flex-shrink: 0;
+}
+
+#screen-organizer .fd-app-header .fd-main-tabs-film-room-slot .fd-main-tab-film-room {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 #screen-organizer .fd-app-header .fd-main-tabs-actions .fc-print-preview-tool {

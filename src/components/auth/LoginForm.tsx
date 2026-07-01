@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppLogoSrc } from "@/hooks/useAppLogoSrc";
-import { useCloudEnabled } from "@/hooks/useCloudEnabled";
+import { isCloudAuthEnabled, useCloudEnabled } from "@/hooks/useCloudEnabled";
 import { getAccessError } from "@/lib/auth/access";
 import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
 import { friendlyAuthError } from "@/lib/auth/errors";
@@ -60,6 +60,7 @@ function EyeIcon() {
 
 function PasswordField({
   id,
+  name,
   value,
   onChange,
   placeholder,
@@ -67,6 +68,7 @@ function PasswordField({
   minLength,
 }: {
   id: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
@@ -79,6 +81,7 @@ function PasswordField({
     <div className="welcome-password-wrap">
       <input
         id={id}
+        name={name}
         type={visible ? "text" : "password"}
         className="welcome-input"
         autoComplete={autoComplete}
@@ -113,6 +116,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
+  const signOut = useAuthStore((s) => s.signOut);
   const appLogoSrc = useAppLogoSrc();
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -121,6 +125,7 @@ export function LoginForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [signupEmailSent, setSignupEmailSent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const recoveryMode = isPasswordRecoveryLogin("/login", searchParams.get("recovery"));
   const [recoveryVerified, setRecoveryVerified] = useState<boolean | null>(() =>
@@ -219,20 +224,12 @@ export function LoginForm() {
     redirectTo?: string,
   ): Promise<string | null> {
     const finalized = finalizeAuthSession(session);
-    const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
-    if (deviceError) return deviceError;
-
     const accessError = getAccessError(finalized.session.user);
     if (accessError) return accessError;
 
     setSession(finalized.session);
 
-    if (finalized.session.cloud) {
-      const supabase = createClient();
-      if (!supabase) return "Cloud sign-in is not configured.";
-      await prepareLibrarySessionForUser(finalized.session.user, supabase);
-      void ensureLibraryReadyForUser(finalized.session.user, supabase);
-    } else {
+    if (!finalized.session.cloud) {
       activateLibraryScope(
         finalized.session.user.id,
         finalized.session.user.id,
@@ -240,17 +237,46 @@ export function LoginForm() {
       );
     }
 
-    try {
-      await useSettingsStore.getState().hydrateForUser(finalized.session.user);
-    } catch (err) {
-      console.error("FastCourt settings hydrate failed:", err);
+    const destination = redirectTo ?? next;
+    if (finalized.session.cloud) {
+      window.location.assign(destination);
+    } else {
+      router.replace(destination);
     }
-    router.replace(redirectTo ?? next);
+
+    void (async () => {
+      const deviceError = await enforceDeviceAccessAsync(finalized.session.user);
+      if (deviceError) {
+        signOut();
+        const supabase = createClient();
+        if (supabase) await supabase.auth.signOut();
+        router.replace(`/login?error=${encodeURIComponent(deviceError)}`);
+        return;
+      }
+
+      if (finalized.session.cloud) {
+        const supabase = createClient();
+        if (!supabase) return;
+        try {
+          await prepareLibrarySessionForUser(finalized.session.user, supabase);
+          void ensureLibraryReadyForUser(finalized.session.user, supabase);
+        } catch (err) {
+          console.error("FastCourt library prepare failed:", err);
+        }
+      }
+
+      try {
+        await useSettingsStore.getState().hydrateForUser(finalized.session.user);
+      } catch (err) {
+        console.error("FastCourt settings hydrate failed:", err);
+      }
+    })();
+
     return null;
   }
 
-  function validateEmail(): string | null {
-    const normalized = email.trim().toLowerCase();
+  function validateEmail(raw?: string): string | null {
+    const normalized = (raw ?? email).trim().toLowerCase();
     if (!normalized || !normalized.includes("@")) {
       setError("Enter a valid email address.");
       return null;
@@ -265,7 +291,7 @@ export function LoginForm() {
       setError("Enter your email address first.");
       return;
     }
-    if (!cloud) {
+    if (!isCloudAuthEnabled()) {
       appNotice(
         "Password reset",
         "Password reset is available in cloud mode. Contact your club administrator on this device.",
@@ -280,7 +306,7 @@ export function LoginForm() {
         setError("Cloud sign-in is not configured.");
         return;
       }
-      const redirectTo = `${window.location.origin}/auth/callback?recovery=1`;
+      const redirectTo = `${window.location.origin}/auth/confirm?recovery=1`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         normalized,
         { redirectTo },
@@ -361,18 +387,21 @@ export function LoginForm() {
     }
   }
 
-  async function submitLogin(normalized: string) {
-    if (password.length < 4) {
+  async function submitLogin(normalized: string, passwordValue: string) {
+    if (passwordValue.length < 4) {
       setError("Enter your password (min 4 characters).");
       return;
     }
 
     setLoading(true);
+    setStatus("Signing in…");
+    let redirecting = false;
     try {
-      if (!cloud) {
+      if (!isCloudAuthEnabled()) {
         const session = localDemoSession(normalized);
         const accessError = await completeAuthSession(session);
         if (accessError) setError(accessError);
+        else redirecting = true;
         return;
       }
 
@@ -387,10 +416,24 @@ export function LoginForm() {
         await resetLibraryOnSignOut();
       }
 
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: normalized,
-        password,
-      });
+      setStatus("Connecting to Supabase…");
+      const signInResult = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email: normalized,
+          password: passwordValue,
+        }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => {
+            reject(
+              new Error(
+                "Sign-in timed out. Check your internet connection and Supabase settings.",
+              ),
+            );
+          }, 30_000);
+        }),
+      ]);
+
+      const { data, error: authError } = signInResult;
 
       if (authError) {
         setError(friendlyAuthError(authError.message));
@@ -402,6 +445,7 @@ export function LoginForm() {
         return;
       }
 
+      setStatus("Loading your profile…");
       let profile = await fetchProfile(supabase, data.user.id);
       if (!profile) {
         profile = await upsertProfileForUser(supabase, data.user);
@@ -417,11 +461,17 @@ export function LoginForm() {
       if (accessError) {
         await supabase.auth.signOut();
         setError(accessError);
+        return;
       }
+      redirecting = true;
+      setStatus("Opening library…");
     } catch (err) {
       setError(friendlyAuthError(err instanceof Error ? err.message : "Authentication failed."));
     } finally {
-      setLoading(false);
+      if (!redirecting) {
+        setLoading(false);
+        setStatus(null);
+      }
     }
   }
 
@@ -438,7 +488,7 @@ export function LoginForm() {
 
     setLoading(true);
     try {
-      if (!cloud) {
+      if (!isCloudAuthEnabled()) {
         const session = localDemoSession(normalized);
         const accessError = await completeAuthSession(session);
         if (accessError) setError(accessError);
@@ -451,7 +501,7 @@ export function LoginForm() {
         return;
       }
 
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const redirectTo = `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`;
       const { data, error: authError } = await supabase.auth.signUp({
         email: normalized,
         password,
@@ -495,9 +545,20 @@ export function LoginForm() {
     }
   }
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setStatus(null);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const emailInput = String(formData.get("email") ?? "").trim();
+    const passwordInput = String(formData.get("password") ?? "");
+    const confirmInput = String(formData.get("confirm-password") ?? "");
+
+    if (emailInput && emailInput !== email) setEmail(emailInput);
+    if (passwordInput && passwordInput !== password) setPassword(passwordInput);
+    if (confirmInput && confirmInput !== confirmPassword) setConfirmPassword(confirmInput);
 
     if (recoveryMode) {
       await submitPasswordRecovery();
@@ -506,15 +567,15 @@ export function LoginForm() {
 
     if (mode === "signup") {
       if (signupEmailSent) return;
-      const normalized = validateEmail();
+      const normalized = validateEmail(emailInput);
       if (!normalized) return;
       await submitSignup(normalized);
       return;
     }
 
-    const normalized = validateEmail();
+    const normalized = validateEmail(emailInput);
     if (!normalized) return;
-    await submitLogin(normalized);
+    await submitLogin(normalized, passwordInput || password);
   }
 
   const submitLabel = loading
@@ -562,6 +623,7 @@ export function LoginForm() {
           <div className="welcome-auth-body">
             <form
               className="welcome-auth-form"
+              noValidate
               onSubmit={(e) => {
                 void onSubmit(e).catch((err) => {
                   setError(
@@ -653,6 +715,7 @@ export function LoginForm() {
                     </label>
                     <input
                       id="auth-email"
+                      name="email"
                       type="email"
                       className="welcome-input"
                       autoComplete="email"
@@ -668,6 +731,7 @@ export function LoginForm() {
                     </label>
                     <PasswordField
                       id="auth-password"
+                      name="password"
                       value={password}
                       onChange={setPassword}
                       placeholder="Your password"
@@ -714,6 +778,7 @@ export function LoginForm() {
                     </label>
                     <input
                       id="auth-email"
+                      name="email"
                       type="email"
                       className="welcome-input"
                       autoComplete="email"
@@ -729,6 +794,7 @@ export function LoginForm() {
                     </label>
                     <PasswordField
                       id="auth-password"
+                      name="password"
                       value={password}
                       onChange={setPassword}
                       placeholder="Create a password"
@@ -746,6 +812,7 @@ export function LoginForm() {
                     </label>
                     <PasswordField
                       id="auth-confirm-password"
+                      name="confirm-password"
                       value={confirmPassword}
                       onChange={setConfirmPassword}
                       placeholder="Confirm password"
@@ -759,6 +826,12 @@ export function LoginForm() {
               {displayError ? (
                 <p className="welcome-auth-error" role="alert">
                   {displayError}
+                </p>
+              ) : null}
+
+              {status && loading ? (
+                <p className="welcome-form-subtitle" role="status" style={{ margin: 0 }}>
+                  {status}
                 </p>
               ) : null}
 
