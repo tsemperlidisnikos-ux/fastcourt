@@ -384,6 +384,9 @@ export const QA_MODULES = [
           { id: "FIL-58", priority: "P1", item: "Ideal vs film compare strip", steps: "Analyze clip → library variation", expected: "Side-by-side Designer read frame and captured film frame" },
           { id: "FIL-59", priority: "P1", item: "Film evaluation strip (xP-lite)", steps: "Run 2+ analyses on session", expected: "Coverage + disruption rate in sidebar" },
           { id: "FIL-60", priority: "P1", item: "Possession reel export + play", steps: "Add bookmarks → Play reel / Cut list / JSON", expected: "Auto-advances clips; exports manifest with deep links" },
+          { id: "FIL-61", priority: "P1", item: "Staff reel share link", steps: "Share staff on reel bar", expected: "Incognito opens read-only reel overlay" },
+          { id: "FIL-62", priority: "P1", item: "Scout PDF v2 evaluation + reel", steps: "Session PDF with analyses + bookmarks", expected: "Evaluation section + cut list + staff link" },
+          { id: "FIL-63", priority: "P2", item: "Upload MP4 reel stitch", steps: "Upload MP4 → bookmarks → MP4 export", expected: "Browser downloads stitched possession reel" },
         ],
       },
       {

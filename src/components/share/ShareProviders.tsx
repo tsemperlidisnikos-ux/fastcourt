@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/fc-film-reel-share.css";
 import { PwaBootstrap } from "@/components/pwa/PwaBootstrap";
 import { AppLogoSync } from "@/components/settings/AppLogoSync";
 import { CourtWoodTextureBootstrap } from "@/components/designer/CourtWoodTextureBootstrap";
@@ -12,6 +13,7 @@ import { HomeworkAckBootstrap } from "@/components/share/HomeworkAckBootstrap";
 import { GamePlanShareOverlay } from "@/components/share/GamePlanShareOverlay";
 import { GameDayShareOverlay } from "@/components/share/GameDayShareOverlay";
 import { PracticeShareOverlay } from "@/components/share/PracticeShareOverlay";
+import { FilmReelShareOverlay } from "@/components/share/FilmReelShareOverlay";
 import { ShareBootstrap } from "@/components/share/ShareBootstrap";
 import { AppDialogHost } from "@/components/ui/AppDialogHost";
 import { ContextMenuGuard } from "@/components/ui/ContextMenuGuard";
@@ -34,6 +36,7 @@ export function ShareProviders({ children }: { children: React.ReactNode }) {
       <GamePlanShareOverlay />
       <GameDayShareOverlay />
       <HomeworkShareOverlay />
+      <FilmReelShareOverlay />
       <PwaBootstrap />
       {children}
     </ViewportProfileProvider>

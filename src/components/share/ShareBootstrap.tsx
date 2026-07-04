@@ -15,6 +15,7 @@ export function ShareBootstrap() {
   const setGamePlanShareSession = useShareStore((s) => s.setGamePlanShareSession);
   const setHomeworkShareSession = useShareStore((s) => s.setHomeworkShareSession);
   const setGameDayShareSession = useShareStore((s) => s.setGameDayShareSession);
+  const setFilmReelShareSession = useShareStore((s) => s.setFilmReelShareSession);
 
   useEffect(() => {
     const payload = decodeFromHash(window.location.hash);
@@ -68,6 +69,12 @@ export function ShareBootstrap() {
         syncToken: payload.syncToken,
         stageRef: payload.stageRef,
       });
+    } else if (payload.type === "filmreel") {
+      setFilmReelShareSession({
+        sessionId: payload.sessionId,
+        session: payload.session,
+        segments: payload.segments,
+      });
     } else if (payload.type === "homework_ack") {
       void useOrganizerStore
         .getState()
@@ -94,7 +101,7 @@ export function ShareBootstrap() {
     const cleanUrl =
       window.location.pathname + window.location.search;
     window.history.replaceState(null, "", cleanUrl);
-  }, [setPlayerShareSession, setPracticeShareSession, setGamePlanShareSession, setHomeworkShareSession, setGameDayShareSession]);
+  }, [setPlayerShareSession, setPracticeShareSession, setGamePlanShareSession, setHomeworkShareSession, setGameDayShareSession, setFilmReelShareSession]);
 
   return null;
 }

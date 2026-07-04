@@ -39,6 +39,7 @@ interface Props {
   onPlay?: () => void;
   onStartReel?: (segments: PossessionReelSegment[]) => void;
   onStopReel?: () => void;
+  getUploadBlob?: () => Promise<Blob | null>;
 }
 
 export const FilmRoomPossessionPlaylist = forwardRef<
@@ -59,6 +60,7 @@ export const FilmRoomPossessionPlaylist = forwardRef<
     onPlay,
     onStartReel,
     onStopReel,
+    getUploadBlob,
   },
   ref,
 ) {
@@ -215,6 +217,7 @@ export const FilmRoomPossessionPlaylist = forwardRef<
           reelIndex={reelIndex}
           onStartReel={onStartReel}
           onStopReel={onStopReel}
+          getUploadBlob={getUploadBlob}
         />
       ) : null}
     </section>

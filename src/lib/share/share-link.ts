@@ -140,6 +140,25 @@ export type SharePayload =
       syncToken?: string;
       stageRef: { width: number; height: number };
       gameDayView?: boolean;
+    }
+  | {
+      v: number;
+      type: "filmreel";
+      sessionId: string;
+      session: {
+        title: string;
+        sourceKind: "upload" | "youtube" | "direct";
+      };
+      segments: Array<{
+        timeLabel: string;
+        label: string;
+        startSec: number;
+        endSec: number;
+        path: string;
+        note?: string;
+        kind?: "chapter" | "disruption";
+      }>;
+      filmReelView?: boolean;
     };
 
 export type ShareMinifiedPlay = Omit<
@@ -222,7 +241,7 @@ function minifyStoredPlay(play: StoredPlay): ShareMinifiedPlay {
   return minified;
 }
 
-function compressJson(json: string) {
+export function compressJson(json: string) {
   return LZString.compressToEncodedURIComponent(json);
 }
 
@@ -797,6 +816,14 @@ export function decodeFromHash(hash: string): SharePayload | null {
       return payload;
     }
     if (payload.type === "gameday" && payload.plan && payload.entries?.length) {
+      return payload;
+    }
+    if (
+      payload.type === "filmreel" &&
+      payload.sessionId &&
+      payload.session &&
+      payload.segments?.length
+    ) {
       return payload;
     }
     return null;

@@ -43,6 +43,57 @@ export function FilmScoutPrintDocument({ model }: { model: FilmScoutPrintModel }
         </section>
       ) : null}
 
+      {model.evaluation ? (
+        <section className="fc-film-scout-print-evaluation">
+          <h2 className="fc-film-scout-print-block-title">Evaluation (xP-lite)</h2>
+          <p>{model.evaluation.summaryLine}</p>
+          {model.evaluation.disruptionRatePct != null ? (
+            <p>
+              <strong>Disruption rate:</strong> {model.evaluation.disruptionRatePct}%
+            </p>
+          ) : null}
+          {model.evaluation.topCoverage ? (
+            <p>
+              <strong>Top coverage:</strong> {model.evaluation.topCoverage.toUpperCase()}
+            </p>
+          ) : null}
+          {model.evaluation.suggestedReads.length ? (
+            <p>
+              <strong>Reads:</strong> {model.evaluation.suggestedReads.join(", ")}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {model.reelSegments?.length ? (
+        <section className="fc-film-scout-print-reel">
+          <h2 className="fc-film-scout-print-block-title">Possession reel cut list</h2>
+          {model.reelShareLink ? (
+            <p className="fc-film-scout-print-reel-share">
+              Staff reel link: {model.reelShareLink}
+            </p>
+          ) : null}
+          <ul className="fc-film-scout-print-reel-list">
+            {model.reelSegments.map((segment) => (
+              <li
+                key={`${segment.index}-${segment.clipLink}`}
+                className={`fc-film-scout-print-reel-row${segment.kind === "disruption" ? " is-disruption" : ""}`}
+              >
+                <span className="fc-film-scout-print-reel-time">{segment.timeLabel}</span>
+                <span className="fc-film-scout-print-reel-label">{segment.label}</span>
+                <span className="fc-film-scout-print-reel-range">
+                  {segment.startSec.toFixed(1)}s → {segment.endSec.toFixed(1)}s
+                </span>
+                {segment.note ? (
+                  <span className="fc-film-scout-print-reel-note">{segment.note}</span>
+                ) : null}
+                <span className="fc-film-scout-print-clip-link">{segment.clipLink}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {model.clips.map((clip, index) => (
         <section
           key={`${clip.playheadLabel}-${index}`}

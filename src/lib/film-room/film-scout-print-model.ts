@@ -14,6 +14,15 @@ import {
 import { detectFilmDisruption } from "@/lib/film-room/film-disruption-detector";
 import { normalizeFilmBookmarks, FILM_DISRUPTION_BOOKMARK_LABEL } from "@/lib/film-room/film-room-bookmarks";
 import { filmRoomSourceLabel } from "@/lib/film-room/film-room-source";
+import {
+  buildFilmSessionEvaluation,
+  formatFilmEvaluationLine,
+} from "@/lib/film-room/film-read-evaluation";
+import { buildPossessionPlaylist } from "@/lib/film-room/film-possession-playlist";
+import {
+  buildPossessionReelSegments,
+  type PossessionReelSegment,
+} from "@/lib/film-room/possession-reel-export";
 import type {
   FilmClipAnalysisResult,
   FilmClipCoachingCategoryId,
@@ -87,6 +96,24 @@ export interface FilmScoutPrintChapter {
   kind?: "chapter" | "disruption";
 }
 
+export interface FilmScoutPrintEvaluation {
+  summaryLine: string;
+  disruptionRatePct: number | null;
+  topCoverage?: string;
+  suggestedReads: string[];
+}
+
+export interface FilmScoutPrintReelSegment {
+  index: number;
+  timeLabel: string;
+  label: string;
+  startSec: number;
+  endSec: number;
+  clipLink: string;
+  note?: string;
+  kind?: "chapter" | "disruption";
+}
+
 export interface FilmScoutPrintModel {
   reportTitle: string;
   sessionTitle: string;
@@ -97,6 +124,9 @@ export interface FilmScoutPrintModel {
   sessionLink: string;
   chapters: FilmScoutPrintChapter[];
   clips: FilmScoutPrintClipBlock[];
+  evaluation?: FilmScoutPrintEvaluation;
+  reelSegments?: FilmScoutPrintReelSegment[];
+  reelShareLink?: string;
 }
 
 export interface FilmScoutPrintClipInput {
@@ -289,11 +319,61 @@ function mapSessionChapters(
   }));
 }
 
+function mapPrintReelSegments(
+  segments: PossessionReelSegment[],
+): FilmScoutPrintReelSegment[] {
+  return segments.map((segment) => ({
+    index: segment.index,
+    timeLabel: segment.timeLabel,
+    label: segment.label,
+    startSec: segment.startSec,
+    endSec: segment.endSec,
+    clipLink: segment.deepLink,
+    note: segment.note,
+    kind: segment.kind,
+  }));
+}
+
+function buildPrintEvaluation(
+  analyses: FilmRoomAnalysisRecord[],
+): FilmScoutPrintEvaluation | undefined {
+  const evaluation = buildFilmSessionEvaluation(analyses);
+  if (!evaluation.analyzedCount) return undefined;
+  const topCoverage = Object.entries(evaluation.coverageCounts).sort(
+    (a, b) => b[1] - a[1],
+  )[0]?.[0];
+  return {
+    summaryLine: formatFilmEvaluationLine(evaluation),
+    disruptionRatePct: evaluation.disruptionRatePct,
+    topCoverage,
+    suggestedReads: evaluation.suggestedReads.slice(0, 6),
+  };
+}
+
+function buildPrintReelFromSession(
+  session: FilmRoomSession,
+  origin: string,
+  videoDuration = 0,
+): FilmScoutPrintReelSegment[] {
+  const bookmarks = normalizeFilmBookmarks(session.bookmarks);
+  if (!bookmarks.length) return [];
+  const items = buildPossessionPlaylist(bookmarks, "all");
+  const segments = buildPossessionReelSegments({
+    sessionId: session.id,
+    origin,
+    items,
+    videoDuration,
+  });
+  return mapPrintReelSegments(segments);
+}
+
 export function buildFilmScoutPrintModelFromSession(input: {
   session: FilmRoomSession;
   origin: string;
   teamName: string;
   footerText: string;
+  videoDuration?: number;
+  reelShareLink?: string;
 }): FilmScoutPrintModel | null {
   const analyses = input.session.analyses ?? [];
   const bookmarks = normalizeFilmBookmarks(input.session.bookmarks);
@@ -307,6 +387,11 @@ export function buildFilmScoutPrintModelFromSession(input: {
         ? `Scout read — ${sessionTitle} @ ${formatFilmTimestamp(analyses[0]!.playheadTime)}`
         : `Scout report — ${sessionTitle}`
       : `Chapter guide — ${sessionTitle}`;
+  const reelSegments = buildPrintReelFromSession(
+    input.session,
+    origin,
+    input.videoDuration ?? 0,
+  );
 
   return {
     reportTitle,
@@ -327,6 +412,9 @@ export function buildFilmScoutPrintModelFromSession(input: {
           disruptionTags: record.disruptionTags,
         }),
       ),
+    evaluation: buildPrintEvaluation(analyses),
+    reelSegments: reelSegments.length ? reelSegments : undefined,
+    reelShareLink: input.reelShareLink,
   };
 }
 

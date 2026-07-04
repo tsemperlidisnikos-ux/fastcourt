@@ -76,6 +76,23 @@ export interface GameDayShareSession {
   stageRef: { width: number; height: number };
 }
 
+export interface FilmReelShareSession {
+  sessionId: string;
+  session: {
+    title: string;
+    sourceKind: "upload" | "youtube" | "direct";
+  };
+  segments: Array<{
+    timeLabel: string;
+    label: string;
+    startSec: number;
+    endSec: number;
+    path: string;
+    note?: string;
+    kind?: "chapter" | "disruption";
+  }>;
+}
+
 interface ShareState {
   portalOpen: boolean;
   playerShareSession: PlayerShareSession | null;
@@ -83,6 +100,7 @@ interface ShareState {
   gamePlanShareSession: GamePlanShareSession | null;
   homeworkShareSession: HomeworkShareSession | null;
   gameDayShareSession: GameDayShareSession | null;
+  filmReelShareSession: FilmReelShareSession | null;
   rosterModalOpen: boolean;
   rosterModalTeam: string;
   sendModalOpen: boolean;
@@ -99,6 +117,8 @@ interface ShareState {
   clearHomeworkShareSession: () => void;
   setGameDayShareSession: (session: GameDayShareSession | null) => void;
   clearGameDayShareSession: () => void;
+  setFilmReelShareSession: (session: FilmReelShareSession | null) => void;
+  clearFilmReelShareSession: () => void;
   openRosterModal: (team?: string) => void;
   closeRosterModal: () => void;
   openSendModal: (context: PlayerShareSendContext) => void;
@@ -112,6 +132,7 @@ export const useShareStore = create<ShareState>((set) => ({
   gamePlanShareSession: null,
   homeworkShareSession: null,
   gameDayShareSession: null,
+  filmReelShareSession: null,
   rosterModalOpen: false,
   rosterModalTeam: "No Team",
   sendModalOpen: false,
@@ -129,6 +150,8 @@ export const useShareStore = create<ShareState>((set) => ({
   clearHomeworkShareSession: () => set({ homeworkShareSession: null }),
   setGameDayShareSession: (session) => set({ gameDayShareSession: session }),
   clearGameDayShareSession: () => set({ gameDayShareSession: null }),
+  setFilmReelShareSession: (session) => set({ filmReelShareSession: session }),
+  clearFilmReelShareSession: () => set({ filmReelShareSession: null }),
   openRosterModal: (team) =>
     set({
       rosterModalOpen: true,

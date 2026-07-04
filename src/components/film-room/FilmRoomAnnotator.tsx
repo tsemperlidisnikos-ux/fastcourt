@@ -50,6 +50,9 @@ import {
 } from "@/lib/film-room/markup-toolbar-presets";
 import { useAiAssistantStatus } from "@/hooks/useAiAssistantStatus";
 import { buildFilmScoutPrintModelFromSession } from "@/lib/film-room/film-scout-print-model";
+import { buildPossessionReelManifest } from "@/lib/film-room/possession-reel-export";
+import { buildPossessionPlaylist } from "@/lib/film-room/film-possession-playlist";
+import { buildFilmReelShareUrl } from "@/lib/film-room/film-reel-share";
 import {
   buildBatchAnalyzeTargets,
   formatBatchSummaryLine,
@@ -60,6 +63,7 @@ import {
   resolvePdfCoverTeam,
   resolvePdfFooterText,
 } from "@/lib/settings/pdf-brand-export";
+import { getFilmRoomBlob } from "@/lib/film-room/film-room-idb";
 import { useFilmRoomStore } from "@/stores/film-room-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import type {
@@ -473,6 +477,19 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   }, []);
 
   const exportSessionScoutPdf = useCallback(() => {
+    const origin = window.location.origin;
+    const reelManifest =
+      bookmarks.length > 0
+        ? buildPossessionReelManifest({
+            sessionId: session.id,
+            sessionTitle: session.title,
+            source: session.source,
+            origin,
+            items: buildPossessionPlaylist(bookmarks, "all"),
+            videoDuration: duration,
+          })
+        : null;
+    const reelShare = reelManifest ? buildFilmReelShareUrl(reelManifest) : null;
     const model = buildFilmScoutPrintModelFromSession({
       session: {
         ...session,
@@ -480,12 +497,14 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
         bookmarks,
         analyses,
       },
-      origin: window.location.origin,
+      origin,
       teamName: resolvePdfCoverTeam(pdfBrand),
       footerText: resolvePdfFooterText(pdfBrand),
+      videoDuration: duration,
+      reelShareLink: reelShare?.ok ? reelShare.url : undefined,
     });
     if (model) setScoutPrintModel(model);
-  }, [analyses, bookmarks, events, pdfBrand, session]);
+  }, [analyses, bookmarks, duration, events, pdfBrand, session]);
 
   const canAnalyzeClip = canCaptureFilmFrames(session.source);
 
@@ -639,6 +658,19 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
         batchRecords.length ? batchRecords : updatedAnalyses,
       );
       appNotice("Batch analyze complete", formatBatchSummaryLine(summary));
+      const origin = window.location.origin;
+      const reelManifest =
+        bookmarks.length > 0
+          ? buildPossessionReelManifest({
+              sessionId: session.id,
+              sessionTitle: session.title,
+              source: session.source,
+              origin,
+              items: buildPossessionPlaylist(bookmarks, "all"),
+              videoDuration: duration,
+            })
+          : null;
+      const reelShare = reelManifest ? buildFilmReelShareUrl(reelManifest) : null;
       const model = buildFilmScoutPrintModelFromSession({
         session: {
           ...session,
@@ -646,9 +678,11 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           bookmarks,
           analyses: updatedAnalyses,
         },
-        origin: window.location.origin,
+        origin,
         teamName: resolvePdfCoverTeam(pdfBrand),
         footerText: resolvePdfFooterText(pdfBrand),
+        videoDuration: duration,
+        reelShareLink: reelShare?.ok ? reelShare.url : undefined,
       });
       if (model) setScoutPrintModel(model);
     } catch (err) {
@@ -662,6 +696,11 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
       setAnalyzePhase(null);
     }
   }
+
+  const getUploadBlob = useCallback(async (): Promise<Blob | null> => {
+    if (session.source.kind !== "upload") return null;
+    return (await getFilmRoomBlob(session.source.blobId)) ?? null;
+  }, [session.source]);
 
   const handleStopReel = useCallback(() => {
     setReelActive(false);
@@ -903,6 +942,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           onPlay={() => controllerRef.current?.play()}
           onStartReel={handleStartReel}
           onStopReel={handleStopReel}
+          getUploadBlob={getUploadBlob}
         />
 
         <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />

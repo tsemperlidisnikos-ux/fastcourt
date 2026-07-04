@@ -1,0 +1,148 @@
+.film-reel-share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  overflow: auto;
+  padding: 24px 16px 40px;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.film-reel-share-header {
+  max-width: 720px;
+  margin: 0 auto 20px;
+}
+
+.film-reel-share-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1e3a8a;
+  color: #bfdbfe;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.film-reel-share-title {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.film-reel-share-meta {
+  margin: 8px 0 0;
+  color: #94a3b8;
+}
+
+.film-reel-share-session-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #60a5fa;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.film-reel-share-list {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.film-reel-share-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #1e293b;
+  border: 1px solid #334155;
+}
+
+.film-reel-share-num {
+  font-weight: 800;
+  color: #93c5fd;
+}
+
+.film-reel-share-main strong {
+  display: block;
+}
+
+.film-reel-share-range,
+.film-reel-share-note {
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.film-reel-share-clip-link {
+  color: #60a5fa;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.film-reel-share-foot {
+  max-width: 720px;
+  margin: 24px auto 0;
+  text-align: center;
+}
+
+.film-reel-share-close {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #334155;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-film-scout-print-evaluation,
+.fc-film-scout-print-reel {
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.fc-film-scout-print-reel-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.fc-film-scout-print-reel-row {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.fc-film-scout-print-reel-row.is-disruption {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.fc-film-scout-print-reel-time {
+  font-weight: 800;
+  color: #6d28d9;
+}
+
+.fc-film-scout-print-reel-share {
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.fc-film-reel-export-progress {
+  margin: 6px 0 0;
+  font-size: 10px;
+  color: #64748b;
+}
