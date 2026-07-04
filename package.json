@@ -21,6 +21,7 @@
     "app-check:full": "node scripts/full-app-check.mjs",
     "app-check:e2e": "npx playwright test",
     "production-smoke": "node scripts/production-smoke.mjs",
+    "qa:checklists": "node scripts/generate-qa-checklists.mjs",
     "link-team-library": "node scripts/link-team-library.mjs",
     "backup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1",
     "render:intro": "node scripts/render-intro-video.mjs",

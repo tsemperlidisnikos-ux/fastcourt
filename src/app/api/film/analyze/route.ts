@@ -5,6 +5,7 @@ import {
   parseFilmClipAnalysisPayload,
 } from "@/lib/film-room/film-clip-analyze-prompt";
 import { normalizeFilmAnalyzeEvents } from "@/lib/film-room/film-event-tags";
+import { normalizeFilmAnalyzeDisruptions } from "@/lib/film-room/film-disruption-tags";
 import { normalizeFilmAnalyzeFrameTimes } from "@/lib/film-room/film-analyze-context";
 import { FILM_CLIP_ANALYZE_FRAME_MAX } from "@/lib/film-room/capture-video-frames";
 import type {
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
   const sessionTitle =
     typeof body.sessionTitle === "string" ? body.sessionTitle.slice(0, 200) : "";
   const filmEvents = normalizeFilmAnalyzeEvents(body.filmEvents);
+  const filmDisruptions = normalizeFilmAnalyzeDisruptions(body.filmDisruptions);
   const frameTimes = normalizeFilmAnalyzeFrameTimes(
     body.frameTimes,
     timestamp,
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
 
   const prompt = buildFilmClipAnalyzePrompt(timestamp, sessionTitle, {
     filmEvents,
+    filmDisruptions,
     frameCount: frames.length,
     frameTimes,
   });

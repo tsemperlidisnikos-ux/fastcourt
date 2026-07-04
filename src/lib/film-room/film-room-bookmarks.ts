@@ -1,4 +1,4 @@
-import type { FilmRoomBookmark } from "@/types/film-room";
+import type { FilmRoomBookmark, FilmRoomBookmarkKind } from "@/types/film-room";
 import { formatFilmEventTime } from "@/lib/film-room/film-event-tags";
 
 export const FILM_BOOKMARK_QUICK_LABELS = [
@@ -42,6 +42,7 @@ export function normalizeFilmBookmarks(
       time,
       label: label.slice(0, 80),
       note: row.note?.trim()?.slice(0, 240) || undefined,
+      kind: row.kind === "disruption" ? "disruption" : "chapter",
       createdAt:
         typeof row.createdAt === "number" && Number.isFinite(row.createdAt)
           ? row.createdAt
@@ -58,17 +59,26 @@ export function sortFilmBookmarks(bookmarks: FilmRoomBookmark[]): FilmRoomBookma
   });
 }
 
+export const FILM_DISRUPTION_BOOKMARK_LABEL = "Plan broke here";
+
+export function defaultDisruptionBookmarkLabel(time: number) {
+  const clock = formatFilmEventTime(time);
+  return clock ? `${FILM_DISRUPTION_BOOKMARK_LABEL} @ ${clock}` : FILM_DISRUPTION_BOOKMARK_LABEL;
+}
+
 export function createFilmBookmark(
   time: number,
   label?: string,
   note?: string,
+  kind: FilmRoomBookmarkKind = "chapter",
 ): FilmRoomBookmark {
   const trimmed = label?.trim();
   return {
     id: newFilmBookmarkId(),
     time: Math.max(0, time),
-    label: trimmed || defaultFilmBookmarkLabel(time),
+    label: trimmed || (kind === "disruption" ? defaultDisruptionBookmarkLabel(time) : defaultFilmBookmarkLabel(time)),
     note: note?.trim() || undefined,
+    kind,
     createdAt: Date.now(),
   };
 }

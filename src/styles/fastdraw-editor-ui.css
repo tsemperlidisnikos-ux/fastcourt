@@ -987,6 +987,93 @@
 }
 
 
+#screen-designer .ds-read-branch-control {
+  margin: 0 12px 10px;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#screen-designer .ds-read-branch-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+#screen-designer .ds-read-branch-parent {
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-designer .ds-read-branch-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #475569;
+}
+
+#screen-designer .ds-read-branch-field input,
+#screen-designer .ds-read-branch-field select {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+  background: #fff;
+}
+
+#screen-designer .ds-read-branch-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+#screen-designer .ds-read-branch-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#screen-designer .ds-read-branch-quick-btn,
+#screen-designer .ds-read-branch-clear {
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+}
+
+#screen-designer .ds-read-branch-quick-btn:hover,
+#screen-designer .ds-read-branch-clear:hover {
+  background: #f1f5f9;
+}
+
+#screen-designer .ds-thumb-read-badge {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 9px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
 #screen-designer .ds-fd-notes-panel .ds-notes-collapsible {
   border-top: none;
   margin-top: 0;

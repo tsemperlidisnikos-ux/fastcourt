@@ -5,6 +5,7 @@ import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar"
 import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
 import { FilmRoomFramePreviewStrip } from "@/components/film-room/FilmRoomFramePreviewStrip";
 import { FilmRoomEventTagBar } from "@/components/film-room/FilmRoomEventTagBar";
+import { FilmRoomDisruptionTagBar } from "@/components/film-room/FilmRoomDisruptionTagBar";
 import { FilmRoomFloatingShuttleWheel } from "@/components/film-room/FilmRoomFloatingShuttleWheel";
 import { FilmRoomAddToGamePlanModal } from "@/components/film-room/FilmRoomAddToGamePlanModal";
 import { FilmRoomAnalyzeModal } from "@/components/film-room/FilmRoomAnalyzeModal";
@@ -30,6 +31,10 @@ import {
   FILM_EVENT_KEYBOARD_MAP,
   selectFilmEventsForAnalyze,
 } from "@/lib/film-room/film-event-tags";
+import {
+  FILM_DISRUPTION_KEYBOARD_MAP,
+  selectFilmDisruptionsForAnalyze,
+} from "@/lib/film-room/film-disruption-tags";
 import type { YouTubePlayerInstance } from "@/lib/film-room/youtube-iframe-api";
 import { analyzeFilmClip } from "@/lib/film-room/film-clip-analyze-client";
 import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
@@ -53,6 +58,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import type {
   FilmRoomSession,
   FilmRoomEventKind,
+  FilmRoomDisruptionKind,
   FilmRoomAnalysisRecord,
   VideoAnnotationStroke,
 } from "@/types/film-room";
@@ -71,6 +77,10 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const updateFilmEvent = useFilmRoomStore((s) => s.updateFilmEvent);
   const undoLastFilmEvent = useFilmRoomStore((s) => s.undoLastFilmEvent);
   const removeFilmEvent = useFilmRoomStore((s) => s.removeFilmEvent);
+  const addFilmDisruption = useFilmRoomStore((s) => s.addFilmDisruption);
+  const updateFilmDisruption = useFilmRoomStore((s) => s.updateFilmDisruption);
+  const undoLastFilmDisruption = useFilmRoomStore((s) => s.undoLastFilmDisruption);
+  const removeFilmDisruption = useFilmRoomStore((s) => s.removeFilmDisruption);
   const addFilmBookmark = useFilmRoomStore((s) => s.addFilmBookmark);
   const updateFilmBookmark = useFilmRoomStore((s) => s.updateFilmBookmark);
   const removeFilmBookmark = useFilmRoomStore((s) => s.removeFilmBookmark);
@@ -83,6 +93,12 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   );
   const events = useFilmRoomStore(
     (s) => s.sessions.find((row) => row.id === session.id)?.events ?? session.events ?? [],
+  );
+  const disruptions = useFilmRoomStore(
+    (s) =>
+      s.sessions.find((row) => row.id === session.id)?.disruptions ??
+      session.disruptions ??
+      [],
   );
   const bookmarks = useFilmRoomStore(
     (s) => s.sessions.find((row) => row.id === session.id)?.bookmarks ?? session.bookmarks ?? [],
@@ -363,9 +379,14 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   ).sort((a, b) => a - b);
 
   const eventMarkerTimes = events.map((event) => ({ id: event.id, time: event.time }));
+  const disruptionMarkerTimes = disruptions.map((row) => ({
+    id: row.id,
+    time: row.time,
+  }));
   const bookmarkMarkerTimes = bookmarks.map((bookmark) => ({
     id: bookmark.id,
     time: bookmark.time,
+    kind: bookmark.kind ?? "chapter",
   }));
 
   const handleTagAtPlayhead = useCallback(
@@ -376,10 +397,18 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     [addFilmEvent, currentTime, duration, session.id],
   );
 
-  const handleAddBookmark = useCallback(
-    (label: string, note?: string) => {
+  const handleDisruptionAtPlayhead = useCallback(
+    (kind: FilmRoomDisruptionKind, note?: string) => {
       if (duration <= 0) return;
-      addFilmBookmark(session.id, currentTime, label, note);
+      addFilmDisruption(session.id, kind, currentTime, note);
+    },
+    [addFilmDisruption, currentTime, duration, session.id],
+  );
+
+  const handleAddBookmark = useCallback(
+    (label: string, note?: string, kind?: import("@/types/film-room").FilmRoomBookmarkKind) => {
+      if (duration <= 0) return;
+      addFilmBookmark(session.id, currentTime, label, note, kind);
     },
     [addFilmBookmark, currentTime, duration, session.id],
   );
@@ -399,6 +428,13 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
         Array.from({ length: record.frameCount }, (_, index) =>
           record.playheadTime - 1 + (index / Math.max(1, record.frameCount - 1)) * 2,
         ),
+        (record.disruptionTags ?? []).map((tag) => ({
+          id: `hist_${tag.time}_${tag.kind}`,
+          kind: tag.kind,
+          time: tag.time,
+          note: tag.note,
+          createdAt: record.createdAt,
+        })),
       ),
     );
     setAnalyzeModalOpen(true);
@@ -459,7 +495,12 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
       setFramePreviews(previews);
       setShowFramePreviews(true);
       const coachTags = selectFilmEventsForAnalyze(events, currentTime);
-      const context = buildFilmAnalyzeContext(coachTags, captured.times);
+      const disruptionTags = selectFilmDisruptionsForAnalyze(disruptions, currentTime);
+      const context = buildFilmAnalyzeContext(
+        coachTags,
+        captured.times,
+        disruptionTags,
+      );
       setAnalyzeContext(context);
       setAnalyzePhase("analyzing");
       const result = await analyzeFilmClip({
@@ -472,6 +513,11 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           time: event.time,
           note: event.note,
         })),
+        filmDisruptions: disruptionTags.map((row) => ({
+          kind: row.kind,
+          time: row.time,
+          note: row.note,
+        })),
       });
       setHistoryPlayheadTime(null);
       setAnalysisResult(result);
@@ -482,6 +528,11 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           result,
           frameCount: captured.frames.length,
           coachTags: coachTags.map((tag) => ({
+            kind: tag.kind,
+            time: tag.time,
+            note: tag.note,
+          })),
+          disruptionTags: disruptionTags.map((tag) => ({
             kind: tag.kind,
             time: tag.time,
             note: tag.note,
@@ -512,6 +563,12 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
               <>
                 {" "}
                 · {events.length} event tag{events.length === 1 ? "" : "s"}
+              </>
+            ) : null}
+            {disruptions.length > 0 ? (
+              <>
+                {" "}
+                · {disruptions.length} disruption{disruptions.length === 1 ? "" : "s"}
               </>
             ) : null}
             {analyses.length > 0 ? (
@@ -588,9 +645,23 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
                 if (tagNoteDraft.trim()) setTagNoteDraft("");
                 return;
               }
+              const disruptionKind = FILM_DISRUPTION_KEYBOARD_MAP[e.key.toLowerCase()];
+              if (disruptionKind) {
+                e.preventDefault();
+                handleDisruptionAtPlayhead(
+                  disruptionKind,
+                  tagNoteDraft.trim() || undefined,
+                );
+                if (tagNoteDraft.trim()) setTagNoteDraft("");
+                return;
+              }
               if (e.key === "b" || e.key === "B") {
                 e.preventDefault();
-                handleAddBookmark(defaultFilmBookmarkLabel(currentTime));
+                if (e.shiftKey) {
+                  handleAddBookmark("Plan broke here", undefined, "disruption");
+                } else {
+                  handleAddBookmark(defaultFilmBookmarkLabel(currentTime));
+                }
               }
             }
             return;
@@ -622,6 +693,22 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           onUndoLast={() => undoLastFilmEvent(session.id)}
           onUpdate={(eventId, patch) => updateFilmEvent(session.id, eventId, patch)}
           onRemove={(eventId) => removeFilmEvent(session.id, eventId)}
+          onSeek={handleSliderSeek}
+        />
+
+        <FilmRoomDisruptionTagBar
+          currentTime={currentTime}
+          disruptions={disruptions}
+          noteDraft={tagNoteDraft}
+          disabled={duration <= 0}
+          canUndo={disruptions.length > 0}
+          onNoteChange={setTagNoteDraft}
+          onTag={handleDisruptionAtPlayhead}
+          onUndoLast={() => undoLastFilmDisruption(session.id)}
+          onUpdate={(disruptionId, patch) =>
+            updateFilmDisruption(session.id, disruptionId, patch)
+          }
+          onRemove={(disruptionId) => removeFilmDisruption(session.id, disruptionId)}
           onSeek={handleSliderSeek}
         />
 
@@ -703,6 +790,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
               duration={duration}
               markerTimes={markerTimes}
               eventMarkerTimes={eventMarkerTimes}
+              disruptionMarkerTimes={disruptionMarkerTimes}
               bookmarkMarkerTimes={bookmarkMarkerTimes}
               fullscreen={fullscreen}
               autoClearOnScrub={autoClearOnScrub}

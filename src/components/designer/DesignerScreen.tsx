@@ -11,10 +11,16 @@ import { useFrameAnimationPlayback } from "@/hooks/useFrameAnimationPlayback";
 import { blankStoredPlay } from "@/lib/library/convert";
 import { serializeDesignerDocument } from "@/lib/designer/designer-document-snapshot";
 import { useDesignerUnsavedGuard } from "@/lib/designer/use-designer-unsaved-guard";
-import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
+import { FrameReadBranchControl } from "@/components/designer/FrameReadBranchControl";
+import {
+  frameThumbBadge,
+  primaryFrameLabel,
+} from "@/lib/designer/frame-read-branch";
+import { parseDesignerFrameParam } from "@/lib/designer/designer-deep-link";
 import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { blockNativeContextMenu } from "@/lib/ui/context-menu-policy";
 import { ActionTimeline } from "@/components/designer/ActionTimeline";
+import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { CourtWhiteboardToolbar } from "@/components/designer/CourtWhiteboardToolbar";
 import { NotesFormatToolbar } from "@/components/designer/NotesFormatToolbar";
 import { LineColorControl } from "@/components/designer/LineColorControl";
@@ -131,6 +137,8 @@ export function DesignerScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get("item");
+  const frameParam = searchParams.get("frame");
+  const pendingFrameIndex = parseDesignerFrameParam(frameParam);
   const getPlayDocument = useLibraryStore((s) => s.getPlayDocument);
   const savePlayDocument = useLibraryStore((s) => s.savePlayDocument);
   const libraryItems = useLibraryStore((s) => s.items);
@@ -170,6 +178,8 @@ export function DesignerScreen() {
   const undoStack = useDesignerStore((s) => s.undoStack);
   const redoStack = useDesignerStore((s) => s.redoStack);
   const setFrameNotes = useDesignerStore((s) => s.setFrameNotes);
+  const setFrameReadBranch = useDesignerStore((s) => s.setFrameReadBranch);
+  const addReadFrame = useDesignerStore((s) => s.addReadFrame);
   const removeObject = useDesignerStore((s) => s.removeObject);
   const removeAction = useDesignerStore((s) => s.removeAction);
   const selectObject = useDesignerStore((s) => s.selectObject);
@@ -210,6 +220,7 @@ export function DesignerScreen() {
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const loadedDocumentKeyRef = useRef<string | null>(null);
+  const appliedFrameParamRef = useRef<string | null>(null);
   const [exportingAnim, setExportingAnim] = useState(false);
   const [exportAnimProgress, setExportAnimProgress] = useState(0);
   const [openToolGroups, setOpenToolGroups] = useState<Set<string>>(defaultOpenToolGroups);
@@ -434,6 +445,15 @@ export function DesignerScreen() {
       active = false;
     };
   }, [itemId, getPlayDocument, loadPlay, router]);
+
+  useEffect(() => {
+    if (loading || pendingFrameIndex === null) return;
+    const key = `${itemId ?? play.id}:${frameParam}`;
+    if (appliedFrameParamRef.current === key) return;
+    if (pendingFrameIndex >= play.frames.length) return;
+    selectFrame(pendingFrameIndex);
+    appliedFrameParamRef.current = key;
+  }, [frameParam, itemId, loading, pendingFrameIndex, play.frames.length, play.id, selectFrame]);
 
   function buildStoredPlaySnapshot(metaPatch?: Partial<StoredPlay>): StoredPlay {
     const notesHtml = notesRef.current?.innerHTML ?? "";
@@ -1131,6 +1151,19 @@ export function DesignerScreen() {
               ✎
             </button>
           </div>
+          <FrameReadBranchControl
+            readBranch={currentFrame?.readBranch}
+            isPrimaryFrame={!currentFrame?.readBranch?.parentFrameId}
+            parentFrameName={
+              currentFrame?.readBranch?.parentFrameId
+                ? play.frames.find(
+                    (frame) => frame.id === currentFrame.readBranch?.parentFrameId,
+                  )?.name
+                : undefined
+            }
+            onSetReadBranch={(branch) => setFrameReadBranch(branch)}
+            onAddReadFrame={(coverage, label) => addReadFrame(coverage, label)}
+          />
           <div className="ds-editor-stack ds-notes-collapsible" id="ds-notes-collapsible">
             <div className="ds-notes-collapse-body" id="ds-notes-collapse-body">
               <div
@@ -1221,7 +1254,12 @@ export function DesignerScreen() {
                     }}
                   >
                     <div className="ds-thumb-frame-label">
-                      {frame.name || `Frame ${index + 1}`}
+                      {primaryFrameLabel(frame, index)}
+                      {frameThumbBadge(frame) ? (
+                        <span className="ds-thumb-read-badge">
+                          {frameThumbBadge(frame)}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="ds-thumb-court">
                       <CourtFrameThumbnail

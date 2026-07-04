@@ -1,10 +1,11 @@
+import { defaultReadBranchForCoverage } from "@/lib/designer/frame-read-branch";
 import { applyActionResultsToFrame } from "@/lib/designer/frame-propagation";
 import { createFrame } from "@/lib/designer/play-factory";
 import {
   MAX_FRAME_ANIM_DURATION_SEC,
   MIN_FRAME_ANIM_DURATION_SEC,
 } from "@/lib/designer/animation-timing";
-import type { DesignerFrame } from "@/types/designer";
+import type { DesignerFrame, FrameReadBranch } from "@/types/designer";
 import {
   cloneAction,
   newObjectId,
@@ -202,4 +203,41 @@ export const createFramesSlice: DesignerSliceCreator = (set, get) => ({
     set((state) =>
       updateCurrentFrame(state, () => frame, { recordUndo: true }),
     ),
+
+  setFrameReadBranch: (branch) =>
+    set((state) =>
+      updateCurrentFrame(state, (frame) => ({
+        ...frame,
+        readBranch: branch,
+      }), { recordUndo: true }),
+    ),
+
+  addReadFrame: (coverage, label) =>
+    set((state) => {
+      const source = state.play.frames[state.currentFrameIndex];
+      if (!source) return state;
+      const nextIndex = state.play.frames.length + 1;
+      const branch = defaultReadBranchForCoverage(
+        coverage,
+        source.id,
+        label || `If ${coverage.toUpperCase()}`,
+      );
+      const draft: DesignerFrame = {
+        ...createFrame(branch.label, nextIndex),
+        objects: source.objects.map((o) => ({ ...o, id: newObjectId() })),
+        readBranch: branch,
+      };
+      const frame = applyActionResultsToFrame(source, draft, {
+        clearActions: true,
+      });
+      return {
+        ...pushUndoSnapshot(state),
+        play: { ...state.play, frames: [...state.play.frames, frame] },
+        currentFrameIndex: state.play.frames.length,
+        lineDraft: null,
+        freehandDraft: null,
+        selectedActionId: null,
+        frameActionsDirty: false,
+      };
+    }),
 });

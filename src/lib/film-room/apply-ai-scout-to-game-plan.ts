@@ -17,6 +17,8 @@ import {
 import { coachingCueKey } from "@/lib/film-room/film-coaching-format";
 import type { FilmClipCounterSuggestion } from "@/lib/film-room/film-clip-analyze-types";
 import { filmScoutNoteFromSession } from "@/lib/film-room/film-game-plan-link";
+import { detectFilmDisruption } from "@/lib/film-room/film-disruption-detector";
+import { suggestOffensePlaysForDisruption } from "@/lib/film-room/film-offense-variation-match";
 import {
   coachingHasSuggestions,
   coachingSuggestionCount,
@@ -32,7 +34,7 @@ import {
 import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
 import type { GamePlan, GamePlanCategoryId, GamePlanFilmRef, GamePlanTimeoutCue, OpponentTendency } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
-import type { FilmRoomEvent } from "@/types/film-room";
+import type { FilmRoomEvent, FilmRoomDisruption } from "@/types/film-room";
 
 export interface BuildAiScoutPatchInput {
   plan: GamePlan;
@@ -50,6 +52,8 @@ export interface BuildAiScoutPatchInput {
   selectedCoachingKeys?: ReadonlySet<string>;
   /** Coach tags sent with this analyze (included in scouting notes). */
   coachTags?: readonly FilmRoomEvent[];
+  /** Disruption tags sent with this analyze (for read/variation matching). */
+  disruptionTags?: readonly FilmRoomDisruption[];
   /** Max defensive plays suggested per tendency (default 3). */
   defensePlaysPerTendency?: number;
   /** Max offense plays from AI pattern match (default 4). */
@@ -136,6 +140,7 @@ export function buildAiScoutGamePlanPatch(
     includeCoachingNotes = true,
     selectedCoachingKeys,
     coachTags,
+    disruptionTags,
     defensePlaysPerTendency = 3,
     offensePlaysLimit = 4,
   } = input;
@@ -233,6 +238,39 @@ export function buildAiScoutGamePlanPatch(
           bestPattern?.tag ?? patternPicks[0]!.tag,
         ),
       });
+    }
+  }
+
+  if (includeOffensePlays) {
+    const assessment = detectFilmDisruption({
+      disruptionTags: disruptionTags ? [...disruptionTags] : [],
+      playPatterns: patternPicks,
+      counters: resolveSelectedCounters(analysis, selectedCoachingKeys),
+      aiSummary: analysis.summary,
+    });
+    if (assessment.suggestedReads.length) {
+      const seen = new Set([
+        ...excludedPlayIds,
+        ...defensePlayIds,
+        ...offenseEntries.map((entry) => entry.playId),
+      ]);
+      const variationMatches = suggestOffensePlaysForDisruption(
+        plays,
+        assessment.suggestedReads,
+        seen,
+        assessment.pattern,
+        2,
+      );
+      for (const match of variationMatches) {
+        if (seen.has(match.play.id)) continue;
+        seen.add(match.play.id);
+        offenseEntries.push({
+          playId: match.play.id,
+          categoryId: assessment.pattern
+            ? gamePlanCategoryForPattern(assessment.pattern)
+            : "halfcourt",
+        });
+      }
     }
   }
 

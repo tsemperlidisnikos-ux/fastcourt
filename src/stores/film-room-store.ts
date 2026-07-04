@@ -13,12 +13,16 @@ import {
   removeFilmAnalysisRecord as dropAnalysisRecord,
 } from "@/lib/film-room/film-analysis-history";
 import { findLastFilmEvent } from "@/lib/film-room/film-event-tags";
+import { findLastFilmDisruption } from "@/lib/film-room/film-disruption-tags";
 import { createFilmBookmark } from "@/lib/film-room/film-room-bookmarks";
 import type {
   FilmRoomSession,
   FilmRoomVideoSource,
   FilmRoomEvent,
   FilmRoomEventKind,
+  FilmRoomDisruption,
+  FilmRoomDisruptionKind,
+  FilmRoomBookmarkKind,
   FilmRoomAnalysisRecord,
   VideoAnnotationStroke,
 } from "@/types/film-room";
@@ -55,11 +59,25 @@ interface FilmRoomState {
   ) => void;
   undoLastFilmEvent: (id: string) => void;
   removeFilmEvent: (id: string, eventId: string) => void;
+  addFilmDisruption: (
+    id: string,
+    kind: FilmRoomDisruptionKind,
+    time: number,
+    note?: string,
+  ) => void;
+  updateFilmDisruption: (
+    id: string,
+    disruptionId: string,
+    patch: { kind?: FilmRoomDisruptionKind; time?: number; note?: string },
+  ) => void;
+  undoLastFilmDisruption: (id: string) => void;
+  removeFilmDisruption: (id: string, disruptionId: string) => void;
   addFilmBookmark: (
     id: string,
     time: number,
     label?: string,
     note?: string,
+    kind?: FilmRoomBookmarkKind,
   ) => void;
   updateFilmBookmark: (
     id: string,
@@ -106,6 +124,7 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
       },
       strokes: [],
       events: [],
+      disruptions: [],
       bookmarks: [],
       analyses: [],
       createdAt: Date.now(),
@@ -126,6 +145,7 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
       source,
       strokes: [],
       events: [],
+      disruptions: [],
       bookmarks: [],
       analyses: [],
       createdAt: Date.now(),
@@ -248,10 +268,88 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
     });
   },
 
-  addFilmBookmark(id, time, label, note) {
+  addFilmDisruption(id, kind, time, note) {
     const existing = get().sessions.find((s) => s.id === id);
     if (!existing) return;
-    const bookmark = createFilmBookmark(time, label, note);
+    const disruption: FilmRoomDisruption = {
+      id: newId("film_dis"),
+      kind,
+      time: Math.max(0, time),
+      note: note?.trim() || undefined,
+      createdAt: Date.now(),
+    };
+    const disruptions = [...(existing.disruptions ?? []), disruption];
+    const next = { ...existing, disruptions, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  updateFilmDisruption(id, disruptionId, patch) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const disruptions = (existing.disruptions ?? []).map((row) => {
+      if (row.id !== disruptionId) return row;
+      return {
+        ...row,
+        ...(patch.kind ? { kind: patch.kind } : {}),
+        ...(typeof patch.time === "number" && Number.isFinite(patch.time)
+          ? { time: Math.max(0, patch.time) }
+          : {}),
+        ...(patch.note !== undefined
+          ? { note: patch.note.trim() || undefined }
+          : {}),
+      };
+    });
+    const next = { ...existing, disruptions, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  undoLastFilmDisruption(id) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const last = findLastFilmDisruption(existing.disruptions ?? []);
+    if (!last) return;
+    const disruptions = (existing.disruptions ?? []).filter(
+      (row) => row.id !== last.id,
+    );
+    const next = { ...existing, disruptions, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  removeFilmDisruption(id, disruptionId) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const disruptions = (existing.disruptions ?? []).filter(
+      (row) => row.id !== disruptionId,
+    );
+    if (disruptions.length === (existing.disruptions ?? []).length) return;
+    const next = { ...existing, disruptions, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  addFilmBookmark(id, time, label, note, kind) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const bookmark = createFilmBookmark(time, label, note, kind);
     const bookmarks = [...(existing.bookmarks ?? []), bookmark];
     const next = { ...existing, bookmarks, updatedAt: Date.now() };
     set((s) => ({

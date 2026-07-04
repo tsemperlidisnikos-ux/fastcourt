@@ -4,17 +4,18 @@ import { useMemo, useState } from "react";
 import {
   defaultFilmBookmarkLabel,
   FILM_BOOKMARK_QUICK_LABELS,
+  FILM_DISRUPTION_BOOKMARK_LABEL,
   formatFilmBookmarkSummary,
   sortFilmBookmarks,
 } from "@/lib/film-room/film-room-bookmarks";
 import { formatFilmEventTime } from "@/lib/film-room/film-event-tags";
-import type { FilmRoomBookmark } from "@/types/film-room";
+import type { FilmRoomBookmark, FilmRoomBookmarkKind } from "@/types/film-room";
 
 interface Props {
   currentTime: number;
   bookmarks: FilmRoomBookmark[];
   disabled?: boolean;
-  onAdd: (label: string, note?: string) => void;
+  onAdd: (label: string, note?: string, kind?: FilmRoomBookmarkKind) => void;
   onUpdate: (
     bookmarkId: string,
     patch: { label?: string; note?: string },
@@ -41,9 +42,13 @@ export function FilmRoomBookmarkBar({
   const sorted = useMemo(() => sortFilmBookmarks(bookmarks), [bookmarks]);
   const timeLabel = formatFilmEventTime(currentTime);
 
-  function handleAdd(labelOverride?: string) {
+  function handleAdd(labelOverride?: string, kind: FilmRoomBookmarkKind = "chapter") {
     const label = (labelOverride ?? labelDraft).trim();
-    onAdd(label || defaultFilmBookmarkLabel(currentTime), noteDraft.trim() || undefined);
+    onAdd(
+      label || defaultFilmBookmarkLabel(currentTime),
+      noteDraft.trim() || undefined,
+      kind,
+    );
     setLabelDraft("");
     setNoteDraft("");
   }
@@ -118,6 +123,15 @@ export function FilmRoomBookmarkBar({
         />
         <button
           type="button"
+          className="fc-film-bookmark-add-btn fc-film-bookmark-disruption-btn"
+          disabled={disabled}
+          title="Mark where the play broke (Shift+B)"
+          onClick={() => handleAdd(FILM_DISRUPTION_BOOKMARK_LABEL, "disruption")}
+        >
+          Plan broke here
+        </button>
+        <button
+          type="button"
           className="fc-film-bookmark-add-btn"
           disabled={disabled}
           title="Add chapter bookmark (B)"
@@ -132,7 +146,10 @@ export function FilmRoomBookmarkBar({
           {sorted.map((bookmark) => {
             const editing = editingId === bookmark.id;
             return (
-              <li key={bookmark.id} className="fc-film-bookmark-row">
+              <li
+                key={bookmark.id}
+                className={`fc-film-bookmark-row${bookmark.kind === "disruption" ? " is-disruption" : ""}`}
+              >
                 {editing ? (
                   <div className="fc-film-bookmark-edit">
                     <input

@@ -765,6 +765,84 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
+#screen-film-room .fc-film-video-controls-marker.is-disruption,
+#screen-organizer .fc-film-video-controls-marker.is-disruption {
+  top: 8px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  background: #ef4444;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+#screen-film-room .fc-film-video-controls-marker.is-disruption-break,
+#screen-organizer .fc-film-video-controls-marker.is-disruption-break {
+  top: -9px;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  background: #dc2626;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+#screen-film-room .fc-film-bookmark-row.is-disruption,
+#screen-organizer .fc-film-bookmark-row.is-disruption {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+#screen-film-room .fc-film-bookmark-disruption-btn,
+#screen-organizer .fc-film-bookmark-disruption-btn {
+  border-color: #fca5a5;
+  color: #b91c1c;
+  background: #fff5f5;
+}
+
+.fc-film-disruption-ai-read {
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #fecaca;
+}
+
+.fc-film-disruption-ai-what,
+.fc-film-disruption-ai-read-suggest {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.fc-film-disruption-variation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fc-film-disruption-ideal-gap {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.fc-film-disruption-frame-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-film-disruption-frame-link {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.fc-film-disruption-frame-link.is-read {
+  color: #b91c1c;
+}
+
 #screen-film-room .fc-film-event-bar,
 #screen-organizer .fc-film-event-bar {
   display: flex;
@@ -2101,4 +2179,223 @@
   line-height: 1.4;
   color: #94a3b8;
   font-style: italic;
+}
+
+/* Disruption tags + panel */
+#screen-film-room .fc-film-disruption-bar,
+#screen-organizer .fc-film-disruption-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff5f5;
+}
+
+#screen-film-room .fc-film-disruption-bar-tags,
+#screen-organizer .fc-film-disruption-bar-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+#screen-film-room .fc-film-disruption-bar-label,
+#screen-organizer .fc-film-disruption-bar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #991b1b;
+  margin-right: 4px;
+}
+
+#screen-film-room .fc-film-disruption-tag-btn,
+#screen-organizer .fc-film-disruption-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-disruption-tag-btn:hover:not(:disabled),
+#screen-organizer .fc-film-disruption-tag-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+#screen-film-room .fc-film-disruption-tag-key,
+#screen-organizer .fc-film-disruption-tag-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  border-radius: 4px;
+  background: #fee2e2;
+  font-size: 9px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+#screen-film-room .fc-film-disruption-list,
+#screen-organizer .fc-film-disruption-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#screen-film-room .fc-film-disruption-row,
+#screen-organizer .fc-film-disruption-row {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+#screen-film-room .fc-film-disruption-row.is-analyze-window,
+#screen-organizer .fc-film-disruption-row.is-analyze-window {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+
+#screen-film-room .fc-film-disruption-seek,
+#screen-organizer .fc-film-disruption-seek {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+#screen-film-room .fc-film-disruption-kind,
+#screen-organizer .fc-film-disruption-kind {
+  font-weight: 700;
+  color: #dc2626;
+}
+
+#screen-film-room .fc-film-disruption-empty,
+#screen-organizer .fc-film-disruption-empty {
+  margin: 0;
+  font-size: 11px;
+  color: #991b1b;
+}
+
+.fc-film-disruption-panel {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff5f5 0%, #fff 100%);
+}
+
+.fc-film-disruption-panel.is-empty {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+.fc-film-disruption-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fc-film-disruption-panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+.fc-film-disruption-confidence {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.fc-film-disruption-headline {
+  margin: 8px 0 4px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fc-film-disruption-reason {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.fc-film-disruption-reads-title {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.fc-film-disruption-reads-list,
+.fc-film-disruption-variation-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fc-film-disruption-read-item {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.fc-film-disruption-read-item strong {
+  display: block;
+  color: #0f172a;
+}
+
+.fc-film-disruption-variation-link {
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.fc-film-disruption-variation-read {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.fc-film-disruption-no-match,
+.fc-film-disruption-panel-hint,
+.fc-film-disruption-film-ref {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
 }

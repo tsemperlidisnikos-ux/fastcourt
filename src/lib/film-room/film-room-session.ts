@@ -6,6 +6,7 @@ export function normalizeFilmRoomSession(session: FilmRoomSession): FilmRoomSess
   return {
     ...session,
     events: Array.isArray(session.events) ? session.events : [],
+    disruptions: Array.isArray(session.disruptions) ? session.disruptions : [],
     bookmarks: normalizeFilmBookmarks(session.bookmarks),
     analyses: Array.isArray(session.analyses) ? session.analyses : [],
   };

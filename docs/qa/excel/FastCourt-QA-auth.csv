@@ -1,0 +1,13 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Auth & Onboarding,Login & Signup,AUTH-01,P0,Email/password login succeeds,"Go to /login, enter valid credentials","Redirect to /library, session active",,,,,
+Auth & Onboarding,Login & Signup,AUTH-02,P1,OAuth login (if configured),Use Google/OAuth button,"Account created or linked, library loads",,,,,
+Auth & Onboarding,Login & Signup,AUTH-03,P0,Invalid password shows error,Wrong password,"Clear error, no crash",,,,,
+Auth & Onboarding,Login & Signup,AUTH-04,P1,Signup with strong password,"/login?signup=1, complete wizard",Confirmation email flow or immediate access per config,,,,,
+Auth & Onboarding,Login & Signup,AUTH-05,P1,Password recovery,Forgot password → email link,"Reset works, can login",,,,,
+Auth & Onboarding,Login & Signup,AUTH-06,P0,Sign out clears session,User menu → Sign out,"Redirect login, library scope reset",,,,,
+Auth & Onboarding,Login & Signup,AUTH-07,P1,Trial banner visible on trial account,,TrialBanner in library header,,,,,
+Auth & Onboarding,Login & Signup,AUTH-08,P0,Trial expired gate blocks app,,Overlay until subscribe or license key,,,,,
+Auth & Onboarding,Onboarding,ONB-01,P1,Welcome modal on first visit (?welcome=1),,Create play / Import .fdb / Tour / Skip,,,,,
+Auth & Onboarding,Onboarding,ONB-02,P2,Create play from onboarding opens create flow,,Create modal or designer opens,,,,,
+Auth & Onboarding,Onboarding,ONB-03,P2,Import .fdb from onboarding triggers import,,Import picker opens on Draw tab,,,,,
+Auth & Onboarding,Onboarding,ONB-04,P2,Skip dismisses modal permanently,,Does not reappear on refresh,,,,,

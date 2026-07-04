@@ -11,6 +11,7 @@ import type {
   DesignerFrame,
   DesignerObject,
   DesignerTool,
+  FrameReadBranch,
   ObjectKind,
   PlayDocument,
 } from "@/types/designer";
@@ -141,6 +142,8 @@ export interface DesignerState {
   canUndo: () => boolean;
   canRedo: () => boolean;
   setFrameNotes: (notes: string) => void;
+  setFrameReadBranch: (branch: FrameReadBranch | undefined) => void;
+  addReadFrame: (coverage: string, label: string) => void;
   setFrameShowTitleInAnimation: (show: boolean) => void;
   setFrameAnimDurationSec: (seconds: number) => void;
   mirrorCurrentFrame: () => void;

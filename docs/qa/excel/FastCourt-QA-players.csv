@@ -1,0 +1,5 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Library — Players,Roster,PLR-01,P1,Add player with team,,Appears in roster,,,,,
+Library — Players,Roster,PLR-02,P1,Edit/delete player,,CRUD works,,,,,
+Library — Players,Roster,PLR-03,P2,Filter by team + search,,List filters,,,,,
+Library — Players,Roster,PLR-04,P2,Player in share-to-players picker,,Selectable in homework/share flows,,,,,

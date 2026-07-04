@@ -1,13 +1,18 @@
 import { OPPONENT_TENDENCY_PRESETS } from "@/lib/game-plan/opponent-board";
 import { emptyCoachingRecommendations } from "@/lib/film-room/film-coaching-format";
 import { formatFilmEventsForPrompt } from "@/lib/film-room/film-event-tags";
+import {
+  formatFilmDisruptionsForPrompt,
+  normalizeFilmDisruptionKind,
+} from "@/lib/film-room/film-disruption-tags";
 import { formatFrameSequenceForPrompt } from "@/lib/film-room/film-analyze-context";
 import {
   buildPatternCounterPromptSection,
   normalizeCounterSuggestion,
 } from "@/lib/film-room/film-counter-playbook";
+import { parseFilmClipAiDisruption } from "@/lib/film-room/film-ai-disruption-parse";
 import type { OpponentTendencyKind } from "@/types/library-meta";
-import type { FilmRoomEvent } from "@/types/film-room";
+import type { FilmRoomEvent, FilmRoomDisruptionKind } from "@/types/film-room";
 import type {
   FilmClipAnalysisResult,
   FilmClipAnalysisTendency,
@@ -83,6 +88,11 @@ export function buildFilmClipAnalyzePrompt(
   sessionTitle?: string,
   options?: {
     filmEvents?: FilmRoomEvent[];
+    filmDisruptions?: Array<{
+      kind: FilmRoomDisruptionKind | string;
+      time: number;
+      note?: string;
+    }>;
     frameCount?: number;
     frameTimes?: number[];
   },
@@ -107,9 +117,28 @@ export function buildFilmClipAnalyzePrompt(
     ? `\n\n${eventsBlock}\nWhen coach tags conflict with your read, prefer the tags and explain how the frames support them.`
     : "";
 
+  const disruptionsBlock = formatFilmDisruptionsForPrompt(
+    (options?.filmDisruptions ?? [])
+      .map((row, index) => {
+        const kind = normalizeFilmDisruptionKind(row.kind);
+        if (!kind) return null;
+        return {
+          id: `dis_${index}`,
+          kind,
+          time: row.time,
+          note: row.note,
+          createdAt: Date.now(),
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null),
+  );
+  const disruptionsSection = disruptionsBlock
+    ? `\n\n${disruptionsBlock}\nIf disruptions are tagged, explain how defense broke the primary action and suggest offensive READ options in alternativeOptions.`
+    : "";
+
   const patternCounterGuide = buildPatternCounterPromptSection();
 
-  return `You are a basketball AI coaching assistant and video scout. Analyze these ${frameCount} sequential frames spanning ~2 seconds of game film (center timestamp ~${Math.round(timestamp)}s). ${titleLine}${frameSequenceSection}${eventsSection}
+  return `You are a basketball AI coaching assistant and video scout. Analyze these ${frameCount} sequential frames spanning ~2 seconds of game film (center timestamp ~${Math.round(timestamp)}s). ${titleLine}${frameSequenceSection}${eventsSection}${disruptionsSection}
 
 Identify what the OFFENSE (team with ball) is running and give actionable coaching for OUR team defending or adjusting. Return JSON only:
 {
@@ -135,6 +164,14 @@ Identify what the OFFENSE (team with ball) is running and give actionable coachi
     "defensiveAdjustments": [${COACHING_ITEM_SCHEMA}],
     "spacingFixes": [${COACHING_ITEM_SCHEMA}],
     "timingCorrections": [${COACHING_ITEM_SCHEMA}]
+  },
+  "disruption": {
+    "detected": true or false,
+    "coverage": "ice | switch | drop | hedge | trap | blitz | show | other (when detected)",
+    "whatBroke": "short phrase e.g. ICE denied middle on side PNR",
+    "suggestedRead": "offensive read e.g. reject, slip, backdoor",
+    "summary": "one sentence on how defense killed the plan",
+    "confidence": "high | medium | low"
   }
 }
 
@@ -153,6 +190,12 @@ Counter quality rules:
 - ballHandlerRule and screenerRule must be specific (e.g. "BH: force baseline, no middle" / "Big: drop to level of ball").
 - weakPoint = what the offense wants (corner three, roller layup, mismatch, etc.).
 - Prefer counters that directly answer the highest-confidence playPattern.
+
+Disruption rules:
+- Set disruption.detected true when defense clearly stops the primary action (deny, ICE, hedge, switch, trap, help collapse).
+- When coach disruption tags are provided, align coverage/whatBroke with them.
+- suggestedRead must name a concrete offensive counter (reject, slip, short roll, backdoor, skip).
+- If the set still runs cleanly, set detected false and omit coverage.
 
 Scout rules:
 - Return 1-3 tendencies max, highest confidence first.
@@ -308,5 +351,7 @@ export function parseFilmClipAnalysisPayload(
     playPatterns[0]?.tag,
   );
 
-  return { summary, tendencies, playPatterns, coaching };
+  const disruption = parseFilmClipAiDisruption(body.disruption);
+
+  return { summary, tendencies, playPatterns, coaching, disruption };
 }

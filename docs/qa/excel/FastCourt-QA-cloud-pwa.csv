@@ -1,0 +1,7 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Cloud Sync & PWA,Cloud Sync,CLD-01,P0,Two-device sync,Create play on A → sync B,Play on B,,,,,
+Cloud Sync & PWA,Cloud Sync,CLD-02,P1,Delete syncs as tombstone,,Removed on other device,,,,,
+Cloud Sync & PWA,Cloud Sync,CLD-03,P1,Settings sync,,PDF brand matches,,,,,
+Cloud Sync & PWA,PWA & Offline,PWA-01,P2,Install prompt / Add to Home Screen,,Standalone app opens,,,,,
+Cloud Sync & PWA,PWA & Offline,PWA-02,P2,Offline shell after prior visit,,offline.html or cached shell,,,,,
+Cloud Sync & PWA,PWA & Offline,PWA-03,P2,Update prompt after deploy,,New version notification,,,,,

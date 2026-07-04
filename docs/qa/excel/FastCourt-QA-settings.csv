@@ -1,0 +1,9 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Settings & Admin,Coach Settings,SET-01,P1,Profile name/email update,,Saves,,,,,
+Settings & Admin,Coach Settings,SET-02,P1,"PDF branding (logo, footer)",,Appears on print exports,,,,,
+Settings & Admin,Coach Settings,SET-03,P1,Library JSON export/import,,Backup restores plays,,,,,
+Settings & Admin,Coach Settings,SET-04,P0,Cloud sync library (cloud user),,"Merge stats, no data loss",,,,,
+Settings & Admin,Coach Settings,SET-05,P1,Devices list vs limit,,Accurate device count,,,,,
+Settings & Admin,Admin,SET-10,P2,Library nav module toggle,Disable Film Room,"Tab hidden, /film-room redirects",,,,,
+Settings & Admin,Admin,SET-11,P2,User role management,,Role change applies,,,,,
+Settings & Admin,Admin,SET-12,P2,Org seats and invites,,Coach can join org,,,,,

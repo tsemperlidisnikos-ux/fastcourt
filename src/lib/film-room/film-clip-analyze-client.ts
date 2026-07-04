@@ -39,6 +39,7 @@ export async function analyzeFilmClip(request: FilmClipAnalyzeRequest) {
   return {
     ...result,
     playPatterns: result.playPatterns ?? [],
+    disruption: result.disruption,
     coaching: result.coaching ?? {
       alternativeOptions: [],
       counters: [],

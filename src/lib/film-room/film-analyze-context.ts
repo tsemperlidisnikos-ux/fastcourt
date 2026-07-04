@@ -8,12 +8,13 @@ import {
   FILM_ROOM_EVENT_LABELS,
   formatFilmEventTime,
 } from "@/lib/film-room/film-event-tags";
-import type { FilmRoomEvent } from "@/types/film-room";
+import type { FilmRoomEvent, FilmRoomDisruption } from "@/types/film-room";
 
 export interface FilmAnalyzeContext {
   frameCount: number;
   frameTimes: number[];
   coachTags: FilmRoomEvent[];
+  disruptionTags: FilmRoomDisruption[];
 }
 
 export function formatFrameSequenceForPrompt(
@@ -72,10 +73,12 @@ export function formatFilmAnalyzeTagsSummary(tags: FilmRoomEvent[]): string {
 export function buildFilmAnalyzeContext(
   coachTags: FilmRoomEvent[],
   frameTimes: number[],
+  disruptionTags: FilmRoomDisruption[] = [],
 ): FilmAnalyzeContext {
   return {
     frameCount: frameTimes.length || FILM_CLIP_ANALYZE_FRAME_COUNT,
     frameTimes,
     coachTags,
+    disruptionTags,
   };
 }

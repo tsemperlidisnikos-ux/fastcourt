@@ -50,13 +50,37 @@ export interface FilmRoomEvent {
   createdAt: number;
 }
 
+/** Defensive reads that disrupt the offense plan (Level A+ tagging). */
+export type FilmRoomDisruptionKind =
+  | "hedge"
+  | "switch"
+  | "trap"
+  | "ice"
+  | "deny"
+  | "top_lock"
+  | "help"
+  | "collapse"
+  | "drop";
+
+export interface FilmRoomDisruption {
+  id: string;
+  kind: FilmRoomDisruptionKind;
+  /** Video timestamp (seconds). */
+  time: number;
+  note?: string;
+  createdAt: number;
+}
+
 /** Possession / chapter markers for quick navigation. */
+export type FilmRoomBookmarkKind = "chapter" | "disruption";
+
 export interface FilmRoomBookmark {
   id: string;
   /** Video timestamp (seconds). */
   time: number;
   label: string;
   note?: string;
+  kind?: FilmRoomBookmarkKind;
   createdAt: number;
 }
 
@@ -71,6 +95,11 @@ export interface FilmRoomAnalysisRecord {
     time: number;
     note?: string;
   }>;
+  disruptionTags?: Array<{
+    kind: FilmRoomDisruptionKind;
+    time: number;
+    note?: string;
+  }>;
   createdAt: number;
 }
 
@@ -81,6 +110,8 @@ export interface FilmRoomSession {
   strokes: VideoAnnotationStroke[];
   /** Coach-tagged actions on the timeline. */
   events: FilmRoomEvent[];
+  /** Defensive disruption tags (ICE, switch, hedge…). */
+  disruptions: FilmRoomDisruption[];
   /** Chapter / possession bookmarks on the timeline. */
   bookmarks: FilmRoomBookmark[];
   /** Past AI analyze results for this clip. */

@@ -1,0 +1,13 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Library — Practice,Session Builder,PRC-01,P0,Create practice session,,Session in list,,,,,
+Library — Practice,Session Builder,PRC-02,P0,Add play blocks + cue blocks,,Duration totals correct,,,,,
+Library — Practice,Session Builder,PRC-03,P1,Drag reorder blocks,,Order persists,,,,,
+Library — Practice,Session Builder,PRC-04,P1,Add whole playbook,,Plays expanded into blocks,,,,,
+Library — Practice,Session Builder,PRC-05,P2,Save/load template,,Template reusable,,,,,
+Library — Practice,Session Builder,PRC-06,P2,Missing play warning,,Flagged in UI,,,,,
+Library — Practice,Live Mode,PRC-10,P0,Live timer start/pause (Space),,Timer counts down,,,,,
+Library — Practice,Live Mode,PRC-11,P1,Next/prev block (arrows),,Block highlight moves,,,,,
+Library — Practice,Live Mode,PRC-12,P1,Mark done & advance (Enter),,Advances to next block,,,,,
+Library — Practice,Live Mode,PRC-13,P1,Exit live (Esc),,Returns to planner,,,,,
+Library — Practice,Print & Share,PRC-20,P1,Session PDF print,,Blocks + durations in PDF,,,,,
+Library — Practice,Print & Share,PRC-21,P1,Share practice link,,Read-only in incognito,,,,,

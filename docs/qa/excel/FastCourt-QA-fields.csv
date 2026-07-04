@@ -1,0 +1,5 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Library — Fields,Seasons / Teams / Series / Tags,FLD-01,P1,Create team,,Available in play filters & Players,,,,,
+Library — Fields,Seasons / Teams / Series / Tags,FLD-02,P1,Rename field value,,Plays reflect new name,,,,,
+Library — Fields,Seasons / Teams / Series / Tags,FLD-03,P2,Delete unused field,,Removed from lists,,,,,
+Library — Fields,Seasons / Teams / Series / Tags,FLD-04,P2,Play count per field accurate,,Count matches library,,,,,

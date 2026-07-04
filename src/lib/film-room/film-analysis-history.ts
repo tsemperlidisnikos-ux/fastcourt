@@ -8,6 +8,7 @@ export function createFilmAnalysisRecord(input: {
   result: FilmClipAnalysisResult;
   frameCount: number;
   coachTags: FilmRoomAnalysisRecord["coachTags"];
+  disruptionTags?: FilmRoomAnalysisRecord["disruptionTags"];
 }): FilmRoomAnalysisRecord {
   return {
     id: `film_an_${crypto.randomUUID()}`,
@@ -15,6 +16,7 @@ export function createFilmAnalysisRecord(input: {
     result: input.result,
     frameCount: input.frameCount,
     coachTags: input.coachTags,
+    disruptionTags: input.disruptionTags,
     createdAt: Date.now(),
   };
 }

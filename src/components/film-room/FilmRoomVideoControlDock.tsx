@@ -6,7 +6,8 @@ interface Props {
   duration: number;
   markerTimes: number[];
   eventMarkerTimes?: Array<{ id: string; time: number }>;
-  bookmarkMarkerTimes?: Array<{ id: string; time: number }>;
+  disruptionMarkerTimes?: Array<{ id: string; time: number }>;
+  bookmarkMarkerTimes?: Array<{ id: string; time: number; kind?: string }>;
   fullscreen: boolean;
   autoClearOnScrub: boolean;
   onToggleAutoClear: () => void;
@@ -29,6 +30,7 @@ export function FilmRoomVideoControlDock({
   duration,
   markerTimes,
   eventMarkerTimes = [],
+  disruptionMarkerTimes = [],
   bookmarkMarkerTimes = [],
   fullscreen,
   autoClearOnScrub,
@@ -76,10 +78,21 @@ export function FilmRoomVideoControlDock({
         <div className="fc-film-video-controls-markers" aria-hidden="true">
           {bookmarkMarkerTimes.map((marker) => {
             const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
+            const isDisruption = marker.kind === "disruption";
             return (
               <span
                 key={marker.id}
-                className="fc-film-video-controls-marker is-bookmark"
+                className={`fc-film-video-controls-marker${isDisruption ? " is-disruption-break" : " is-bookmark"}`}
+                style={{ left: `${pct}%` }}
+              />
+            );
+          })}
+          {disruptionMarkerTimes.map((marker) => {
+            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
+            return (
+              <span
+                key={marker.id}
+                className="fc-film-video-controls-marker is-disruption"
                 style={{ left: `${pct}%` }}
               />
             );

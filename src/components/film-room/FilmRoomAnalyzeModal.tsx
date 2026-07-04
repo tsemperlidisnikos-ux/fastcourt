@@ -8,6 +8,7 @@ import { useClientMounted } from "@/hooks/useClientMounted";
 import { useDraggablePanel } from "@/hooks/useDraggablePanel";
 import { gamePlanCategoryLabel } from "@/lib/game-plan/constants";
 import { FilmRoomCoachingSections } from "@/components/film-room/FilmRoomCoachingSections";
+import { FilmRoomDisruptionPanel } from "@/components/film-room/FilmRoomDisruptionPanel";
 import { FilmScoutPrintOverlay } from "@/components/film-room/FilmScoutPrintOverlay";
 import {
   buildAiScoutGamePlanPatch,
@@ -148,10 +149,12 @@ function FilmRoomAnalyzeModalBody({
       selectedPatternIndices,
       selectedCoachingKeys,
       coachTags: analyzeContext?.coachTags ?? [],
+      disruptionTags: analyzeContext?.disruptionTags ?? [],
     };
   }, [
     analysis,
     analyzeContext?.coachTags,
+    analyzeContext?.disruptionTags,
     currentTime,
     plays,
     selectedCoachingKeys,
@@ -392,6 +395,14 @@ function FilmRoomAnalyzeModalBody({
 
         <div className="fc-film-game-plan-body">
           <p className="fc-film-analyze-summary">{analysis.summary}</p>
+
+          <FilmRoomDisruptionPanel
+            analysis={analysis}
+            disruptionTags={analyzeContext?.disruptionTags ?? []}
+            plays={plays}
+            sessionId={sessionId}
+            timestamp={currentTime}
+          />
 
           <h3 className="fc-film-game-plan-section-title">Coaching suggestions</h3>
           <p className="fc-film-analyze-coaching-hint">

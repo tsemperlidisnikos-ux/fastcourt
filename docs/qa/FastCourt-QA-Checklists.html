@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FastCourt — QA Checklists</title>
+  <style>
+    :root {
+      --ink: #111;
+      --muted: #555;
+      --line: #ccc;
+      --p0: #b91c1c;
+      --p1: #b45309;
+      --p2: #475569;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--ink);
+      margin: 0;
+      padding: 16px 18px 32px;
+    }
+    .cover {
+      page-break-after: always;
+      padding: 24px 0 40px;
+      border-bottom: 3px solid var(--ink);
+      margin-bottom: 24px;
+    }
+    .cover h1 { font-size: 28px; margin: 0 0 8px; }
+    .cover p { margin: 4px 0; color: var(--muted); }
+    .legend { margin-top: 16px; font-size: 10px; }
+    .legend span { margin-right: 14px; }
+    .pri.p0 { color: var(--p0); font-weight: 700; }
+    .pri.p1 { color: var(--p1); font-weight: 700; }
+    .pri.p2 { color: var(--p2); }
+    h2 {
+      font-size: 16px;
+      margin: 28px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid var(--ink);
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 12px;
+      margin: 16px 0 6px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      page-break-after: avoid;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      page-break-inside: auto;
+    }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 5px 6px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f3f4f6;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    td.id { width: 52px; font-weight: 700; white-space: nowrap; }
+    td.pri { width: 28px; text-align: center; }
+    td.pass { width: 36px; }
+    td.notes { width: 80px; min-height: 18px; }
+    td.steps, td.expected { font-size: 10px; color: var(--muted); }
+    .no-print {
+      position: sticky;
+      top: 0;
+      background: #111;
+      color: #fff;
+      padding: 10px 14px;
+      margin: -16px -18px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 10;
+    }
+    .no-print button {
+      background: #2563eb;
+      color: #fff;
+      border: 0;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 0; font-size: 9px; }
+      @page { margin: 12mm; size: A4 landscape; }
+      h2 { margin-top: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <strong>FastCourt QA Checklists</strong>
+    <button type="button" onclick="window.print()">Print / Save as PDF</button>
+    <span style="opacity:0.8;font-size:11px">Tip: Enable "Background graphics" for colors</span>
+  </div>
+
+  <div class="cover">
+    <h1>FastCourt — QA Checklists</h1>
+    <p><strong>Version:</strong> ea047b7 · <strong>Generated:</strong> 5 Ιουλ 2026, 12:18 π.μ.</p>
+    <p><strong>Production:</strong> https://fastcourt.eu</p>
+    <p>Pass: Y / N / N/A — fill in Excel or print HTML to PDF</p>
+    <div class="legend">
+      <span><strong>P0</strong> = Critical / smoke</span>
+      <span><strong>P1</strong> = Important regression</span>
+      <span><strong>P2</strong> = Secondary</span>
+    </div>
+    <p style="margin-top:20px"><strong>Total checks:</strong> 157</p>
+  </div>
+
+  
+    <section class="module">
+      <h2>Auth &amp; Onboarding</h2>
+      
+        <h3>Login &amp; Signup</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">AUTH-01</td>
+            <td class="pri p0">P0</td>
+            <td>Email/password login succeeds</td>
+            <td class="steps">Go to /login, enter valid credentials</td>
+            <td class="expected">Redirect to /library, session active</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-02</td>
+            <td class="pri p1">P1</td>
+            <td>OAuth login (if configured)</td>
+            <td class="steps">Use Google/OAuth button</td>
+            <td class="expected">Account created or linked, library loads</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-03</td>
+            <td class="pri p0">P0</td>
+            <td>Invalid password shows error</td>
+            <td class="steps">Wrong password</td>
+            <td class="expected">Clear error, no crash</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-04</td>
+            <td class="pri p1">P1</td>
+            <td>Signup with strong password</td>
+            <td class="steps">/login?signup=1, complete wizard</td>
+            <td class="expected">Confirmation email flow or immediate access per config</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-05</td>
+            <td class="pri p1">P1</td>
+            <td>Password recovery</td>
+            <td class="steps">Forgot password → email link</td>
+            <td class="expected">Reset works, can login</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-06</td>
+            <td class="pri p0">P0</td>
+            <td>Sign out clears session</td>
+            <td class="steps">User menu → Sign out</td>
+            <td class="expected">Redirect login, library scope reset</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-07</td>
+            <td class="pri p1">P1</td>
+            <td>Trial banner visible on trial account</td>
+            <td class="steps">—</td>
+            <td class="expected">TrialBanner in library header</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-08</td>
+            <td class="pri p0">P0</td>
+            <td>Trial expired gate blocks app</td>
+            <td class="steps">—</td>
+            <td class="expected">Overlay until subscribe or license key</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Onboarding</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">ONB-01</td>
+            <td class="pri p1">P1</td>
+            <td>Welcome modal on first visit (?welcome=1)</td>
+            <td class="steps">—</td>
+            <td class="expected">Create play / Import .fdb / Tour / Skip</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">ONB-02</td>
+            <td class="pri p2">P2</td>
+            <td>Create play from onboarding opens create flow</td>
+            <td class="steps">—</td>
+            <td class="expected">Create modal or designer opens</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">ONB-03</td>
+            <td class="pri p2">P2</td>
+            <td>Import .fdb from onboarding triggers import</td>
+            <td class="steps">—</td>
+            <td class="expected">Import picker opens on Draw tab</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">ONB-04</td>
+            <td class="pri p2">P2</td>
+            <td>Skip dismisses modal permanently</td>
+            <td class="steps">—</td>
+            <td class="expected">Does not reappear on refresh</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Library — Draw</h2>
+      
+        <h3>Create &amp; Import</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DRW-01</td>
+            <td class="pri p0">P0</td>
+            <td>Create new play</td>
+            <td class="steps">Create → fill metadata → save</td>
+            <td class="expected">Play in list, opens in designer</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-02</td>
+            <td class="pri p0">P0</td>
+            <td>Create new drill</td>
+            <td class="steps">—</td>
+            <td class="expected">Type drill, ball tool available in designer</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-03</td>
+            <td class="pri p1">P1</td>
+            <td>Import .fdb file</td>
+            <td class="steps">Import .fdb → select FastDraw export</td>
+            <td class="expected">Plays imported with thumbnails</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-04</td>
+            <td class="pri p2">P2</td>
+            <td>Deep link ?new=1 opens create</td>
+            <td class="steps">—</td>
+            <td class="expected">Create modal auto-opens</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-05</td>
+            <td class="pri p2">P2</td>
+            <td>Deep link ?import=1 opens import</td>
+            <td class="steps">—</td>
+            <td class="expected">Import picker auto-opens</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Browse &amp; Filter</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DRW-10</td>
+            <td class="pri p0">P0</td>
+            <td>Type chips filter (All/Favorites/Plays/Drills)</td>
+            <td class="steps">—</td>
+            <td class="expected">List count changes correctly</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-11</td>
+            <td class="pri p1">P1</td>
+            <td>Search by play name</td>
+            <td class="steps">—</td>
+            <td class="expected">Matching plays only</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-12</td>
+            <td class="pri p1">P1</td>
+            <td>Season/team/series/tags filters</td>
+            <td class="steps">—</td>
+            <td class="expected">Combined filters work</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-13</td>
+            <td class="pri p1">P1</td>
+            <td>Sort control changes order</td>
+            <td class="steps">—</td>
+            <td class="expected">Order updates, persists preference</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-14</td>
+            <td class="pri p1">P1</td>
+            <td>Pagination (50/page)</td>
+            <td class="steps">—</td>
+            <td class="expected">Next/prev pages work</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-15</td>
+            <td class="pri p1">P1</td>
+            <td>Preview panel shows frames + animation</td>
+            <td class="steps">—</td>
+            <td class="expected">Select row → preview updates</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-16</td>
+            <td class="pri p2">P2</td>
+            <td>Split resizer between list and preview</td>
+            <td class="steps">—</td>
+            <td class="expected">Drag divider, layout persists</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-17</td>
+            <td class="pri p1">P1</td>
+            <td>Favorite toggle</td>
+            <td class="steps">—</td>
+            <td class="expected">Star persists, Favorites filter works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Row Actions &amp; Bulk</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DRW-20</td>
+            <td class="pri p0">P0</td>
+            <td>Open in designer</td>
+            <td class="steps">—</td>
+            <td class="expected">/designer?item=id loads play</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-21</td>
+            <td class="pri p1">P1</td>
+            <td>Duplicate play</td>
+            <td class="steps">—</td>
+            <td class="expected">Copy appears with distinct id</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-22</td>
+            <td class="pri p1">P1</td>
+            <td>Edit details modal</td>
+            <td class="steps">—</td>
+            <td class="expected">Metadata saves</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-23</td>
+            <td class="pri p1">P1</td>
+            <td>Delete with confirm</td>
+            <td class="steps">—</td>
+            <td class="expected">Play removed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-24</td>
+            <td class="pri p2">P2</td>
+            <td>Context menu all actions</td>
+            <td class="steps">—</td>
+            <td class="expected">Right-click menu complete</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-25</td>
+            <td class="pri p2">P2</td>
+            <td>Bulk selection operations</td>
+            <td class="steps">—</td>
+            <td class="expected">Multi-select works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Preview — Present / Print / Share</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DRW-30</td>
+            <td class="pri p1">P1</td>
+            <td>Present overlay animation</td>
+            <td class="steps">Present → Space/ arrows</td>
+            <td class="expected">Play/pause, frame step, Esc close</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-31</td>
+            <td class="pri p1">P1</td>
+            <td>Print single play PDF</td>
+            <td class="steps">—</td>
+            <td class="expected">Print overlay → Save as PDF</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-32</td>
+            <td class="pri p1">P1</td>
+            <td>Share link generation</td>
+            <td class="steps">—</td>
+            <td class="expected">URL with #s= hash, opens in incognito</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-33</td>
+            <td class="pri p2">P2</td>
+            <td>Add to playbook from preview</td>
+            <td class="steps">—</td>
+            <td class="expected">Play added to selected playbook</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-34</td>
+            <td class="pri p2">P2</td>
+            <td>Add to practice from preview</td>
+            <td class="steps">—</td>
+            <td class="expected">Practice block created</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Library Clean</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DRW-40</td>
+            <td class="pri p2">P2</td>
+            <td>Library Clean panel opens</td>
+            <td class="steps">—</td>
+            <td class="expected">Review queue visible</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-41</td>
+            <td class="pri p2">P2</td>
+            <td>Duplicate detection</td>
+            <td class="steps">—</td>
+            <td class="expected">Duplicate groups listed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-42</td>
+            <td class="pri p2">P2</td>
+            <td>Duplicate merge</td>
+            <td class="steps">—</td>
+            <td class="expected">Merged play correct, duplicate removed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Library — Playbooks</h2>
+      
+        <h3>Playbooks Core</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PB-01</td>
+            <td class="pri p0">P0</td>
+            <td>Create playbook</td>
+            <td class="steps">—</td>
+            <td class="expected">Appears in sidebar list</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-02</td>
+            <td class="pri p0">P0</td>
+            <td>Add/remove plays</td>
+            <td class="steps">—</td>
+            <td class="expected">Preview updates</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-03</td>
+            <td class="pri p1">P1</td>
+            <td>Rename playbook</td>
+            <td class="steps">—</td>
+            <td class="expected">Name persists</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-04</td>
+            <td class="pri p1">P1</td>
+            <td>Delete playbook</td>
+            <td class="steps">—</td>
+            <td class="expected">Playbook gone, plays remain</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-05</td>
+            <td class="pri p1">P1</td>
+            <td>Inline preview zoom/pages</td>
+            <td class="steps">—</td>
+            <td class="expected">Navigate multi-page layout</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Print &amp; Share</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PB-10</td>
+            <td class="pri p0">P0</td>
+            <td>Download/Print PDF</td>
+            <td class="steps">Print settings → Print/Save PDF</td>
+            <td class="expected">PDF with branding, all plays</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-11</td>
+            <td class="pri p1">P1</td>
+            <td>Print settings panel options</td>
+            <td class="steps">—</td>
+            <td class="expected">Cover, layout, scale apply</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-12</td>
+            <td class="pri p1">P1</td>
+            <td>Share to players</td>
+            <td class="steps">—</td>
+            <td class="expected">Roster picker → link works incognito</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-13</td>
+            <td class="pri p2">P2</td>
+            <td>Save to cloud (cloud user)</td>
+            <td class="steps">—</td>
+            <td class="expected">Sync completes without error</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Library — Game Plan</h2>
+      
+        <h3>Plan Management</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">GP-01</td>
+            <td class="pri p0">P0</td>
+            <td>Create game plan (opponent)</td>
+            <td class="steps">—</td>
+            <td class="expected">Plan in list, draft status</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-02</td>
+            <td class="pri p0">P0</td>
+            <td>Add plays to categories</td>
+            <td class="steps">—</td>
+            <td class="expected">Entries appear per category</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-03</td>
+            <td class="pri p1">P1</td>
+            <td>Edit call names and entry notes</td>
+            <td class="steps">—</td>
+            <td class="expected">Saves on apply</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-04</td>
+            <td class="pri p1">P1</td>
+            <td>Suggest plays modal</td>
+            <td class="steps">—</td>
+            <td class="expected">Library matches suggested</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-05</td>
+            <td class="pri p1">P1</td>
+            <td>Duplicate / rematch / archive</td>
+            <td class="steps">—</td>
+            <td class="expected">Each action correct</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-06</td>
+            <td class="pri p2">P2</td>
+            <td>Deep link ?plan=id</td>
+            <td class="steps">—</td>
+            <td class="expected">Plan auto-selected</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-07</td>
+            <td class="pri p1">P1</td>
+            <td>Scouting keys + post-game notes</td>
+            <td class="steps">—</td>
+            <td class="expected">Text persists</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Opponent Board &amp; Film Evidence</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">GP-10</td>
+            <td class="pri p0">P0</td>
+            <td>Add opponent tendency preset</td>
+            <td class="steps">—</td>
+            <td class="expected">Chip on board</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-11</td>
+            <td class="pri p1">P1</td>
+            <td>Suggested defense plays → Add</td>
+            <td class="steps">—</td>
+            <td class="expected">Play in Defense category</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-12</td>
+            <td class="pri p0">P0</td>
+            <td>Film evidence panel links</td>
+            <td class="steps">After AI scout apply</td>
+            <td class="expected">Watch clip ↗ opens Film Room at timestamp</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-13</td>
+            <td class="pri p1">P1</td>
+            <td>Opponent history import</td>
+            <td class="steps">—</td>
+            <td class="expected">Prior scout merged</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-14</td>
+            <td class="pri p1">P1</td>
+            <td>Clip button on film-linked tendency</td>
+            <td class="steps">—</td>
+            <td class="expected">Correct session + time</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Game Day &amp; Timeout</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">GP-20</td>
+            <td class="pri p0">P0</td>
+            <td>Game Day full-screen board</td>
+            <td class="steps">—</td>
+            <td class="expected">Categories navigable</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-21</td>
+            <td class="pri p0">P0</td>
+            <td>Staff live view link sync</td>
+            <td class="steps">2 browsers, change category</td>
+            <td class="expected">Remote view updates</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-22</td>
+            <td class="pri p1">P1</td>
+            <td>Timeout mode slides</td>
+            <td class="steps">—</td>
+            <td class="expected">Counter cues from AI scout</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-23</td>
+            <td class="pri p1">P1</td>
+            <td>Bench card PDF print</td>
+            <td class="steps">—</td>
+            <td class="expected">One-page call sheet</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Homework &amp; Practice Prep</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">GP-30</td>
+            <td class="pri p1">P1</td>
+            <td>Create player homework</td>
+            <td class="steps">—</td>
+            <td class="expected">Assignment with due date</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-31</td>
+            <td class="pri p1">P1</td>
+            <td>Share homework per player</td>
+            <td class="steps">—</td>
+            <td class="expected">Personalized link</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-32</td>
+            <td class="pri p1">P1</td>
+            <td>Player ack opened/studied</td>
+            <td class="steps">Incognito homework link</td>
+            <td class="expected">Coach panel counts update</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-33</td>
+            <td class="pri p2">P2</td>
+            <td>Prep practice before game</td>
+            <td class="steps">—</td>
+            <td class="expected">Practice session created with date</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Library — Fields</h2>
+      
+        <h3>Seasons / Teams / Series / Tags</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">FLD-01</td>
+            <td class="pri p1">P1</td>
+            <td>Create team</td>
+            <td class="steps">—</td>
+            <td class="expected">Available in play filters &amp; Players</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FLD-02</td>
+            <td class="pri p1">P1</td>
+            <td>Rename field value</td>
+            <td class="steps">—</td>
+            <td class="expected">Plays reflect new name</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FLD-03</td>
+            <td class="pri p2">P2</td>
+            <td>Delete unused field</td>
+            <td class="steps">—</td>
+            <td class="expected">Removed from lists</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FLD-04</td>
+            <td class="pri p2">P2</td>
+            <td>Play count per field accurate</td>
+            <td class="steps">—</td>
+            <td class="expected">Count matches library</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Library — Practice</h2>
+      
+        <h3>Session Builder</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PRC-01</td>
+            <td class="pri p0">P0</td>
+            <td>Create practice session</td>
+            <td class="steps">—</td>
+            <td class="expected">Session in list</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-02</td>
+            <td class="pri p0">P0</td>
+            <td>Add play blocks + cue blocks</td>
+            <td class="steps">—</td>
+            <td class="expected">Duration totals correct</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-03</td>
+            <td class="pri p1">P1</td>
+            <td>Drag reorder blocks</td>
+            <td class="steps">—</td>
+            <td class="expected">Order persists</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-04</td>
+            <td class="pri p1">P1</td>
+            <td>Add whole playbook</td>
+            <td class="steps">—</td>
+            <td class="expected">Plays expanded into blocks</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-05</td>
+            <td class="pri p2">P2</td>
+            <td>Save/load template</td>
+            <td class="steps">—</td>
+            <td class="expected">Template reusable</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-06</td>
+            <td class="pri p2">P2</td>
+            <td>Missing play warning</td>
+            <td class="steps">—</td>
+            <td class="expected">Flagged in UI</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Live Mode</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PRC-10</td>
+            <td class="pri p0">P0</td>
+            <td>Live timer start/pause (Space)</td>
+            <td class="steps">—</td>
+            <td class="expected">Timer counts down</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-11</td>
+            <td class="pri p1">P1</td>
+            <td>Next/prev block (arrows)</td>
+            <td class="steps">—</td>
+            <td class="expected">Block highlight moves</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-12</td>
+            <td class="pri p1">P1</td>
+            <td>Mark done &amp; advance (Enter)</td>
+            <td class="steps">—</td>
+            <td class="expected">Advances to next block</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-13</td>
+            <td class="pri p1">P1</td>
+            <td>Exit live (Esc)</td>
+            <td class="steps">—</td>
+            <td class="expected">Returns to planner</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Print &amp; Share</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PRC-20</td>
+            <td class="pri p1">P1</td>
+            <td>Session PDF print</td>
+            <td class="steps">—</td>
+            <td class="expected">Blocks + durations in PDF</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-21</td>
+            <td class="pri p1">P1</td>
+            <td>Share practice link</td>
+            <td class="steps">—</td>
+            <td class="expected">Read-only in incognito</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Library — Players</h2>
+      
+        <h3>Roster</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PLR-01</td>
+            <td class="pri p1">P1</td>
+            <td>Add player with team</td>
+            <td class="steps">—</td>
+            <td class="expected">Appears in roster</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PLR-02</td>
+            <td class="pri p1">P1</td>
+            <td>Edit/delete player</td>
+            <td class="steps">—</td>
+            <td class="expected">CRUD works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PLR-03</td>
+            <td class="pri p2">P2</td>
+            <td>Filter by team + search</td>
+            <td class="steps">—</td>
+            <td class="expected">List filters</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PLR-04</td>
+            <td class="pri p2">P2</td>
+            <td>Player in share-to-players picker</td>
+            <td class="steps">—</td>
+            <td class="expected">Selectable in homework/share flows</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Designer</h2>
+      
+        <h3>Tools &amp; Objects</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DSG-01</td>
+            <td class="pri p0">P0</td>
+            <td>Place offense/defense players</td>
+            <td class="steps">O/P and X shortcuts</td>
+            <td class="expected">Markers snap, labels editable</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-02</td>
+            <td class="pri p0">P0</td>
+            <td>Draw pass, cut, dribble, screen, shot</td>
+            <td class="steps">L then C/P/B/R/S</td>
+            <td class="expected">Actions on court, sequence panel</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-03</td>
+            <td class="pri p1">P1</td>
+            <td>Ball on drill (B)</td>
+            <td class="steps">—</td>
+            <td class="expected">Ball ring on player</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-04</td>
+            <td class="pri p1">P1</td>
+            <td>Text, cone, flag, shadow, zone tools</td>
+            <td class="steps">—</td>
+            <td class="expected">Objects place and edit</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-05</td>
+            <td class="pri p1">P1</td>
+            <td>Delete selected (Delete key)</td>
+            <td class="steps">—</td>
+            <td class="expected">Object/action removed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-06</td>
+            <td class="pri p0">P0</td>
+            <td>Undo/redo (Ctrl+Z / Ctrl+Shift+Z)</td>
+            <td class="steps">—</td>
+            <td class="expected">5+ steps reversible</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Frames &amp; Animation</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DSG-10</td>
+            <td class="pri p0">P0</td>
+            <td>Add/duplicate/delete frames</td>
+            <td class="steps">—</td>
+            <td class="expected">Frame strip updates</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-11</td>
+            <td class="pri p0">P0</td>
+            <td>Animation playback</td>
+            <td class="steps">—</td>
+            <td class="expected">Smooth, ball transfers</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-12</td>
+            <td class="pri p1">P1</td>
+            <td>Player propagation across frames</td>
+            <td class="steps">—</td>
+            <td class="expected">Positions propagate per rules</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-13</td>
+            <td class="pri p1">P1</td>
+            <td>Frame notes rich text</td>
+            <td class="steps">—</td>
+            <td class="expected">Notes save and print</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-14</td>
+            <td class="pri p2">P2</td>
+            <td>Import frame from library play</td>
+            <td class="steps">—</td>
+            <td class="expected">Frame content copied</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-15</td>
+            <td class="pri p2">P2</td>
+            <td>Mirror frame (Ctrl+Shift+M)</td>
+            <td class="steps">—</td>
+            <td class="expected">Horizontal mirror</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-16</td>
+            <td class="pri p2">P2</td>
+            <td>Formations / FastBuild</td>
+            <td class="steps">—</td>
+            <td class="expected">Preset layout applied</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Court Settings</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DSG-20</td>
+            <td class="pri p1">P1</td>
+            <td>Half vs full court</td>
+            <td class="steps">—</td>
+            <td class="expected">Layout changes</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-21</td>
+            <td class="pri p1">P1</td>
+            <td>Court template (NCAA/NBA/FIBA/HS)</td>
+            <td class="steps">—</td>
+            <td class="expected">Lines match template</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-22</td>
+            <td class="pri p2">P2</td>
+            <td>Wood texture + line toggles</td>
+            <td class="steps">—</td>
+            <td class="expected">Visual updates</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Save &amp; Export</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">DSG-30</td>
+            <td class="pri p0">P0</td>
+            <td>Save persists to library</td>
+            <td class="steps">Edit → navigate away → return</td>
+            <td class="expected">Changes kept</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-31</td>
+            <td class="pri p1">P1</td>
+            <td>Unsaved changes guard</td>
+            <td class="steps">—</td>
+            <td class="expected">Prompt on leave</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-32</td>
+            <td class="pri p1">P1</td>
+            <td>Share link from designer</td>
+            <td class="steps">—</td>
+            <td class="expected">Valid #s= URL</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-33</td>
+            <td class="pri p2">P2</td>
+            <td>Export MP4 animation</td>
+            <td class="steps">—</td>
+            <td class="expected">Video downloads (Chrome/Edge)</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-34</td>
+            <td class="pri p2">P2</td>
+            <td>Export PNG frames</td>
+            <td class="steps">—</td>
+            <td class="expected">Images download</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-35</td>
+            <td class="pri p2">P2</td>
+            <td>Print from designer</td>
+            <td class="steps">—</td>
+            <td class="expected">Print overlay works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Film Room</h2>
+      
+        <h3>Sessions &amp; Video</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">FIL-01</td>
+            <td class="pri p0">P0</td>
+            <td>Upload MP4 session</td>
+            <td class="steps">—</td>
+            <td class="expected">Session in sidebar, video plays</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-02</td>
+            <td class="pri p1">P1</td>
+            <td>YouTube URL session</td>
+            <td class="steps">—</td>
+            <td class="expected">Embeds and scrubs</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-03</td>
+            <td class="pri p1">P1</td>
+            <td>Direct MP4 URL session</td>
+            <td class="steps">—</td>
+            <td class="expected">Video loads</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-04</td>
+            <td class="pri p1">P1</td>
+            <td>Delete session</td>
+            <td class="steps">—</td>
+            <td class="expected">Removed with confirm</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-05</td>
+            <td class="pri p1">P1</td>
+            <td>Deep link ?session=&amp;t=</td>
+            <td class="steps">—</td>
+            <td class="expected">Opens session, seeks to time</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Annotation &amp; Navigation</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">FIL-10</td>
+            <td class="pri p1">P1</td>
+            <td>Pen/laser strokes time-synced</td>
+            <td class="steps">—</td>
+            <td class="expected">Strokes appear at playhead, rewind shows again</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-11</td>
+            <td class="pri p1">P1</td>
+            <td>Shuttle wheel seek</td>
+            <td class="steps">—</td>
+            <td class="expected">Fine scrub works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-12</td>
+            <td class="pri p1">P1</td>
+            <td>Fullscreen F + Space play/pause</td>
+            <td class="steps">—</td>
+            <td class="expected">Works in fullscreen</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-13</td>
+            <td class="pri p2">P2</td>
+            <td>Auto-clear on scrub toggle</td>
+            <td class="steps">—</td>
+            <td class="expected">Drawings clear when scrubbing if enabled</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Coach Tags &amp; Chapters</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">FIL-20</td>
+            <td class="pri p0">P0</td>
+            <td>Tag events 1–7 at playhead</td>
+            <td class="steps">—</td>
+            <td class="expected">Orange markers on timeline</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-21</td>
+            <td class="pri p1">P1</td>
+            <td>Undo last tag / edit tag</td>
+            <td class="steps">—</td>
+            <td class="expected">Tag updated or removed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-22</td>
+            <td class="pri p0">P0</td>
+            <td>Add chapter bookmark (B key)</td>
+            <td class="steps">—</td>
+            <td class="expected">Green marker, list entry</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-23</td>
+            <td class="pri p1">P1</td>
+            <td>Quick chapter labels (ATO, Horns…)</td>
+            <td class="steps">—</td>
+            <td class="expected">Chapter at current time</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-24</td>
+            <td class="pri p1">P1</td>
+            <td>Chapter list seek + edit + delete</td>
+            <td class="steps">—</td>
+            <td class="expected">Jump to timestamp</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>AI Analyze &amp; Game Plan</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">FIL-30</td>
+            <td class="pri p0">P0</td>
+            <td>Analyze clip (OPENAI configured)</td>
+            <td class="steps">Upload MP4 → tag → Analyze</td>
+            <td class="expected">Modal with summary, tendencies, coaching</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-31</td>
+            <td class="pri p0">P0</td>
+            <td>Frame preview strip (10 frames)</td>
+            <td class="steps">—</td>
+            <td class="expected">Thumbnails before/during analyze</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-32</td>
+            <td class="pri p0">P0</td>
+            <td>Apply full scout to game plan</td>
+            <td class="steps">—</td>
+            <td class="expected">Tendencies, plays, notes, timeout cues, film refs</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-33</td>
+            <td class="pri p1">P1</td>
+            <td>Add to game plan (manual tendency)</td>
+            <td class="steps">—</td>
+            <td class="expected">Tendency with film link</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-34</td>
+            <td class="pri p1">P1</td>
+            <td>Analysis history reopen</td>
+            <td class="steps">—</td>
+            <td class="expected">Past read opens modal</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-35</td>
+            <td class="pri p1">P1</td>
+            <td>AI off when no OPENAI_API_KEY</td>
+            <td class="steps">—</td>
+            <td class="expected">Hint shown, Analyze disabled</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Scout PDF</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">FIL-40</td>
+            <td class="pri p1">P1</td>
+            <td>Scout PDF from analyze modal</td>
+            <td class="steps">—</td>
+            <td class="expected">Print/Save PDF with branding</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-41</td>
+            <td class="pri p1">P1</td>
+            <td>Session PDF with chapters + analyses</td>
+            <td class="steps">—</td>
+            <td class="expected">Chapters section + clip links</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Share Links</h2>
+      
+        <h3>Share Types (incognito)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">SHR-01</td>
+            <td class="pri p0">P0</td>
+            <td>Play share link</td>
+            <td class="steps">—</td>
+            <td class="expected">Animation viewable, no login</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SHR-02</td>
+            <td class="pri p1">P1</td>
+            <td>Playbook share link</td>
+            <td class="steps">—</td>
+            <td class="expected">Read-only playbook</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SHR-03</td>
+            <td class="pri p1">P1</td>
+            <td>Practice share link</td>
+            <td class="steps">—</td>
+            <td class="expected">Session plan visible</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SHR-04</td>
+            <td class="pri p1">P1</td>
+            <td>Game plan share link</td>
+            <td class="steps">—</td>
+            <td class="expected">Categories readable</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SHR-05</td>
+            <td class="pri p1">P1</td>
+            <td>Homework share + ack</td>
+            <td class="steps">—</td>
+            <td class="expected">Opened/studied tracked</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SHR-06</td>
+            <td class="pri p1">P1</td>
+            <td>Game day staff link</td>
+            <td class="steps">—</td>
+            <td class="expected">Live category sync</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Settings &amp; Admin</h2>
+      
+        <h3>Coach Settings</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">SET-01</td>
+            <td class="pri p1">P1</td>
+            <td>Profile name/email update</td>
+            <td class="steps">—</td>
+            <td class="expected">Saves</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-02</td>
+            <td class="pri p1">P1</td>
+            <td>PDF branding (logo, footer)</td>
+            <td class="steps">—</td>
+            <td class="expected">Appears on print exports</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-03</td>
+            <td class="pri p1">P1</td>
+            <td>Library JSON export/import</td>
+            <td class="steps">—</td>
+            <td class="expected">Backup restores plays</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-04</td>
+            <td class="pri p0">P0</td>
+            <td>Cloud sync library (cloud user)</td>
+            <td class="steps">—</td>
+            <td class="expected">Merge stats, no data loss</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-05</td>
+            <td class="pri p1">P1</td>
+            <td>Devices list vs limit</td>
+            <td class="steps">—</td>
+            <td class="expected">Accurate device count</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Admin</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">SET-10</td>
+            <td class="pri p2">P2</td>
+            <td>Library nav module toggle</td>
+            <td class="steps">Disable Film Room</td>
+            <td class="expected">Tab hidden, /film-room redirects</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-11</td>
+            <td class="pri p2">P2</td>
+            <td>User role management</td>
+            <td class="steps">—</td>
+            <td class="expected">Role change applies</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-12</td>
+            <td class="pri p2">P2</td>
+            <td>Org seats and invites</td>
+            <td class="steps">—</td>
+            <td class="expected">Coach can join org</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Cloud Sync &amp; PWA</h2>
+      
+        <h3>Cloud Sync</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">CLD-01</td>
+            <td class="pri p0">P0</td>
+            <td>Two-device sync</td>
+            <td class="steps">Create play on A → sync B</td>
+            <td class="expected">Play on B</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">CLD-02</td>
+            <td class="pri p1">P1</td>
+            <td>Delete syncs as tombstone</td>
+            <td class="steps">—</td>
+            <td class="expected">Removed on other device</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">CLD-03</td>
+            <td class="pri p1">P1</td>
+            <td>Settings sync</td>
+            <td class="steps">—</td>
+            <td class="expected">PDF brand matches</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>PWA &amp; Offline</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">PWA-01</td>
+            <td class="pri p2">P2</td>
+            <td>Install prompt / Add to Home Screen</td>
+            <td class="steps">—</td>
+            <td class="expected">Standalone app opens</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PWA-02</td>
+            <td class="pri p2">P2</td>
+            <td>Offline shell after prior visit</td>
+            <td class="steps">—</td>
+            <td class="expected">offline.html or cached shell</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PWA-03</td>
+            <td class="pri p2">P2</td>
+            <td>Update prompt after deploy</td>
+            <td class="steps">—</td>
+            <td class="expected">New version notification</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Production Smoke (fastcourt.eu)</h2>
+      
+        <h3>15-minute smoke</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">SMK-01</td>
+            <td class="pri p0">P0</td>
+            <td>Login on production</td>
+            <td class="steps">—</td>
+            <td class="expected">Library loads</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SMK-02</td>
+            <td class="pri p0">P0</td>
+            <td>Create play → designer → save</td>
+            <td class="steps">—</td>
+            <td class="expected">End-to-end OK</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SMK-03</td>
+            <td class="pri p0">P0</td>
+            <td>Film Room analyze on production</td>
+            <td class="steps">—</td>
+            <td class="expected">AI returns (if key set)</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SMK-04</td>
+            <td class="pri p1">P1</td>
+            <td>Share link on production domain</td>
+            <td class="steps">—</td>
+            <td class="expected">Hash decode works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SMK-05</td>
+            <td class="pri p1">P1</td>
+            <td>Game Plan Game Day on production</td>
+            <td class="steps">—</td>
+            <td class="expected">Board opens</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+</body>
+</html>

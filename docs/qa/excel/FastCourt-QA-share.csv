@@ -1,0 +1,7 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Share Links,Share Types (incognito),SHR-01,P0,Play share link,,"Animation viewable, no login",,,,,
+Share Links,Share Types (incognito),SHR-02,P1,Playbook share link,,Read-only playbook,,,,,
+Share Links,Share Types (incognito),SHR-03,P1,Practice share link,,Session plan visible,,,,,
+Share Links,Share Types (incognito),SHR-04,P1,Game plan share link,,Categories readable,,,,,
+Share Links,Share Types (incognito),SHR-05,P1,Homework share + ack,,Opened/studied tracked,,,,,
+Share Links,Share Types (incognito),SHR-06,P1,Game day staff link,,Live category sync,,,,,

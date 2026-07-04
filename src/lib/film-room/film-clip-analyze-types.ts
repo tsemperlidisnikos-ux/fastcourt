@@ -49,11 +49,22 @@ export interface FilmClipCoachingRecommendations {
   timingCorrections: FilmClipCoachingSuggestion[];
 }
 
+/** AI vision read of whether defense broke the offense plan. */
+export interface FilmClipAiDisruption {
+  detected: boolean;
+  coverage?: CounterCoverageId;
+  whatBroke?: string;
+  suggestedRead?: string;
+  summary?: string;
+  confidence?: "high" | "medium" | "low";
+}
+
 export interface FilmClipAnalysisResult {
   summary: string;
   tendencies: FilmClipAnalysisTendency[];
   playPatterns: FilmClipPlayPattern[];
   coaching: FilmClipCoachingRecommendations;
+  disruption?: FilmClipAiDisruption;
 }
 
 export interface FilmClipAnalyzeRequest {
@@ -64,6 +75,12 @@ export interface FilmClipAnalyzeRequest {
   frameTimes?: number[];
   /** Coach-tagged events near the analyze window. */
   filmEvents?: Array<{
+    kind: string;
+    time: number;
+    note?: string;
+  }>;
+  /** Defensive disruption tags near the analyze window. */
+  filmDisruptions?: Array<{
     kind: string;
     time: number;
     note?: string;

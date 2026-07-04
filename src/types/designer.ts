@@ -231,6 +231,27 @@ export interface DesignerFrame {
   /** Total playback duration for this frame's actions, in seconds. */
   animDurationSec?: number;
 
+  /** Offensive read branch when defense disrupts the primary action. */
+  readBranch?: FrameReadBranch;
+
+}
+
+
+
+export interface FrameReadBranch {
+
+  /** Coach label e.g. "If ICE — Reject" */
+
+  label: string;
+
+  /** Defensive coverage that triggers this read (ice, switch, hedge…) */
+
+  coverage?: string;
+
+  /** Primary frame id this read branches from */
+
+  parentFrameId?: string;
+
 }
 
 
