@@ -10,6 +10,10 @@ import {
   buildDisruptionPracticeEntries,
   disruptionPracticeSessionTitle,
 } from "@/lib/film-room/film-practice-disruption";
+import {
+  buildHomeworkReadItemsFromEntries,
+} from "@/lib/film-room/film-homework-disruption";
+import { homeworkForGamePlan } from "@/lib/game-plan/player-homework";
 import { suggestOffensePlaysForDisruption } from "@/lib/film-room/film-offense-variation-match";
 import { appNotice } from "@/stores/dialog-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
@@ -36,13 +40,24 @@ export function FilmRoomDisruptionPanel({
 }: Props) {
   const router = useRouter();
   const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
+  const gamePlans = useOrganizerStore((s) => s.gamePlans);
+  const playerHomework = useOrganizerStore((s) => s.playerHomework);
   const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
   const addDisruptionReadsToPractice = useOrganizerStore(
     (s) => s.addDisruptionReadsToPractice,
   );
+  const addDisruptionReadsToHomework = useOrganizerStore(
+    (s) => s.addDisruptionReadsToHomework,
+  );
+  const createDisruptionHomeworkFromGamePlan = useOrganizerStore(
+    (s) => s.createDisruptionHomeworkFromGamePlan,
+  );
   const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [selectedHomeworkId, setSelectedHomeworkId] = useState<string>("");
   const [practiceBusy, setPracticeBusy] = useState(false);
+  const [homeworkBusy, setHomeworkBusy] = useState(false);
   const assessment = useMemo(
     () =>
       detectFilmDisruption({
@@ -77,6 +92,19 @@ export function FilmRoomDisruptionPanel({
     return buildDisruptionPracticeEntries(offenseMatches, assessment, analysis);
   }, [analysis, assessment, offenseMatches]);
 
+  const homeworkReadItems = useMemo(() => {
+    if (!practiceEntries.length) return [];
+    return buildHomeworkReadItemsFromEntries(practiceEntries, {
+      sessionId,
+      timestamp,
+    });
+  }, [practiceEntries, sessionId, timestamp]);
+
+  const planHomework = useMemo(() => {
+    if (!selectedPlanId) return [];
+    return homeworkForGamePlan(playerHomework, selectedPlanId);
+  }, [playerHomework, selectedPlanId]);
+
   async function handleAddToPractice(createNew: boolean) {
     if (!practiceEntries.length) {
       appNotice("Practice", "No matching offense plays to add.");
@@ -108,6 +136,56 @@ export function FilmRoomDisruptionPanel({
       }
     } finally {
       setPracticeBusy(false);
+    }
+  }
+
+  async function handleAddToHomework(createNew: boolean) {
+    if (!homeworkReadItems.length) {
+      appNotice("Homework", "No matching offense plays to assign.");
+      return;
+    }
+    if (!gamePlans.length) {
+      appNotice("Homework", "Create a game plan first, then assign reads.");
+      return;
+    }
+    setHomeworkBusy(true);
+    try {
+      const planId = selectedPlanId || gamePlans[0]?.id || "";
+      if (!planId) return;
+
+      if (createNew || !selectedHomeworkId) {
+        const assignment = await createDisruptionHomeworkFromGamePlan(
+          planId,
+          homeworkReadItems,
+          sessionTitle,
+        );
+        if (!assignment) {
+          appNotice("Homework", "Could not create homework assignment.");
+          return;
+        }
+        appNotice(
+          "Homework",
+          `Created homework with ${homeworkReadItems.length} read${homeworkReadItems.length === 1 ? "" : "s"}.`,
+        );
+        router.push(`/library?tab=gameplan&plan=${encodeURIComponent(planId)}`);
+        return;
+      }
+
+      const added = await addDisruptionReadsToHomework(
+        selectedHomeworkId,
+        homeworkReadItems,
+      );
+      appNotice(
+        "Homework",
+        added
+          ? `Added ${added} read${added === 1 ? "" : "s"} to homework.`
+          : "Those reads are already in the assignment.",
+      );
+      if (added) {
+        router.push(`/library?tab=gameplan&plan=${encodeURIComponent(planId)}`);
+      }
+    } finally {
+      setHomeworkBusy(false);
     }
   }
 
@@ -270,6 +348,61 @@ export function FilmRoomDisruptionPanel({
               onClick={() => void handleAddToPractice(true)}
             >
               New practice session
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {homeworkReadItems.length && gamePlans.length ? (
+        <div className="fc-film-disruption-homework">
+          <h5 className="fc-film-disruption-reads-title">Player homework</h5>
+          <label className="fc-film-disruption-practice-select">
+            <span>Game plan</span>
+            <select
+              value={selectedPlanId || gamePlans[0]?.id || ""}
+              onChange={(e) => {
+                setSelectedPlanId(e.target.value);
+                setSelectedHomeworkId("");
+              }}
+            >
+              {gamePlans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.title} vs {plan.opponent}
+                </option>
+              ))}
+            </select>
+          </label>
+          {planHomework.length ? (
+            <label className="fc-film-disruption-practice-select">
+              <span>Assignment</span>
+              <select
+                value={selectedHomeworkId || planHomework[0]?.id || ""}
+                onChange={(e) => setSelectedHomeworkId(e.target.value)}
+              >
+                {planHomework.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.title} ({row.status})
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <div className="fc-film-disruption-practice-actions">
+            <button
+              type="button"
+              className="fc-film-disruption-practice-btn"
+              disabled={homeworkBusy}
+              onClick={() => void handleAddToHomework(false)}
+            >
+              Add reads to homework
+            </button>
+            <button
+              type="button"
+              className="fc-film-disruption-practice-btn secondary"
+              disabled={homeworkBusy}
+              onClick={() => void handleAddToHomework(true)}
+            >
+              New homework
             </button>
           </div>
         </div>

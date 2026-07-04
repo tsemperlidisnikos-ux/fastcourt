@@ -12,15 +12,29 @@ interface Props {
   play: StoredPlay;
   onClose: () => void;
   simulateGuardRotation?: boolean;
+  initialFrameIndex?: number;
 }
 
 export function PresentationOverlay({
   play,
   onClose,
   simulateGuardRotation = false,
+  initialFrameIndex = 0,
 }: Props) {
-  const [frameIndex, setFrameIndex] = useState(0);
+  const startFrame =
+    typeof initialFrameIndex === "number" &&
+    Number.isFinite(initialFrameIndex) &&
+    initialFrameIndex >= 0
+      ? Math.min(Math.floor(initialFrameIndex), Math.max(0, play.frames.length - 1))
+      : 0;
+  const [frameIndex, setFrameIndex] = useState(startFrame);
   const animation = usePlayAnimationDriver(play, { simulateGuardRotation });
+
+  useEffect(() => {
+    animation.clearSample();
+    setFrameIndex(startFrame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset when opening a new read frame
+  }, [play.id, startFrame]);
 
   const chainFrames = useMemo(
     () => framesForDesignerThumbnails(play.frames),

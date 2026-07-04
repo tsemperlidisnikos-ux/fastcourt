@@ -470,6 +470,47 @@
   color: #cbd5e1;
 }
 
+.homework-share-read-call {
+  display: block;
+  margin-bottom: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.85);
+  border: 1px solid #fca5a5;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.homework-share-read-thumb {
+  margin-top: 8px;
+  max-width: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.homework-share-read-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.homework-share-film-link {
+  text-align: center;
+  text-decoration: none;
+}
+
+.game-plan-share-category.is-film-reads .game-plan-share-category-title {
+  color: #fca5a5;
+}
+
+.game-plan-share-call-row.is-read-call {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.15);
+}
+
 #screen-organizer .fc-game-plan-homework-panel {
   margin: 0 18px 12px;
   padding: 14px 16px;

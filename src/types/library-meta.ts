@@ -180,9 +180,20 @@ export interface PlayerHomeworkAssignment {
   team: string;
   notes?: string;
   playIds: string[];
+  /** Film Room offensive reads — opens at read frame in player homework. */
+  readItems?: PlayerHomeworkReadItem[];
   playerTokens?: Record<string, string>;
   playerStatus: Record<string, PlayerHomeworkPlayerStatus>;
   status: PlayerHomeworkStatus;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PlayerHomeworkReadItem {
+  playId: string;
+  frameIndex?: number;
+  liveCall?: string;
+  notes?: string;
+  filmSessionId?: string;
+  filmTimestamp?: number;
 }

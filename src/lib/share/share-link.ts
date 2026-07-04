@@ -26,6 +26,10 @@ export type ShareGamePlanEntry = {
   callName?: string;
   notes?: string;
   play?: ShareMinifiedPlay;
+  frameIndex?: number;
+  liveCall?: string;
+  filmSessionId?: string;
+  filmTimestamp?: number;
 };
 
 export type SharePayload =
@@ -493,12 +497,33 @@ export function buildSmartGamePlanUrl(
 
 function buildHomeworkShareEntries(
   plan: GamePlan,
-  playIds: string[],
+  assignment: PlayerHomeworkAssignment,
   plays: StoredPlay[],
 ): ShareGamePlanEntry[] {
-  const wanted = new Set(playIds);
+  const wanted = new Set(assignment.playIds);
   const playById = new Map(plays.map((play) => [play.id, play]));
   const entries: ShareGamePlanEntry[] = [];
+  const seenPlayIds = new Set<string>();
+
+  for (const read of assignment.readItems ?? []) {
+    const play = playById.get(read.playId);
+    if (!play) continue;
+    const signature = `${read.playId}|${read.frameIndex ?? 0}`;
+    if (seenPlayIds.has(signature)) continue;
+    seenPlayIds.add(signature);
+    entries.push({
+      categoryId: "halfcourt",
+      categoryLabel: "Film reads",
+      callName: read.liveCall?.trim() || play.title?.slice(0, 120),
+      notes: truncateShareNotes(read.notes || "", 400) || undefined,
+      frameIndex: read.frameIndex,
+      liveCall: read.liveCall?.trim()?.slice(0, 80) || undefined,
+      filmSessionId: read.filmSessionId,
+      filmTimestamp: read.filmTimestamp,
+      play: minifyStoredPlay(play),
+    });
+    wanted.delete(read.playId);
+  }
 
   for (const entry of plan.entries) {
     if (!entry.playId || !wanted.has(entry.playId)) continue;
@@ -513,12 +538,15 @@ function buildHomeworkShareEntries(
     if (entry.callName?.trim()) row.callName = entry.callName.trim().slice(0, 120);
     entries.push(row);
     wanted.delete(entry.playId);
+    seenPlayIds.add(`${entry.playId}|0`);
   }
 
-  for (const playId of playIds) {
+  for (const playId of assignment.playIds) {
     if (!wanted.has(playId)) continue;
     const play = playById.get(playId);
     if (!play) continue;
+    const signature = `${playId}|0`;
+    if (seenPlayIds.has(signature)) continue;
     entries.push({
       categoryId: "custom" as GamePlanCategoryId,
       callName: play.title?.slice(0, 120),
@@ -562,7 +590,7 @@ export function encodeHomeworkPayload(
       team: String(assignment.team || "").slice(0, 80),
       notes: truncateShareNotes(assignment.notes || "", 800) || undefined,
     },
-    entries: buildHomeworkShareEntries(plan, assignment.playIds, plays),
+    entries: buildHomeworkShareEntries(plan, assignment, plays),
     stageRef,
     homeworkView: true,
   };

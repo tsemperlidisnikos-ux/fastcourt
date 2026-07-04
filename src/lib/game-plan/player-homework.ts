@@ -1,5 +1,11 @@
 import { computePrepPracticeDate } from "@/lib/game-plan/prep-practice";
-import type { GamePlan, PlayerHomeworkAssignment } from "@/types/library-meta";
+import {
+  normalizeHomeworkReadItems,
+} from "@/lib/film-room/film-homework-disruption";
+import type {
+  GamePlan,
+  PlayerHomeworkAssignment,
+} from "@/types/library-meta";
 
 export function newPlayerHomeworkId() {
   return `hw_${crypto.randomUUID()}`;
@@ -34,6 +40,7 @@ export function normalizePlayerHomework(
     playIds: Array.isArray(raw.playIds)
       ? [...new Set(raw.playIds.filter(Boolean))]
       : [],
+    readItems: normalizeHomeworkReadItems(raw.readItems),
     playerTokens:
       raw.playerTokens && typeof raw.playerTokens === "object"
         ? Object.fromEntries(

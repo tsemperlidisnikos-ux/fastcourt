@@ -21,4 +21,6 @@ Library — Game Plan,Game Day & Timeout,GP-25,P1,Bench card PDF print,,One-page
 Library — Game Plan,Homework & Practice Prep,GP-30,P1,Create player homework,,Assignment with due date,,,,,
 Library — Game Plan,Homework & Practice Prep,GP-31,P1,Share homework per player,,Personalized link,,,,,
 Library — Game Plan,Homework & Practice Prep,GP-32,P1,Player ack opened/studied,Incognito homework link,Coach panel counts update,,,,,
-Library — Game Plan,Homework & Practice Prep,GP-33,P2,Prep practice before game,,Practice session created with date,,,,,
+Library — Game Plan,Homework & Practice Prep,GP-33,P0,Assign disruption reads to homework,Film Room → Analyze → Player homework,Read items with liveCall + read frame in share link,,,,,
+Library — Game Plan,Homework & Practice Prep,GP-34,P1,Player homework film read study,Incognito homework link,"CALL banner, Study read opens at frame",,,,,
+Library — Game Plan,Homework & Practice Prep,GP-35,P2,Prep practice before game,,Practice session created with date,,,,,

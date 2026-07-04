@@ -61,8 +61,11 @@ export function GamePlanHomeworkPanel({ plan, assignment }: Props) {
         <div>
           <h3 className="fc-game-plan-homework-title">{assignment.title}</h3>
           <p className="fc-game-plan-homework-meta">
-            Due {formatHomeworkDueDate(assignment.dueDate)} · {assignment.playIds.length} plays ·{" "}
-            {studiedCount}/{roster.length || 0} studied · {homeworkOpenedCount(assignment)} opened
+            Due {formatHomeworkDueDate(assignment.dueDate)} · {assignment.playIds.length} plays
+            {(assignment.readItems?.length ?? 0) > 0
+              ? ` · ${assignment.readItems!.length} film read${assignment.readItems!.length === 1 ? "" : "s"}`
+              : ""}{" "}
+            · {studiedCount}/{roster.length || 0} studied · {homeworkOpenedCount(assignment)} opened
           </p>
         </div>
         <div className="fc-game-plan-homework-actions">

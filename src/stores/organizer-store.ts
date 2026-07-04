@@ -38,6 +38,10 @@ import type { HomeworkAckType } from "@/lib/game-plan/player-homework-ack";
 import { buildPracticeSessionFromGamePlan } from "@/lib/game-plan/prep-practice";
 import type { DisruptionPracticeEntry } from "@/lib/film-room/film-practice-disruption";
 import {
+  buildDisruptionHomeworkFromPlan,
+  mergeHomeworkReadItems,
+} from "@/lib/film-room/film-homework-disruption";
+import {
   createGamePlanDraft,
   duplicateGamePlan,
   newGamePlanEntryId,
@@ -67,6 +71,7 @@ import type {
   GamePlanEntry,
   GamePlanStatus,
   PlayerHomeworkAssignment,
+  PlayerHomeworkReadItem,
   PlaybookSection,
   PracticeSession,
   PracticeSessionItem,
@@ -170,6 +175,15 @@ interface OrganizerState {
     sessionId: string,
     entries: DisruptionPracticeEntry[],
   ) => Promise<number>;
+  addDisruptionReadsToHomework: (
+    homeworkId: string,
+    readItems: PlayerHomeworkReadItem[],
+  ) => Promise<number>;
+  createDisruptionHomeworkFromGamePlan: (
+    planId: string,
+    readItems: PlayerHomeworkReadItem[],
+    sessionTitle?: string,
+  ) => Promise<PlayerHomeworkAssignment | null>;
   addPlaybookToSession: (sessionId: string, playbookId: string) => Promise<void>;
   addPracticeCueBlock: (
     sessionId: string,
@@ -976,6 +990,45 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     await setPracticeData({ sessions });
     set({ practiceSessions: sessions });
     return addedCount;
+  },
+
+  addDisruptionReadsToHomework: async (homeworkId, readItems) => {
+    if (!readItems.length) return 0;
+    const playsById = new Map(get().plays.map((p) => [p.id, p]));
+    let addedCount = 0;
+    const playerHomework = get().playerHomework.map((row) => {
+      if (row.id !== homeworkId) return row;
+      const mergedReads = mergeHomeworkReadItems(row.readItems, readItems);
+      addedCount = mergedReads.length - (row.readItems?.length ?? 0);
+      if (addedCount <= 0) return row;
+      const playIdSet = new Set(row.playIds);
+      for (const item of readItems) {
+        if (playsById.has(item.playId)) playIdSet.add(item.playId);
+      }
+      return normalizePlayerHomework({
+        ...row,
+        playIds: [...playIdSet],
+        readItems: mergedReads,
+        updatedAt: new Date().toISOString(),
+      });
+    });
+    await setPlayerHomework(playerHomework);
+    set({ playerHomework });
+    return addedCount;
+  },
+
+  createDisruptionHomeworkFromGamePlan: async (planId, readItems, sessionTitle) => {
+    if (!readItems.length) return null;
+    const plan = get().gamePlans.find((row) => row.id === planId);
+    if (!plan) return null;
+    const playsById = new Map(get().plays.map((p) => [p.id, p]));
+    const validReads = readItems.filter((row) => playsById.has(row.playId));
+    if (!validReads.length) return null;
+    const assignment = buildDisruptionHomeworkFromPlan(plan, validReads, sessionTitle);
+    const playerHomework = [assignment, ...get().playerHomework];
+    await setPlayerHomework(playerHomework);
+    set({ playerHomework });
+    return assignment;
   },
 
   addPlaybookToSession: async (sessionId, playbookId) => {
