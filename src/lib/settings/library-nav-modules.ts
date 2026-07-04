@@ -52,7 +52,7 @@ export function isLibraryNavModuleEnabled(
 export function firstEnabledLibraryScreenTab(
   config: LibraryNavModulesConfig,
 ): LibraryScreenTab {
-  const order: LibraryScreenTab[] = [
+  const order: Exclude<LibraryNavModuleId, "film-room">[] = [
     "draw",
     "playbooks",
     "gameplan",
@@ -68,7 +68,16 @@ export function resolveLibraryScreenTab(
   config: LibraryNavModulesConfig,
 ): LibraryScreenTab {
   const tab = parseLibraryScreenTab(raw);
-  if (isLibraryNavModuleEnabled(config, tab)) return tab;
+  if (tab === "coach") {
+    if (
+      isLibraryNavModuleEnabled(config, "practice") ||
+      isLibraryNavModuleEnabled(config, "film-room")
+    ) {
+      return tab;
+    }
+    return firstEnabledLibraryScreenTab(config);
+  }
+  if (isLibraryNavModuleEnabled(config, tab as LibraryNavModuleId)) return tab;
   return firstEnabledLibraryScreenTab(config);
 }
 
@@ -78,6 +87,7 @@ export function parseLibraryScreenTab(raw: string | null): LibraryScreenTab {
     raw === "gameplan" ||
     raw === "fields" ||
     raw === "practice" ||
+    raw === "coach" ||
     raw === "players"
   ) {
     return raw;

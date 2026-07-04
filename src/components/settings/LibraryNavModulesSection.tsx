@@ -24,22 +24,29 @@ export function LibraryNavModulesSection({ config, onChange }: Props) {
         least one section must stay visible. Saved with Apply.
       </p>
       <div className="admin-library-nav-modules">
-        {LIBRARY_NAV_TABS.map((tab) => (
+        {LIBRARY_NAV_TABS.filter((tab) =>
+          (LIBRARY_NAV_MODULE_IDS as readonly string[]).includes(tab.id),
+        ).map((tab) => (
           <label key={tab.id} className="admin-library-nav-module-row">
             <input
               type="checkbox"
-              checked={config[tab.id]}
-              onChange={(e) => toggle(tab.id, e.target.checked)}
+              checked={config[tab.id as keyof LibraryNavModulesConfig]}
+              onChange={(e) =>
+                toggle(tab.id as (typeof LIBRARY_NAV_MODULE_IDS)[number], e.target.checked)
+              }
             />
             <span className="admin-library-nav-module-label">
               {tab.label}
             </span>
             <span className="admin-library-nav-module-hint">
-              {LIBRARY_NAV_MODULE_LABELS[tab.id]}
+              {LIBRARY_NAV_MODULE_LABELS[tab.id as keyof typeof LIBRARY_NAV_MODULE_LABELS]}
             </span>
           </label>
         ))}
       </div>
+      <p className="org-settings-brand-help">
+        The Coach tab appears when Practice or Film Room is enabled.
+      </p>
     </section>
   );
 }

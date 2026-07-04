@@ -246,6 +246,22 @@ export const QA_MODULES = [
     ],
   },
   {
+    id: "coach",
+    title: "Coach Dashboard",
+    sections: [
+      {
+        id: "coach-dash",
+        title: "Insights & Drills",
+        items: [
+          { id: "COH-01", priority: "P0", item: "Coach tab opens dashboard", expected: "Read success %, film eval, drill suggestions" },
+          { id: "COH-02", priority: "P1", item: "Practice read trend chart", steps: "Mark reads in 2+ sessions", expected: "Bars show session success rates" },
+          { id: "COH-03", priority: "P1", item: "Add drill blocks from suggestion", expected: "New practice session with CALL blocks" },
+          { id: "COH-04", priority: "P1", item: "Film session evaluation links", expected: "Links open Film Room with analyses" },
+        ],
+      },
+    ],
+  },
+  {
     id: "players",
     title: "Library — Players",
     sections: [
@@ -367,6 +383,7 @@ export const QA_MODULES = [
           { id: "FIL-57", priority: "P0", item: "Batch analyze possessions", steps: "Add disruption tags → Analyze possessions", expected: "Up to 8 clips analyzed, summary notice, Session PDF opens" },
           { id: "FIL-58", priority: "P1", item: "Ideal vs film compare strip", steps: "Analyze clip → library variation", expected: "Side-by-side Designer read frame and captured film frame" },
           { id: "FIL-59", priority: "P1", item: "Film evaluation strip (xP-lite)", steps: "Run 2+ analyses on session", expected: "Coverage + disruption rate in sidebar" },
+          { id: "FIL-60", priority: "P1", item: "Possession reel export + play", steps: "Add bookmarks → Play reel / Cut list / JSON", expected: "Auto-advances clips; exports manifest with deep links" },
         ],
       },
       {

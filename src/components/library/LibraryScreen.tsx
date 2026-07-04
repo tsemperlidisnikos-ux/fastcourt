@@ -12,6 +12,7 @@ import {
 import { OnboardingModal } from "@/components/library/OnboardingModal";
 import { GamePlanView } from "@/components/library/GamePlanView";
 import { PlaybooksView } from "@/components/library/PlaybooksView";
+import { CoachDashboardView } from "@/components/library/CoachDashboardView";
 import { PracticePlannerView } from "@/components/library/PracticePlannerView";
 import { PlayersView } from "@/components/library/PlayersView";
 import { TrialBanner } from "@/components/billing/TrialBanner";
@@ -132,6 +133,8 @@ export function LibraryScreen() {
             ? "library-gameplan-mode"
           : tab === "players"
             ? "library-players-mode"
+            : tab === "coach"
+              ? "library-coach-mode"
             : "library-practice-mode";
 
   return (
@@ -152,6 +155,10 @@ export function LibraryScreen() {
         ) : tab === "practice" ? (
           <div className="org-practice-shell-wrap" id="org-practice-shell-wrap">
             <PracticePlannerView />
+          </div>
+        ) : tab === "coach" ? (
+          <div className="org-coach-shell-wrap" id="org-coach-shell-wrap">
+            <CoachDashboardView />
           </div>
         ) : tab === "players" ? (
           <div className="org-players-shell-wrap" id="org-players-shell-wrap">

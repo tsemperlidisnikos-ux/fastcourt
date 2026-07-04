@@ -61,6 +61,7 @@ import {
   defaultPracticeItemDuration,
   newPracticeItemId,
   normalizePracticeSession,
+  normalizePracticeItem,
 } from "@/lib/practice/practice-items";
 import { sessionFromTemplate } from "@/lib/practice/templates";
 import type { StoredPlay } from "@/types/library";
@@ -190,6 +191,10 @@ interface OrganizerState {
     cueLabel: string,
     durationMin?: number,
   ) => Promise<void>;
+  appendPracticeItems: (
+    sessionId: string,
+    items: PracticeSessionItem[],
+  ) => Promise<number>;
   updatePracticeItem: (
     sessionId: string,
     itemId: string,
@@ -1058,6 +1063,26 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     });
     await setPracticeData({ sessions });
     set({ practiceSessions: sessions });
+  },
+
+  appendPracticeItems: async (sessionId, items) => {
+    if (!items.length) return 0;
+    let added = 0;
+    const sessions = get().practiceSessions.map((s) => {
+      if (s.id !== sessionId) return s;
+      const normalized = items.map((item, index) =>
+        normalizePracticeItem(item, s.items.length + index),
+      );
+      added = normalized.length;
+      return normalizePracticeSession({
+        ...s,
+        items: [...s.items, ...normalized],
+        updatedAt: new Date().toISOString(),
+      });
+    });
+    await setPracticeData({ sessions });
+    set({ practiceSessions: sessions });
+    return added;
   },
 
   updatePracticeItem: async (sessionId, itemId, patch) => {

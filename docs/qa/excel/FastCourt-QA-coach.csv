@@ -1,0 +1,5 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Coach Dashboard,Insights & Drills,COH-01,P0,Coach tab opens dashboard,,"Read success %, film eval, drill suggestions",,,,,
+Coach Dashboard,Insights & Drills,COH-02,P1,Practice read trend chart,Mark reads in 2+ sessions,Bars show session success rates,,,,,
+Coach Dashboard,Insights & Drills,COH-03,P1,Add drill blocks from suggestion,,New practice session with CALL blocks,,,,,
+Coach Dashboard,Insights & Drills,COH-04,P1,Film session evaluation links,,Links open Film Room with analyses,,,,,

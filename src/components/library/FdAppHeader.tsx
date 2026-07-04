@@ -38,7 +38,19 @@ export function FdAppHeader({ activeTab = "draw" }: { activeTab?: LibraryNavTabI
   const navModules = useLibraryNavModules();
 
   const visibleTabs = useMemo(
-    () => LIBRARY_NAV_TABS.filter((tab) => isLibraryNavModuleEnabled(navModules, tab.id)),
+    () =>
+      LIBRARY_NAV_TABS.filter((tab) => {
+        if (tab.id === "coach") {
+          return (
+            isLibraryNavModuleEnabled(navModules, "practice") ||
+            isLibraryNavModuleEnabled(navModules, "film-room")
+          );
+        }
+        if (tab.id === "film-room") {
+          return isLibraryNavModuleEnabled(navModules, "film-room");
+        }
+        return isLibraryNavModuleEnabled(navModules, tab.id);
+      }),
     [navModules],
   );
 

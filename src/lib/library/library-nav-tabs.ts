@@ -19,6 +19,11 @@ export const LIBRARY_NAV_TABS = [
     label: "PRACTICE",
     href: "/library?tab=practice",
   },
+  {
+    id: "coach" as const,
+    label: "COACH",
+    href: "/library?tab=coach",
+  },
   { id: "players" as const, label: "PLAYERS", href: "/library?tab=players" },
   {
     id: "film-room" as const,

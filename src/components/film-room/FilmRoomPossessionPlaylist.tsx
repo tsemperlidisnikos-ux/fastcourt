@@ -15,7 +15,9 @@ import {
   type PossessionPlaylistFilter,
   type PossessionPlaylistItem,
 } from "@/lib/film-room/film-possession-playlist";
-import type { FilmRoomBookmark } from "@/types/film-room";
+import type { FilmRoomBookmark, FilmRoomVideoSource } from "@/types/film-room";
+import { FilmRoomReelExportBar } from "@/components/film-room/FilmRoomReelExportBar";
+import type { PossessionReelSegment } from "@/lib/film-room/possession-reel-export";
 
 export interface FilmRoomPossessionPlaylistHandle {
   goNext: () => void;
@@ -24,18 +26,40 @@ export interface FilmRoomPossessionPlaylistHandle {
 }
 
 interface Props {
+  sessionId: string;
+  sessionTitle: string;
+  source: FilmRoomVideoSource;
   bookmarks: FilmRoomBookmark[];
   currentTime: number;
+  videoDuration: number;
   disabled?: boolean;
+  reelActive?: boolean;
+  reelIndex?: number;
   onSeek: (time: number) => void;
   onPlay?: () => void;
+  onStartReel?: (segments: PossessionReelSegment[]) => void;
+  onStopReel?: () => void;
 }
 
 export const FilmRoomPossessionPlaylist = forwardRef<
   FilmRoomPossessionPlaylistHandle,
   Props
 >(function FilmRoomPossessionPlaylist(
-  { bookmarks, currentTime, disabled = false, onSeek, onPlay },
+  {
+    sessionId,
+    sessionTitle,
+    source,
+    bookmarks,
+    currentTime,
+    videoDuration,
+    disabled = false,
+    reelActive = false,
+    reelIndex = 0,
+    onSeek,
+    onPlay,
+    onStartReel,
+    onStopReel,
+  },
   ref,
 ) {
   const [filter, setFilter] = useState<PossessionPlaylistFilter>("all");
@@ -178,6 +202,21 @@ export const FilmRoomPossessionPlaylist = forwardRef<
           No bookmarks match this filter — add chapters or mark where the plan broke.
         </p>
       )}
+
+      {onStartReel && onStopReel ? (
+        <FilmRoomReelExportBar
+          sessionId={sessionId}
+          sessionTitle={sessionTitle}
+          source={source}
+          bookmarks={bookmarks}
+          videoDuration={videoDuration}
+          filter={filter}
+          reelActive={reelActive}
+          reelIndex={reelIndex}
+          onStartReel={onStartReel}
+          onStopReel={onStopReel}
+        />
+      ) : null}
     </section>
   );
 });

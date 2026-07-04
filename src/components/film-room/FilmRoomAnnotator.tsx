@@ -70,6 +70,7 @@ import type {
   VideoAnnotationStroke,
 } from "@/types/film-room";
 import type { FilmAnalyzeContext } from "@/lib/film-room/film-analyze-context";
+import type { PossessionReelSegment } from "@/lib/film-room/possession-reel-export";
 import type { FilmScoutPrintModel } from "@/lib/film-room/film-scout-print-model";
 
 interface Props {
@@ -169,6 +170,9 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const [showFramePreviews, setShowFramePreviews] = useState(false);
   const [historyPlayheadTime, setHistoryPlayheadTime] = useState<number | null>(null);
   const [scoutPrintModel, setScoutPrintModel] = useState<FilmScoutPrintModel | null>(null);
+  const [reelActive, setReelActive] = useState(false);
+  const [reelIndex, setReelIndex] = useState(0);
+  const [reelSegments, setReelSegments] = useState<PossessionReelSegment[]>([]);
   const aiStatus = useAiAssistantStatus();
   const pdfBrand = useSettingsStore((s) => s.pdfBrand);
   const nativeVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -659,6 +663,55 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     }
   }
 
+  const handleStopReel = useCallback(() => {
+    setReelActive(false);
+    setReelIndex(0);
+    setReelSegments([]);
+    controllerRef.current?.pause();
+  }, []);
+
+  const handleStartReel = useCallback(
+    (segments: PossessionReelSegment[]) => {
+      if (!segments.length) return;
+      setReelSegments(segments);
+      setReelActive(true);
+      setReelIndex(0);
+      handleSliderSeek(segments[0]!.startSec);
+      controllerRef.current?.play();
+    },
+    [handleSliderSeek],
+  );
+
+  useEffect(() => {
+    if (!reelActive || !playing || !reelSegments.length) return;
+    const segment = reelSegments[reelIndex];
+    if (!segment) {
+      handleStopReel();
+      return;
+    }
+    if (currentTime < segment.endSec - 0.2) return;
+    const nextIndex = reelIndex + 1;
+    if (nextIndex >= reelSegments.length) {
+      handleStopReel();
+      appNotice(
+        "Reel complete",
+        `Played ${reelSegments.length} possession clip${reelSegments.length === 1 ? "" : "s"}.`,
+      );
+      return;
+    }
+    setReelIndex(nextIndex);
+    handleSliderSeek(reelSegments[nextIndex]!.startSec);
+    controllerRef.current?.play();
+  }, [
+    currentTime,
+    playing,
+    reelActive,
+    reelIndex,
+    reelSegments,
+    handleSliderSeek,
+    handleStopReel,
+  ]);
+
   const centerFilmPreviewUrl =
     framePreviews[Math.floor(framePreviews.length / 2)]?.dataUrl ?? undefined;
 
@@ -837,11 +890,19 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
 
         <FilmRoomPossessionPlaylist
           ref={playlistRef}
+          sessionId={session.id}
+          sessionTitle={session.title}
+          source={session.source}
           bookmarks={bookmarks}
           currentTime={currentTime}
+          videoDuration={duration}
           disabled={duration <= 0}
+          reelActive={reelActive}
+          reelIndex={reelIndex}
           onSeek={handleSliderSeek}
           onPlay={() => controllerRef.current?.play()}
+          onStartReel={handleStartReel}
+          onStopReel={handleStopReel}
         />
 
         <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />

@@ -10,6 +10,7 @@ import "@/styles/fc-fields.css";
 import "@/styles/fc-playbooks.css";
 import "@/styles/fc-game-plan.css";
 import "@/styles/fc-players.css";
+import "@/styles/fc-coach-dashboard.css";
 import "@/styles/billing-ui.css";
 import "@/styles/fc-presentation.css";
 import "@/styles/fc-playbook-print.css";
