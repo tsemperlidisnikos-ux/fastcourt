@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar";
 import { FilmRoomPossessionPlaylist, type FilmRoomPossessionPlaylistHandle } from "@/components/film-room/FilmRoomPossessionPlaylist";
+import { FilmRoomEvaluationStrip } from "@/components/film-room/FilmRoomEvaluationStrip";
 import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
 import { FilmRoomFramePreviewStrip } from "@/components/film-room/FilmRoomFramePreviewStrip";
 import { FilmRoomEventTagBar } from "@/components/film-room/FilmRoomEventTagBar";
@@ -49,6 +50,11 @@ import {
 } from "@/lib/film-room/markup-toolbar-presets";
 import { useAiAssistantStatus } from "@/hooks/useAiAssistantStatus";
 import { buildFilmScoutPrintModelFromSession } from "@/lib/film-room/film-scout-print-model";
+import {
+  buildBatchAnalyzeTargets,
+  formatBatchSummaryLine,
+  summarizeBatchAnalysis,
+} from "@/lib/film-room/film-batch-analyze";
 import { defaultFilmBookmarkLabel, FILM_DISRUPTION_BOOKMARK_LABEL } from "@/lib/film-room/film-room-bookmarks";
 import {
   resolvePdfCoverTeam,
@@ -151,6 +157,10 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     null,
   );
   const [analyzeBusy, setAnalyzeBusy] = useState(false);
+  const [batchBusy, setBatchBusy] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(
+    null,
+  );
   const [analyzePhase, setAnalyzePhase] = useState<"capturing" | "analyzing" | null>(null);
   const [captureProgress, setCaptureProgress] = useState({ current: 0, total: FILM_CLIP_ANALYZE_FRAME_COUNT });
   const [analyzeContext, setAnalyzeContext] = useState<FilmAnalyzeContext | null>(null);
@@ -475,22 +485,100 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
 
   const canAnalyzeClip = canCaptureFilmFrames(session.source);
 
+  async function performAnalyzeAtTime(
+    playheadTime: number,
+    options: { openModal?: boolean; storePreviews?: boolean } = {},
+  ): Promise<FilmClipAnalysisResult | null> {
+    const video = nativeVideoRef.current;
+    if (session.source.kind !== "youtube" && !video) {
+      throw new Error("Video is not ready yet. Try again in a moment.");
+    }
+    if (session.source.kind === "youtube" && !youtubePlayerRef.current) {
+      throw new Error("YouTube player is not ready yet. Try again in a moment.");
+    }
+
+    controllerRef.current?.pause();
+    const captured = await captureFilmFramesAroundTime({
+      source: session.source,
+      centerTime: playheadTime,
+      video,
+      youtubePlayer: youtubePlayerRef.current,
+      youtubeCaptureRoot: youtubeCaptureRootRef.current,
+      count: FILM_CLIP_ANALYZE_FRAME_COUNT,
+      onProgress: (current, total) => setCaptureProgress({ current, total }),
+    });
+    if (options.storePreviews !== false) {
+      const previews = capturedFramesToPreviews(captured);
+      setFramePreviews(previews);
+      setShowFramePreviews(true);
+    }
+    const coachTags = selectFilmEventsForAnalyze(events, playheadTime);
+    const disruptionTags = selectFilmDisruptionsForAnalyze(disruptions, playheadTime);
+    const context = buildFilmAnalyzeContext(coachTags, captured.times, disruptionTags);
+    if (options.openModal !== false) {
+      setAnalyzeContext(context);
+    }
+    setAnalyzePhase("analyzing");
+    const result = await analyzeFilmClip({
+      frames: captured.frames,
+      frameTimes: captured.times,
+      timestamp: playheadTime,
+      sessionTitle: session.title,
+      filmEvents: coachTags.map((event) => ({
+        kind: event.kind,
+        time: event.time,
+        note: event.note,
+      })),
+      filmDisruptions: disruptionTags.map((row) => ({
+        kind: row.kind,
+        time: row.time,
+        note: row.note,
+      })),
+    });
+    appendAnalysisRecord(
+      session.id,
+      createFilmAnalysisRecord({
+        playheadTime,
+        result,
+        frameCount: captured.frames.length,
+        coachTags: coachTags.map((tag) => ({
+          kind: tag.kind,
+          time: tag.time,
+          note: tag.note,
+        })),
+        disruptionTags: disruptionTags.map((tag) => ({
+          kind: tag.kind,
+          time: tag.time,
+          note: tag.note,
+        })),
+      }),
+    );
+    if (result.disruption?.detected) {
+      const note = result.disruption.whatBroke || result.disruption.summary;
+      addFilmBookmark(
+        session.id,
+        playheadTime,
+        FILM_DISRUPTION_BOOKMARK_LABEL,
+        note,
+        "disruption",
+      );
+    }
+    if (options.openModal !== false) {
+      setHistoryPlayheadTime(null);
+      setAnalysisResult(result);
+      setAnalyzeContext(context);
+      setAnalyzeModalOpen(true);
+    }
+    return result;
+  }
+
   async function handleAnalyzeClip() {
-    if (!canAnalyzeClip || analyzeBusy) return;
+    if (!canAnalyzeClip || analyzeBusy || batchBusy) return;
     if (aiStatus.configured === false) {
       appNotice(
         "AI Assistant",
         "OpenAI is not configured on this server. Add OPENAI_API_KEY to .env.local (local) or Vercel Environment Variables (production), then restart.",
       );
-      return;
-    }
-    const video = nativeVideoRef.current;
-    if (session.source.kind !== "youtube" && !video) {
-      appNotice("Analyze clip", "Video is not ready yet. Try again in a moment.");
-      return;
-    }
-    if (session.source.kind === "youtube" && !youtubePlayerRef.current) {
-      appNotice("Analyze clip", "YouTube player is not ready yet. Try again in a moment.");
       return;
     }
 
@@ -499,75 +587,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     setCaptureProgress({ current: 0, total: FILM_CLIP_ANALYZE_FRAME_COUNT });
     setShowFramePreviews(false);
     try {
-      controllerRef.current?.pause();
-      const captured = await captureFilmFramesAroundTime({
-        source: session.source,
-        centerTime: currentTime,
-        video,
-        youtubePlayer: youtubePlayerRef.current,
-        youtubeCaptureRoot: youtubeCaptureRootRef.current,
-        count: FILM_CLIP_ANALYZE_FRAME_COUNT,
-        onProgress: (current, total) => setCaptureProgress({ current, total }),
-      });
-      const previews = capturedFramesToPreviews(captured);
-      setFramePreviews(previews);
-      setShowFramePreviews(true);
-      const coachTags = selectFilmEventsForAnalyze(events, currentTime);
-      const disruptionTags = selectFilmDisruptionsForAnalyze(disruptions, currentTime);
-      const context = buildFilmAnalyzeContext(
-        coachTags,
-        captured.times,
-        disruptionTags,
-      );
-      setAnalyzeContext(context);
-      setAnalyzePhase("analyzing");
-      const result = await analyzeFilmClip({
-        frames: captured.frames,
-        frameTimes: captured.times,
-        timestamp: currentTime,
-        sessionTitle: session.title,
-        filmEvents: coachTags.map((event) => ({
-          kind: event.kind,
-          time: event.time,
-          note: event.note,
-        })),
-        filmDisruptions: disruptionTags.map((row) => ({
-          kind: row.kind,
-          time: row.time,
-          note: row.note,
-        })),
-      });
-      setHistoryPlayheadTime(null);
-      setAnalysisResult(result);
-      appendAnalysisRecord(
-        session.id,
-        createFilmAnalysisRecord({
-          playheadTime: currentTime,
-          result,
-          frameCount: captured.frames.length,
-          coachTags: coachTags.map((tag) => ({
-            kind: tag.kind,
-            time: tag.time,
-            note: tag.note,
-          })),
-          disruptionTags: disruptionTags.map((tag) => ({
-            kind: tag.kind,
-            time: tag.time,
-            note: tag.note,
-          })),
-        }),
-      );
-      if (result.disruption?.detected) {
-        const note = result.disruption.whatBroke || result.disruption.summary;
-        addFilmBookmark(
-          session.id,
-          currentTime,
-          FILM_DISRUPTION_BOOKMARK_LABEL,
-          note,
-          "disruption",
-        );
-      }
-      setAnalyzeModalOpen(true);
+      await performAnalyzeAtTime(currentTime, { openModal: true, storePreviews: true });
     } catch (err) {
       appNotice(
         "Analyze clip",
@@ -578,6 +598,69 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
       setAnalyzePhase(null);
     }
   }
+
+  async function handleBatchAnalyze() {
+    if (!canAnalyzeClip || analyzeBusy || batchBusy) return;
+    if (aiStatus.configured === false) {
+      appNotice(
+        "AI Assistant",
+        "OpenAI is not configured on this server. Add OPENAI_API_KEY to enable batch analyze.",
+      );
+      return;
+    }
+    const targets = buildBatchAnalyzeTargets(bookmarks, disruptions, "disruptions");
+    if (!targets.length) {
+      appNotice(
+        "Batch analyze",
+        "Add disruption tags or Plan broke here bookmarks first.",
+      );
+      return;
+    }
+
+    setBatchBusy(true);
+    const analysesBefore = analyses.length;
+    try {
+      for (let index = 0; index < targets.length; index += 1) {
+        const target = targets[index]!;
+        setBatchProgress({ current: index + 1, total: targets.length });
+        setAnalyzePhase("capturing");
+        setCaptureProgress({ current: 0, total: FILM_CLIP_ANALYZE_FRAME_COUNT });
+        await performAnalyzeAtTime(target.time, { openModal: false, storePreviews: false });
+      }
+      const updatedAnalyses =
+        useFilmRoomStore.getState().sessions.find((row) => row.id === session.id)
+          ?.analyses ?? analyses;
+      const batchRecords = updatedAnalyses.slice(analysesBefore);
+      const summary = summarizeBatchAnalysis(
+        batchRecords.length ? batchRecords : updatedAnalyses,
+      );
+      appNotice("Batch analyze complete", formatBatchSummaryLine(summary));
+      const model = buildFilmScoutPrintModelFromSession({
+        session: {
+          ...session,
+          events,
+          bookmarks,
+          analyses: updatedAnalyses,
+        },
+        origin: window.location.origin,
+        teamName: resolvePdfCoverTeam(pdfBrand),
+        footerText: resolvePdfFooterText(pdfBrand),
+      });
+      if (model) setScoutPrintModel(model);
+    } catch (err) {
+      appNotice(
+        "Batch analyze",
+        err instanceof Error ? err.message : "Batch analysis failed.",
+      );
+    } finally {
+      setBatchBusy(false);
+      setBatchProgress(null);
+      setAnalyzePhase(null);
+    }
+  }
+
+  const centerFilmPreviewUrl =
+    framePreviews[Math.floor(framePreviews.length / 2)]?.dataUrl ?? undefined;
 
   return (
     <div className="fc-film-annotator">
@@ -772,7 +855,12 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           onExportSession={
             analyses.length || bookmarks.length ? exportSessionScoutPdf : undefined
           }
+          onBatchAnalyze={canAnalyzeClip ? handleBatchAnalyze : undefined}
+          batchBusy={batchBusy}
+          batchProgress={batchProgress}
         />
+
+        <FilmRoomEvaluationStrip analyses={analyses} />
 
         <div className="fc-film-stage">
           <div ref={overlayRef} className="fc-film-video-stack">
@@ -862,6 +950,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           currentTime={historyPlayheadTime ?? currentTime}
           analysis={analysisResult}
           analyzeContext={analyzeContext}
+          filmPreviewUrl={centerFilmPreviewUrl}
           onClose={() => {
             setAnalyzeModalOpen(false);
             setAnalysisResult(null);

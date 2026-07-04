@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AddPlayToPlaybookModal } from "@/components/library/AddPlayToPlaybookModal";
 import { GamePlanHomeworkPanel } from "@/components/library/GamePlanHomeworkPanel";
 import { OpponentBoardPanel } from "@/components/library/OpponentBoardPanel";
+import { GamePlanReadRollupPanel } from "@/components/library/GamePlanReadRollupPanel";
 import { GamePlanFilmEvidencePanel } from "@/components/library/GamePlanFilmEvidencePanel";
 import { GameDayOverlay } from "@/components/library/GameDayOverlay";
 import { GamePlanBenchPrintOverlay } from "@/components/library/GamePlanBenchPrintOverlay";
@@ -758,6 +759,8 @@ export function GamePlanView() {
               ) : null}
 
               <GamePlanFilmEvidencePanel plan={selected} />
+
+              <GamePlanReadRollupPanel plan={selected} />
 
               {selected.postGameNotes?.trim() ? (
                 <div className="fc-game-plan-postgame-notes">

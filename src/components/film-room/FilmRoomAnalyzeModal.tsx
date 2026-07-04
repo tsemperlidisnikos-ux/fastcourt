@@ -50,6 +50,7 @@ interface Props {
   currentTime: number;
   analysis: FilmClipAnalysisResult;
   analyzeContext?: FilmAnalyzeContext | null;
+  filmPreviewUrl?: string;
   onClose: () => void;
 }
 
@@ -66,6 +67,7 @@ function FilmRoomAnalyzeModalBody({
   currentTime,
   analysis,
   analyzeContext,
+  filmPreviewUrl,
   onClose,
 }: Omit<Props, "open">) {
   const router = useRouter();
@@ -410,6 +412,7 @@ function FilmRoomAnalyzeModalBody({
             sessionId={sessionId}
             sessionTitle={sessionTitle}
             timestamp={currentTime}
+            filmPreviewUrl={filmPreviewUrl}
           />
 
           <h3 className="fc-film-game-plan-section-title">Coaching suggestions</h3>

@@ -14,6 +14,9 @@ interface Props {
   onSeek: (time: number) => void;
   onRemove: (recordId: string) => void;
   onExportSession?: () => void;
+  onBatchAnalyze?: () => void;
+  batchBusy?: boolean;
+  batchProgress?: { current: number; total: number } | null;
 }
 
 export function FilmRoomAnalysisHistoryPanel({
@@ -23,8 +26,13 @@ export function FilmRoomAnalysisHistoryPanel({
   onSeek,
   onRemove,
   onExportSession,
+  onBatchAnalyze,
+  batchBusy = false,
+  batchProgress = null,
 }: Props) {
-  if (!analyses.length && !bookmarkCount && !onExportSession) return null;
+  if (!analyses.length && !bookmarkCount && !onExportSession && !onBatchAnalyze) {
+    return null;
+  }
 
   const sorted = [...analyses].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -32,15 +40,29 @@ export function FilmRoomAnalysisHistoryPanel({
     <section className="fc-film-analysis-history" aria-label="Analysis history">
       <div className="fc-film-analysis-history-head">
         <h3 className="fc-film-analysis-history-title">Analysis history</h3>
-        {onExportSession ? (
-          <button
-            type="button"
-            className="fc-film-analysis-history-export"
-            onClick={onExportSession}
-          >
-            Session PDF
-          </button>
-        ) : null}
+        <div className="fc-film-analysis-history-actions">
+          {onBatchAnalyze ? (
+            <button
+              type="button"
+              className="fc-film-analysis-history-batch"
+              disabled={batchBusy}
+              onClick={onBatchAnalyze}
+            >
+              {batchBusy && batchProgress
+                ? `Analyzing ${batchProgress.current}/${batchProgress.total}…`
+                : "Analyze possessions"}
+            </button>
+          ) : null}
+          {onExportSession ? (
+            <button
+              type="button"
+              className="fc-film-analysis-history-export"
+              onClick={onExportSession}
+            >
+              Session PDF
+            </button>
+          ) : null}
+        </div>
       </div>
       {!sorted.length ? (
         <p className="fc-film-analysis-history-empty">

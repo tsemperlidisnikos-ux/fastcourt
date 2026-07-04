@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { FilmRoomIdealCompareStrip } from "@/components/film-room/FilmRoomIdealCompareStrip";
 import { buildDesignerHref } from "@/lib/designer/designer-deep-link";
 import { detectFilmDisruption } from "@/lib/film-room/film-disruption-detector";
 import { comparePlayIdealToDisruption } from "@/lib/film-room/film-play-ideal-compare";
@@ -28,6 +29,7 @@ interface Props {
   sessionId?: string;
   sessionTitle?: string;
   timestamp?: number;
+  filmPreviewUrl?: string;
 }
 
 export function FilmRoomDisruptionPanel({
@@ -37,6 +39,7 @@ export function FilmRoomDisruptionPanel({
   sessionId,
   sessionTitle,
   timestamp,
+  filmPreviewUrl,
 }: Props) {
   const router = useRouter();
   const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
@@ -286,6 +289,11 @@ export function FilmRoomDisruptionPanel({
                       {compare.mismatchNote}
                     </span>
                   ) : null}
+                  <FilmRoomIdealCompareStrip
+                    compare={compare}
+                    play={match.play}
+                    filmPreviewUrl={filmPreviewUrl}
+                  />
                   <div className="fc-film-disruption-frame-links">
                     <Link
                       href={buildDesignerHref(match.play.id, compare?.primaryFrameIndex ?? 0)}

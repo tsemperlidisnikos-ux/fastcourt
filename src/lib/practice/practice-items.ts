@@ -33,6 +33,10 @@ export function normalizePracticeItem(
       raw.designerFrameIndex >= 0
         ? Math.floor(raw.designerFrameIndex)
         : undefined,
+    readOutcome:
+      raw.readOutcome === "landed" || raw.readOutcome === "missed"
+        ? raw.readOutcome
+        : undefined,
   };
 }
 

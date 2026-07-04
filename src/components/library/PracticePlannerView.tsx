@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PracticeAddModal } from "@/components/library/PracticeAddModal";
 import { PracticeAddPlaybookModal } from "@/components/library/PracticeAddPlaybookModal";
+import { PracticeReadScorecardPanel } from "@/components/library/PracticeReadScorecardPanel";
 import { PracticeItemRow } from "@/components/library/PracticeItemRow";
 import { PracticeLiveOverlay } from "@/components/library/PracticeLiveOverlay";
 import {
@@ -460,6 +461,8 @@ export function PracticePlannerView() {
                   </span>
                 </div>
               ) : null}
+
+              <PracticeReadScorecardPanel session={selected} allSessions={sessions} />
 
               <div className="practice-items-list" id="practice-items-list">
                 {!rows.length ? (

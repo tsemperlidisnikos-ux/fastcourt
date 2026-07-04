@@ -6,6 +6,7 @@ import {
   isPracticeItemMissing,
   type ResolvedPracticeRow,
 } from "@/lib/practice/practice-items";
+import { isReadTrackableItem } from "@/lib/practice/read-success-scorecard";
 import type { PracticeSessionItem } from "@/types/library-meta";
 
 interface Props {
@@ -43,6 +44,7 @@ export function PracticeItemRow({
   const kind = play ? (play.type === "drill" ? "drill" : "play") : "cue";
   const kindLabel = kind === "drill" ? "Drill" : kind === "cue" ? "Block" : "Play";
   const name = play?.title || item.cueLabel || "(Missing from library)";
+  const readTrackable = isReadTrackableItem(item);
 
   return (
     <div
@@ -90,6 +92,15 @@ export function PracticeItemRow({
             <span className="practice-item-missing-label">Missing from library</span>
           ) : null}
           {play?.series ? <span>{play.series}</span> : null}
+          {readTrackable && item.readOutcome === "landed" ? (
+            <span className="practice-item-read-outcome is-landed">Landed</span>
+          ) : null}
+          {readTrackable && item.readOutcome === "missed" ? (
+            <span className="practice-item-read-outcome is-missed">Missed</span>
+          ) : null}
+          {readTrackable && !item.readOutcome ? (
+            <span className="practice-item-read-outcome is-pending">Read</span>
+          ) : null}
         </div>
         {isMissing && onReplace ? (
           <button

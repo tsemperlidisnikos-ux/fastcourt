@@ -11,5 +11,7 @@ Library — Practice,Live Mode,PRC-12,P1,Mark done & advance (Enter),,Advances t
 Library — Practice,Live Mode,PRC-13,P1,Exit live (Esc),,Returns to planner,,,,,
 Library — Practice,Live Mode,PRC-14,P0,Disruption CALL banner,Add reads from Film Room,Large red CALL + read frame thumbnail,,,,,
 Library — Practice,Live Mode,PRC-15,P1,Share view live call sync,Practice share + live mode,Live call updates on share page,,,,,
+Library — Practice,Live Mode,PRC-16,P1,Read outcome Landed / Missed,Practice Live block with CALL,Toggle saves readOutcome on item,,,,,
+Library — Practice,Live Mode,PRC-17,P1,Session read scorecard,Mark reads in Live → open planner,Scorecard shows % landed/missed + trend,,,,,
 Library — Practice,Print & Share,PRC-20,P1,Session PDF print,,Blocks + durations in PDF,,,,,
 Library — Practice,Print & Share,PRC-21,P1,Share practice link,,Read-only in incognito,,,,,

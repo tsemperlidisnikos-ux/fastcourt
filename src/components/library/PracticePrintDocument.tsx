@@ -3,6 +3,10 @@
 import dynamic from "next/dynamic";
 import { Fragment } from "react";
 import { getPracticeSessionTotalMinutes, isPracticeItemMissing } from "@/lib/practice/practice-items";
+import {
+  buildPracticeReadScorecard,
+  formatReadSuccessLine,
+} from "@/lib/practice/read-success-scorecard";
 import { stripNotesForPrint } from "@/lib/library/playbook-print";
 import {
   resolvePdfCoverSubtitle,
@@ -52,6 +56,7 @@ export function PracticePrintDocument({
   const coverTeam = resolvePdfCoverTeam(pdfBrand, session.team);
   const tagline = resolvePdfCoverSubtitle(pdfBrand);
   const footerText = resolvePdfFooterText(pdfBrand);
+  const readScorecard = buildPracticeReadScorecard(session);
   const rowEndTimes = rows.reduce<number[]>((times, { item }) => {
     const prev = times.length ? times[times.length - 1]! : 0;
     times.push(prev + (Number(item.durationMin) || 0));
@@ -85,6 +90,23 @@ export function PracticePrintDocument({
           </div>
         ) : null}
       </div>
+
+      {readScorecard.trackableCount ? (
+        <section className="fc-practice-print-read-scorecard">
+          <h2 className="fc-practice-print-read-scorecard-title">Read success</h2>
+          <p>{formatReadSuccessLine(readScorecard)}</p>
+          {readScorecard.byCall.length ? (
+            <ul>
+              {readScorecard.byCall.map((row) => (
+                <li key={row.call}>
+                  {row.call}: {row.landed} landed, {row.missed} missed
+                  {row.unmarked ? `, ${row.unmarked} unmarked` : ""}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       <table className="fc-practice-plan-table">
         <thead>

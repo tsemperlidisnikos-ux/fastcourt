@@ -54,6 +54,7 @@ function blockTimerState(
 export function PracticeLiveOverlay({ session, onClose }: Props) {
   const plays = useOrganizerStore((s) => s.plays);
   const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
+  const updatePracticeItem = useOrganizerStore((s) => s.updatePracticeItem);
   const mounted = useClientMounted();
 
   const playById = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
@@ -214,6 +215,15 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
     void updatePracticeSession(session.id, { liveNotes: value });
   }
 
+  const setReadOutcome = useCallback(
+    (outcome: "landed" | "missed" | undefined) => {
+      const row = rows[index];
+      if (!row) return;
+      void updatePracticeItem(session.id, row.item.id, { readOutcome: outcome });
+    },
+    [index, rows, session.id, updatePracticeItem],
+  );
+
   if (!mounted || !rows.length || !current) return null;
 
   const { item, play } = current;
@@ -372,6 +382,34 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
               >
                 <span className="practice-live-disruption-call-label">Call</span>
                 <span className="practice-live-disruption-call-text">{liveCall}</span>
+              </div>
+            ) : null}
+            {liveCall || item.designerFrameIndex !== undefined ? (
+              <div
+                className="practice-live-read-outcome"
+                aria-label="Mark read outcome"
+              >
+                <span className="practice-live-read-outcome-label">Read result</span>
+                <div className="practice-live-read-outcome-actions">
+                  <button
+                    type="button"
+                    className={`practice-live-read-outcome-btn${item.readOutcome === "landed" ? " is-active is-landed" : ""}`}
+                    onClick={() =>
+                      setReadOutcome(item.readOutcome === "landed" ? undefined : "landed")
+                    }
+                  >
+                    Landed
+                  </button>
+                  <button
+                    type="button"
+                    className={`practice-live-read-outcome-btn${item.readOutcome === "missed" ? " is-active is-missed" : ""}`}
+                    onClick={() =>
+                      setReadOutcome(item.readOutcome === "missed" ? undefined : "missed")
+                    }
+                  >
+                    Missed
+                  </button>
+                </div>
               </div>
             ) : null}
             {disruptionCue?.broke ? (

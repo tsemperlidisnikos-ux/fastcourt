@@ -18,6 +18,8 @@ export interface PracticeSessionItem {
   liveCall?: string;
   /** Designer frame index for read-branch thumbnail in live mode. */
   designerFrameIndex?: number;
+  /** Coach marks whether the live read landed in practice (Step 8 lite). */
+  readOutcome?: "landed" | "missed";
 }
 
 export interface PracticeSession {

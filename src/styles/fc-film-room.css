@@ -843,8 +843,95 @@
   color: #b91c1c;
 }
 
-.fc-film-disruption-frame-link.is-read {
+.fc-film-ideal-compare {
+  margin: 8px 0 0;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.fc-film-ideal-compare.is-aligned {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.fc-film-ideal-compare.is-mismatch {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.fc-film-ideal-compare-title {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fc-film-ideal-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fc-film-ideal-compare-cell {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fc-film-ideal-compare-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.fc-film-ideal-compare-thumb,
+.fc-film-ideal-compare-film-thumb {
+  display: block;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+}
+
+.fc-film-ideal-compare-film-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.fc-film-ideal-compare-caption {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #475569;
+}
+
+.fc-film-ideal-compare-film-missing {
+  font-size: 10px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.fc-film-ideal-compare-gap {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
   color: #b91c1c;
+}
+
+.fc-film-ideal-compare-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 #screen-film-room .fc-film-possession-playlist,
@@ -1516,6 +1603,93 @@
   border: 1px solid #dbe3ef;
   border-radius: 10px;
   background: #fafafa;
+}
+
+#screen-film-room .fc-film-analysis-history-head,
+#screen-organizer .fc-film-analysis-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#screen-film-room .fc-film-analysis-history-actions,
+#screen-organizer .fc-film-analysis-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#screen-film-room .fc-film-analysis-history-batch,
+#screen-film-room .fc-film-analysis-history-export,
+#screen-organizer .fc-film-analysis-history-batch,
+#screen-organizer .fc-film-analysis-history-export {
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-analysis-history-batch,
+#screen-organizer .fc-film-analysis-history-batch {
+  border-color: #c4b5fd;
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+#screen-film-room .fc-film-analysis-history-batch:disabled,
+#screen-organizer .fc-film-analysis-history-batch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#screen-film-room .fc-film-evaluation,
+#screen-organizer .fc-film-evaluation {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+
+#screen-film-room .fc-film-evaluation-head,
+#screen-organizer .fc-film-evaluation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#screen-film-room .fc-film-evaluation-title,
+#screen-organizer .fc-film-evaluation-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #166534;
+}
+
+#screen-film-room .fc-film-evaluation-rate,
+#screen-organizer .fc-film-evaluation-rate {
+  font-size: 12px;
+  font-weight: 800;
+  color: #15803d;
+}
+
+#screen-film-room .fc-film-evaluation-summary,
+#screen-film-room .fc-film-evaluation-coverage,
+#screen-film-room .fc-film-evaluation-reads,
+#screen-organizer .fc-film-evaluation-summary,
+#screen-organizer .fc-film-evaluation-coverage,
+#screen-organizer .fc-film-evaluation-reads {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #334155;
 }
 
 #screen-film-room .fc-film-analysis-history-title,

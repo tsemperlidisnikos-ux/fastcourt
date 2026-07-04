@@ -184,6 +184,7 @@ export const QA_MODULES = [
           { id: "GP-33", priority: "P0", item: "Assign disruption reads to homework", steps: "Film Room → Analyze → Player homework", expected: "Read items with liveCall + read frame in share link" },
           { id: "GP-34", priority: "P1", item: "Player homework film read study", steps: "Incognito homework link", expected: "CALL banner, Study read opens at frame" },
           { id: "GP-35", priority: "P2", item: "Prep practice before game", expected: "Practice session created with date" },
+          { id: "GP-36", priority: "P1", item: "Practice read rollup on game plan", steps: "Mark reads in practice for plan plays", expected: "Rollup panel shows % landed per play" },
         ],
       },
     ],
@@ -230,6 +231,8 @@ export const QA_MODULES = [
           { id: "PRC-13", priority: "P1", item: "Exit live (Esc)", expected: "Returns to planner" },
           { id: "PRC-14", priority: "P0", item: "Disruption CALL banner", steps: "Add reads from Film Room", expected: "Large red CALL + read frame thumbnail" },
           { id: "PRC-15", priority: "P1", item: "Share view live call sync", steps: "Practice share + live mode", expected: "Live call updates on share page" },
+          { id: "PRC-16", priority: "P1", item: "Read outcome Landed / Missed", steps: "Practice Live block with CALL", expected: "Toggle saves readOutcome on item" },
+          { id: "PRC-17", priority: "P1", item: "Session read scorecard", steps: "Mark reads in Live → open planner", expected: "Scorecard shows % landed/missed + trend" },
         ],
       },
       {
@@ -361,6 +364,9 @@ export const QA_MODULES = [
           { id: "FIL-54", priority: "P1", item: "Add reads to practice", expected: "Practice blocks with liveCall + notes" },
           { id: "FIL-55", priority: "P1", item: "Add reads to player homework", expected: "Homework readItems on game plan" },
           { id: "FIL-56", priority: "P1", item: "Auto bookmark after AI disruption", expected: "Plan broke here bookmark created" },
+          { id: "FIL-57", priority: "P0", item: "Batch analyze possessions", steps: "Add disruption tags → Analyze possessions", expected: "Up to 8 clips analyzed, summary notice, Session PDF opens" },
+          { id: "FIL-58", priority: "P1", item: "Ideal vs film compare strip", steps: "Analyze clip → library variation", expected: "Side-by-side Designer read frame and captured film frame" },
+          { id: "FIL-59", priority: "P1", item: "Film evaluation strip (xP-lite)", steps: "Run 2+ analyses on session", expected: "Coverage + disruption rate in sidebar" },
         ],
       },
       {

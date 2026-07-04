@@ -217,6 +217,80 @@
   border: 1px solid #bfdbfe;
 }
 
+#screen-organizer .fc-game-plan-read-rollup {
+  margin: 0 18px 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #faf5ff;
+  border: 1px solid #ddd6fe;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #5b21b6;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-rate {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6d28d9;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-rate.is-pending {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-summary {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-row {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e9d5ff;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-play {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-stats {
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-organizer .fc-game-plan-read-rollup-calls {
+  font-size: 10px;
+  color: #7c3aed;
+}
+
 #screen-organizer .fc-game-plan-film-evidence-head {
   margin-bottom: 10px;
 }
