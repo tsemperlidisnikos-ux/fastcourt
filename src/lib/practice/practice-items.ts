@@ -37,6 +37,7 @@ export function normalizePracticeItem(
       raw.readOutcome === "landed" || raw.readOutcome === "missed"
         ? raw.readOutcome
         : undefined,
+    readPlayerId: raw.readPlayerId?.trim() || undefined,
   };
 }
 

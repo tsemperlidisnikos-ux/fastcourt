@@ -112,7 +112,7 @@
 
   <div class="cover">
     <h1>FastCourt — QA Checklists</h1>
-    <p><strong>Version:</strong> ea047b7 · <strong>Generated:</strong> 5 Ιουλ 2026, 2:31 π.μ.</p>
+    <p><strong>Version:</strong> ea047b7 · <strong>Generated:</strong> 5 Ιουλ 2026, 2:46 π.μ.</p>
     <p><strong>Production:</strong> https://fastcourt.eu</p>
     <p>Pass: Y / N / N/A — fill in Excel or print HTML to PDF</p>
     <div class="legend">
@@ -120,7 +120,7 @@
       <span><strong>P1</strong> = Important regression</span>
       <span><strong>P2</strong> = Secondary</span>
     </div>
-    <p style="margin-top:20px"><strong>Total checks:</strong> 189</p>
+    <p style="margin-top:20px"><strong>Total checks:</strong> 194</p>
   </div>
 
   
@@ -998,6 +998,24 @@
             <td class="expected">Rollup panel shows % landed per play</td>
             <td class="pass"></td>
             <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-37</td>
+            <td class="pri p1">P1</td>
+            <td>Opponent read rollup on game plan</td>
+            <td class="steps">Prep vs opponent + mark reads</td>
+            <td class="expected">vs Opponent panel shows call-level % landed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-38</td>
+            <td class="pri p1">P1</td>
+            <td>Game Day / timeout read success %</td>
+            <td class="steps">Marked reads in prep vs opponent</td>
+            <td class="expected">Offense read cards + timeout slides show e.g. 67% landed</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
           </tr></tbody>
         </table>
     </section>
@@ -1213,6 +1231,15 @@
             <td class="expected">Scorecard shows % landed/missed + trend</td>
             <td class="pass"></td>
             <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PRC-18</td>
+            <td class="pri p1">P1</td>
+            <td>Player attribution on read outcome</td>
+            <td class="steps">Roster players + Practice Live CALL block</td>
+            <td class="expected">Select player when marking Landed/Missed; persists readPlayerId</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
           </tr></tbody>
         </table>
         <h3>Print &amp; Share</h3>
@@ -1299,6 +1326,24 @@
             <td>Film session evaluation links</td>
             <td class="steps">—</td>
             <td class="expected">Links open Film Room with analyses</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">COH-05</td>
+            <td class="pri p1">P1</td>
+            <td>Season trend (10 sessions)</td>
+            <td class="steps">Mark reads across 3+ practice sessions</td>
+            <td class="expected">Season chart shows up to 10 dated bars oldest→newest</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">COH-06</td>
+            <td class="pri p1">P1</td>
+            <td>Player read attribution panel</td>
+            <td class="steps">Assign players in Practice Live</td>
+            <td class="expected">Dashboard lists per-player % landed + top calls</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>

@@ -16,7 +16,9 @@ import {
   subscribeGameDayLivePoll,
 } from "@/lib/game-plan/game-day-live";
 import { formatGamePlanDate, formatGamePlanHomeAway } from "@/lib/game-plan/game-plan-items";
+import { opponentScopedSessionsForReadLookup } from "@/lib/game-plan/opponent-read-rollup";
 import type { TimeoutViewSlide } from "@/lib/game-plan/timeout-mode";
+import { buildReadSuccessLookup } from "@/lib/practice/read-success-by-call";
 import { GameDayCounterStrip } from "@/components/library/GameDayCounterStrip";
 import { GameDayOffenseReadStrip } from "@/components/library/GameDayOffenseReadStrip";
 import { TimeoutOverlay } from "@/components/library/TimeoutOverlay";
@@ -165,6 +167,8 @@ export function GameDayOverlay({
   onClose,
 }: Props) {
   const updateGamePlan = useOrganizerStore((s) => s.updateGamePlan);
+  const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
+  const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const mounted = useClientMounted();
   const categories = useMemo(
     () => buildGameDayCategories(plan, plays),
@@ -179,6 +183,15 @@ export function GameDayOverlay({
 
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [timeoutOpen, setTimeoutOpen] = useState(false);
+
+  const readSuccessLookup = useMemo(() => {
+    const scoped = opponentScopedSessionsForReadLookup(
+      plan,
+      practiceSessions,
+      gamePlans,
+    );
+    return buildReadSuccessLookup(scoped);
+  }, [gamePlans, plan, practiceSessions]);
 
   const pushCategory = useCallback(
     (index: number) => {
@@ -240,6 +253,7 @@ export function GameDayOverlay({
         <TimeoutOverlay
           slides={timeoutViewSlides}
           title={`${plan.title} timeout calls`}
+          readSuccessLookup={readSuccessLookup}
           onClose={() => setTimeoutOpen(false)}
         />
       ) : null}

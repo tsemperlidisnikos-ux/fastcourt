@@ -74,7 +74,7 @@ export function buildPracticeSessionFromGamePlan(
   return normalizePracticeSession({
     id: options.sessionId || `prac_${crypto.randomUUID()}`,
     date: computePrepPracticeDate(plan.gameDate),
-    title: `Prep: ${plan.title}`,
+    title: `Prep: vs ${plan.opponent || plan.title}`,
     team: plan.team,
     notes:
       plan.scoutingNotes?.trim() ||

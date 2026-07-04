@@ -215,3 +215,50 @@
 .coach-dashboard-drills {
   grid-column: 1 / -1;
 }
+
+.coach-dashboard-season {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.coach-dashboard-season-trend {
+  min-height: 120px;
+}
+
+.coach-dashboard-players {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.coach-dashboard-player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coach-dashboard-player-row {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.coach-dashboard-player-name {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.coach-dashboard-player-stats {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.coach-dashboard-player-calls {
+  font-size: 11px;
+  color: #94a3b8;
+}

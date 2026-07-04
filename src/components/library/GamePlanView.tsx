@@ -49,6 +49,8 @@ import {
   DEFAULT_SHARE_STAGE,
 } from "@/lib/share/share-link";
 import { buildTimeoutViewSlides } from "@/lib/game-plan/timeout-mode";
+import { opponentScopedSessionsForReadLookup } from "@/lib/game-plan/opponent-read-rollup";
+import { buildReadSuccessLookup } from "@/lib/practice/read-success-by-call";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import {
   appConfirm,
@@ -507,6 +509,17 @@ export function GamePlanView() {
     if (!selected) return [];
     return buildTimeoutViewSlides(selected, playMap);
   }, [selected, playMap]);
+
+  const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
+  const readSuccessLookup = useMemo(() => {
+    if (!selected) return undefined;
+    const scoped = opponentScopedSessionsForReadLookup(
+      selected,
+      practiceSessions,
+      gamePlans,
+    );
+    return buildReadSuccessLookup(scoped);
+  }, [gamePlans, practiceSessions, selected]);
 
   const canPrintBench = !!selected && gamePlanEntryCount(selected) > 0;
   const canTimeoutMode = timeoutViewSlides.length > 0;
@@ -1022,6 +1035,7 @@ export function GamePlanView() {
         <TimeoutOverlay
           slides={timeoutViewSlides}
           title={selected ? `${selected.title} timeout calls` : undefined}
+          readSuccessLookup={readSuccessLookup}
           onClose={() => setTimeoutOpen(false)}
         />
       ) : null}

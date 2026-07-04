@@ -1,9 +1,14 @@
 import { buildDrillSuggestions, type DrillSuggestion } from "@/lib/practice/drill-suggestions";
 import {
+  buildReadPlayerAttribution,
+  type ReadPlayerAttribution,
+} from "@/lib/practice/read-player-attribution";
+import {
   buildPracticeReadScorecard,
   buildPracticeReadTrend,
   type PracticeReadTrendPoint,
 } from "@/lib/practice/read-success-scorecard";
+import type { PlayerRosterEntry } from "@/types/player-roster";
 import {
   buildFilmSessionEvaluation,
   type FilmSessionEvaluation,
@@ -20,11 +25,15 @@ export interface CoachFilmSessionSummary {
   link: string;
 }
 
+export const COACH_SEASON_TREND_SESSIONS = 10;
+
 export interface CoachDashboardModel {
   overallReadRatePct: number | null;
   totalLanded: number;
   totalMissed: number;
   practiceTrend: PracticeReadTrendPoint[];
+  seasonTrend: PracticeReadTrendPoint[];
+  playerAttribution: ReadPlayerAttribution;
   filmSessions: CoachFilmSessionSummary[];
   drillSuggestions: DrillSuggestion[];
 }
@@ -35,6 +44,7 @@ export function buildCoachDashboardModel(input: {
   plays: StoredPlay[];
   origin: string;
   teamFilter?: string;
+  rosterPlayers?: PlayerRosterEntry[];
 }): CoachDashboardModel {
   const team = input.teamFilter?.trim();
   const practiceSessions = team
@@ -64,12 +74,23 @@ export function buildCoachDashboardModel(input: {
     )
     .slice(0, 8);
 
+  const seasonTrend = buildPracticeReadTrend(
+    practiceSessions,
+    COACH_SEASON_TREND_SESSIONS,
+  );
+
   return {
     overallReadRatePct:
       marked > 0 ? Math.round((totalLanded / marked) * 100) : null,
     totalLanded,
     totalMissed,
-    practiceTrend: buildPracticeReadTrend(practiceSessions, 6),
+    practiceTrend: seasonTrend.slice(0, 6),
+    seasonTrend,
+    playerAttribution: buildReadPlayerAttribution(
+      practiceSessions,
+      input.rosterPlayers ?? [],
+      { teamFilter: team },
+    ),
     filmSessions,
     drillSuggestions: buildDrillSuggestions(practiceSessions, input.plays, 6),
   };

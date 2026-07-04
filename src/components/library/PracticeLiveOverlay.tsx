@@ -22,6 +22,10 @@ import {
 } from "@/lib/practice/live-prefs";
 import { publishPracticeLiveState } from "@/lib/practice/live-broadcast";
 import { playPracticeTimerAlert } from "@/lib/practice/timer-alert";
+import {
+  getTeamRoster,
+  playerRosterDisplayName,
+} from "@/lib/players/player-roster";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { PracticeSession } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
@@ -216,12 +220,27 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
   }
 
   const setReadOutcome = useCallback(
-    (outcome: "landed" | "missed" | undefined) => {
+    (
+      outcome: "landed" | "missed" | undefined,
+      playerId?: string | null,
+    ) => {
       const row = rows[index];
       if (!row) return;
-      void updatePracticeItem(session.id, row.item.id, { readOutcome: outcome });
+      const patch: {
+        readOutcome?: "landed" | "missed";
+        readPlayerId?: string;
+      } = { readOutcome: outcome };
+      if (playerId !== undefined) {
+        patch.readPlayerId = playerId?.trim() || undefined;
+      }
+      void updatePracticeItem(session.id, row.item.id, patch);
     },
     [index, rows, session.id, updatePracticeItem],
+  );
+
+  const rosterPlayers = useMemo(
+    () => getTeamRoster(session.team).players,
+    [session.team],
   );
 
   if (!mounted || !rows.length || !current) return null;
@@ -395,7 +414,9 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                     type="button"
                     className={`practice-live-read-outcome-btn${item.readOutcome === "landed" ? " is-active is-landed" : ""}`}
                     onClick={() =>
-                      setReadOutcome(item.readOutcome === "landed" ? undefined : "landed")
+                      setReadOutcome(
+                        item.readOutcome === "landed" ? undefined : "landed",
+                      )
                     }
                   >
                     Landed
@@ -404,12 +425,39 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
                     type="button"
                     className={`practice-live-read-outcome-btn${item.readOutcome === "missed" ? " is-active is-missed" : ""}`}
                     onClick={() =>
-                      setReadOutcome(item.readOutcome === "missed" ? undefined : "missed")
+                      setReadOutcome(
+                        item.readOutcome === "missed" ? undefined : "missed",
+                      )
                     }
                   >
                     Missed
                   </button>
                 </div>
+                {rosterPlayers.length ? (
+                  <label className="practice-live-read-player">
+                    <span className="practice-live-read-outcome-label">Player</span>
+                    <select
+                      value={item.readPlayerId || ""}
+                      onChange={(event) => {
+                        const value = event.target.value.trim();
+                        void updatePracticeItem(session.id, item.id, {
+                          readPlayerId: value || undefined,
+                        });
+                      }}
+                    >
+                      <option value="">— Select —</option>
+                      {rosterPlayers.map((player) => (
+                        <option key={player.id} value={player.id}>
+                          {playerRosterDisplayName(player)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <p className="practice-live-read-player-hint">
+                    Add roster players to attribute reads.
+                  </p>
+                )}
               </div>
             ) : null}
             {disruptionCue?.broke ? (

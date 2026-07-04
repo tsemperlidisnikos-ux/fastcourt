@@ -20,6 +20,8 @@ export interface PracticeSessionItem {
   designerFrameIndex?: number;
   /** Coach marks whether the live read landed in practice (Step 8 lite). */
   readOutcome?: "landed" | "missed";
+  /** Roster player credited with the read outcome (Practice Live). */
+  readPlayerId?: string;
 }
 
 export interface PracticeSession {

@@ -229,6 +229,13 @@
   max-width: 640px;
 }
 
+.fc-timeout-read-success {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #86efac;
+}
+
 .fc-timeout-read-links {
   display: flex;
   flex-wrap: wrap;

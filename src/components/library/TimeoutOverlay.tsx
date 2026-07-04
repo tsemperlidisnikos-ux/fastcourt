@@ -17,6 +17,11 @@ import {
   type TimeoutSlide,
   type TimeoutViewSlide,
 } from "@/lib/game-plan/timeout-mode";
+import {
+  formatReadSuccessBadge,
+  lookupReadSuccessPct,
+  type ReadSuccessLookup,
+} from "@/lib/practice/read-success-by-call";
 import type { GamePlanTimeoutCue } from "@/types/library-meta";
 import "@/styles/fc-timeout-mode.css";
 
@@ -25,6 +30,7 @@ interface Props {
   onClose: () => void;
   countdownSeconds?: number;
   title?: string;
+  readSuccessLookup?: ReadSuccessLookup;
 }
 
 function CounterTimeoutView({
@@ -167,6 +173,7 @@ function ReadTimeoutView({
   hasNext,
   slideIndex,
   slideCount,
+  readSuccessLookup,
 }: {
   read: TimeoutReadSlide;
   countdownSeconds: number;
@@ -177,6 +184,7 @@ function ReadTimeoutView({
   hasNext: boolean;
   slideIndex: number;
   slideCount: number;
+  readSuccessLookup?: ReadSuccessLookup;
 }) {
   const chainFrames = useMemo(
     () => framesForDesignerThumbnails(read.play.frames),
@@ -189,6 +197,10 @@ function ReadTimeoutView({
     read.filmSessionId != null
       ? buildFilmRoomDeepLink(read.filmSessionId, read.filmTimestamp)
       : null;
+  const successPct = readSuccessLookup
+    ? lookupReadSuccessPct(readSuccessLookup, read.callLabel, read.play.id)
+    : null;
+  const successBadge = formatReadSuccessBadge(successPct);
 
   useEffect(() => {
     setSecondsLeft(countdownSeconds);
@@ -225,6 +237,9 @@ function ReadTimeoutView({
         <div className="fc-timeout-call-block">
           <span className="fc-timeout-category fc-timeout-category-read">Offense read</span>
           <h1 className="fc-timeout-call">{read.callLabel}</h1>
+          {successBadge ? (
+            <p className="fc-timeout-read-success">{successBadge}</p>
+          ) : null}
           <p className="fc-timeout-play-title">{read.play.title}</p>
           {read.detail ? (
             <p className="fc-timeout-read-detail">{read.detail}</p>
@@ -457,6 +472,7 @@ export function TimeoutOverlay({
   onClose,
   countdownSeconds = DEFAULT_TIMEOUT_SECONDS,
   title,
+  readSuccessLookup,
 }: Props) {
   const mounted = useClientMounted();
   const [index, setIndex] = useState(0);
@@ -484,6 +500,7 @@ export function TimeoutOverlay({
         <ReadTimeoutView
           key={`${slide.read.play.id}-${slide.read.frameIndex}-${index}`}
           read={slide.read}
+          readSuccessLookup={readSuccessLookup}
           {...common}
         />
       ) : (

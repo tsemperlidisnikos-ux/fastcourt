@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   buildCoachDashboardModel,
+  COACH_SEASON_TREND_SESSIONS,
   coachTrendBarHeight,
 } from "@/lib/coach/coach-dashboard";
+import { getAllRosterPlayers } from "@/lib/players/player-roster";
 import { createDrillPracticeItems } from "@/lib/practice/drill-suggestions";
 import { useFilmRoomStore } from "@/stores/film-room-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
@@ -27,6 +29,22 @@ export function CoachDashboardView() {
 
   const [teamFilter, setTeamFilter] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [rosterTick, setRosterTick] = useState(0);
+
+  useEffect(() => {
+    function onStorage(event: StorageEvent) {
+      if (event.key?.includes("fastcourt_playerRoster")) {
+        setRosterTick((value) => value + 1);
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const rosterPlayers = useMemo(() => {
+    void rosterTick;
+    return getAllRosterPlayers();
+  }, [rosterTick]);
 
   const model = useMemo(
     () =>
@@ -36,11 +54,15 @@ export function CoachDashboardView() {
         plays,
         origin: typeof window !== "undefined" ? window.location.origin : "",
         teamFilter: teamFilter || undefined,
+        rosterPlayers,
       }),
-    [practiceSessions, filmSessions, plays, teamFilter],
+    [practiceSessions, filmSessions, plays, teamFilter, rosterPlayers],
   );
 
   const markedTrend = model.practiceTrend.filter(
+    (row) => row.landedCount + row.missedCount > 0,
+  );
+  const seasonTrend = model.seasonTrend.filter(
     (row) => row.landedCount + row.missedCount > 0,
   );
 
@@ -127,6 +149,79 @@ export function CoachDashboardView() {
               ))}
             </div>
           ) : null}
+        </section>
+
+        <section className="coach-dashboard-card coach-dashboard-season">
+          <h3>Season trend ({COACH_SEASON_TREND_SESSIONS} sessions)</h3>
+          {seasonTrend.length ? (
+            <>
+              <div
+                className="coach-dashboard-trend coach-dashboard-season-trend"
+                aria-label="Season read success trend"
+              >
+                {[...seasonTrend].reverse().map((row) => (
+                  <div key={row.sessionId} className="coach-dashboard-trend-col">
+                    <div
+                      className="coach-dashboard-trend-bar"
+                      style={{ height: `${coachTrendBarHeight(row.successRatePct)}%` }}
+                      title={
+                        row.successRatePct != null
+                          ? `${row.title || row.date}: ${row.successRatePct}%`
+                          : row.title || row.date
+                      }
+                    />
+                    <span className="coach-dashboard-trend-label">
+                      {row.date.slice(5)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="coach-dashboard-stat-meta">
+                Oldest ← → newest · {seasonTrend.length} marked session
+                {seasonTrend.length === 1 ? "" : "s"}
+              </p>
+            </>
+          ) : (
+            <p className="coach-dashboard-empty">
+              Need marked reads across multiple practice sessions.
+            </p>
+          )}
+        </section>
+
+        <section className="coach-dashboard-card coach-dashboard-players">
+          <h3>Player read attribution</h3>
+          {model.playerAttribution.players.length ? (
+            <>
+              <ul className="coach-dashboard-player-list">
+                {model.playerAttribution.players.map((row) => (
+                  <li key={row.playerId} className="coach-dashboard-player-row">
+                    <span className="coach-dashboard-player-name">{row.playerName}</span>
+                    <span className="coach-dashboard-player-stats">
+                      {row.successRatePct != null ? `${row.successRatePct}%` : "—"} ·{" "}
+                      {row.landed}✓ {row.missed}✗
+                    </span>
+                    {row.topCalls.length ? (
+                      <span className="coach-dashboard-player-calls">
+                        {row.topCalls.join(", ")}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              {model.playerAttribution.unattributedLanded +
+                model.playerAttribution.unattributedMissed >
+              0 ? (
+                <p className="coach-dashboard-stat-meta">
+                  {model.playerAttribution.unattributedLanded} landed ·{" "}
+                  {model.playerAttribution.unattributedMissed} missed without player
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className="coach-dashboard-empty">
+              Assign players in Practice Live when marking reads.
+            </p>
+          )}
         </section>
 
         <section className="coach-dashboard-card coach-dashboard-film">

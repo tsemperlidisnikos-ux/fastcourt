@@ -13,5 +13,6 @@ Library — Practice,Live Mode,PRC-14,P0,Disruption CALL banner,Add reads from F
 Library — Practice,Live Mode,PRC-15,P1,Share view live call sync,Practice share + live mode,Live call updates on share page,,,,,
 Library — Practice,Live Mode,PRC-16,P1,Read outcome Landed / Missed,Practice Live block with CALL,Toggle saves readOutcome on item,,,,,
 Library — Practice,Live Mode,PRC-17,P1,Session read scorecard,Mark reads in Live → open planner,Scorecard shows % landed/missed + trend,,,,,
+Library — Practice,Live Mode,PRC-18,P1,Player attribution on read outcome,Roster players + Practice Live CALL block,Select player when marking Landed/Missed; persists readPlayerId,,,,,
 Library — Practice,Print & Share,PRC-20,P1,Session PDF print,,Blocks + durations in PDF,,,,,
 Library — Practice,Print & Share,PRC-21,P1,Share practice link,,Read-only in incognito,,,,,
