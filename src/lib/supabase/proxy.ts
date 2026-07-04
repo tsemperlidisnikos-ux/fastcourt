@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   applySafeNextPath,
+  isLoginSignedOut,
   isPasswordRecoveryLogin,
 } from "@/lib/auth/safe-next-path";
 import { getSupabaseAnonKey, getSupabaseUrl, isCloudConfigured } from "@/lib/supabase/env";
@@ -35,6 +36,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  if (path === "/login" && isLoginSignedOut(request.nextUrl.searchParams)) {
+    await supabase.auth.signOut();
+    return response;
+  }
+
   const isProtected =
     path.startsWith("/library") ||
     path.startsWith("/designer") ||

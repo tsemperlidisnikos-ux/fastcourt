@@ -5,7 +5,8 @@ import type {
   DesignerObject,
   ObjectKind,
 } from "@/types/designer";
-import type { LibraryItemType, StoredPlay } from "@/types/library";
+import { mergeCourtViewSettings } from "@/lib/designer/court-view-settings";
+import type { LibraryItemType, PlayDetailsValues, StoredPlay } from "@/types/library";
 import {
   canPlaceRosterPlayer,
   nextAvailableJersey,
@@ -339,6 +340,28 @@ export function legacyPlayToStored(play: LegacyPlay, source: StoredPlay["source"
     createdAt: now,
     updatedAt: now,
     source,
+  };
+}
+
+/** Apply Play Details modal values onto a full stored play document. */
+export function patchStoredPlayFromDetails(
+  play: StoredPlay,
+  details: PlayDetailsValues,
+): StoredPlay {
+  const now = new Date().toISOString();
+  return {
+    ...play,
+    title: details.title,
+    type: details.type,
+    team: details.team,
+    series: details.series,
+    tags: details.tags,
+    courtType: details.courtType,
+    courtView: mergeCourtViewSettings(details.courtView ?? play.courtView),
+    season: details.season,
+    playNotes: details.playNotes || undefined,
+    videoUrl: details.videoUrl || undefined,
+    updatedAt: now,
   };
 }
 

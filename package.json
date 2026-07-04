@@ -20,6 +20,8 @@
     "app-check": "node scripts/full-app-check.mjs --skip-build",
     "app-check:full": "node scripts/full-app-check.mjs",
     "app-check:e2e": "npx playwright test",
+    "production-smoke": "node scripts/production-smoke.mjs",
+    "link-team-library": "node scripts/link-team-library.mjs",
     "backup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1",
     "render:intro": "node scripts/render-intro-video.mjs",
     "render:intro:preview": "node scripts/render-intro-video.mjs --preview",
@@ -62,6 +64,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.1",
+    "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "konva": "^10.3.0",
     "lz-string": "^1.5.0",

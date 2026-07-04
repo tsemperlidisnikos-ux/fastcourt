@@ -1480,3 +1480,60 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   font-size: 14px;
   color: #a3a3a3;
 }
+
+.fc-play-dna-panel {
+  margin: 0 12px 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.fc-play-dna-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.fc-play-dna-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fc-play-dna-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.fc-play-dna-item:hover {
+  background: #eff6ff;
+}
+
+.fc-play-dna-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fc-play-dna-item-score {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #16a34a;
+}

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useClientMounted } from "@/hooks/useClientMounted";
+import { loginSignedOutUrl } from "@/lib/auth/safe-next-path";
 import { resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { listStoredPlays } from "@/lib/library/idb";
@@ -181,7 +182,7 @@ export function UserMenu({ variant = "topbar" }: { variant?: UserMenuVariant }) 
     }
     await resetLibraryOnSignOut();
     signOut();
-    router.replace("/login");
+    window.location.replace(loginSignedOutUrl());
   }
 
   async function handleExportLibrary() {

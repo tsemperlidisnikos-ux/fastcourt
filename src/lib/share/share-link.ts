@@ -56,6 +56,7 @@ export type SharePayload =
       items: SharePracticeItem[];
       stageRef: { width: number; height: number };
       practiceView?: boolean;
+      sessionId?: string;
     }
   | {
       v: number;
@@ -116,6 +117,19 @@ export type SharePayload =
         location?: string;
         homeAway?: string;
         scoutingNotes?: string;
+        timeoutCues?: Array<{
+          id: string;
+          title: string;
+          detail: string;
+          coverage: string;
+          targetsPattern?: string;
+          trigger?: string;
+          ballHandlerRule?: string;
+          screenerRule?: string;
+          weakPoint?: string;
+          priority?: "high" | "medium" | "low";
+          createdAt: string;
+        }>;
       };
       entries: ShareGamePlanEntry[];
       activeCategoryId?: GamePlanCategoryId;
@@ -343,7 +357,7 @@ export function buildSmartPlaybookUrl(
 }
 
 export function encodePracticePayload(
-  session: Pick<PracticeSession, "title" | "date" | "team" | "notes">,
+  session: Pick<PracticeSession, "id" | "title" | "date" | "team" | "notes">,
   items: Array<{
     durationMin: number;
     notes?: string;
@@ -378,11 +392,12 @@ export function encodePracticePayload(
     items: sanitizedItems,
     stageRef,
     practiceView: true,
+    ...(session.id ? { sessionId: String(session.id).slice(0, 64) } : {}),
   };
 }
 
 export function buildSmartPracticeUrl(
-  session: Pick<PracticeSession, "title" | "date" | "team" | "notes" | "items">,
+  session: Pick<PracticeSession, "id" | "title" | "date" | "team" | "notes" | "items">,
   items: Array<{
     durationMin: number;
     notes?: string;
@@ -643,6 +658,19 @@ export function encodeGameDayPayload(
       location: plan.location?.trim().slice(0, 120) || undefined,
       homeAway: plan.homeAway || undefined,
       scoutingNotes: truncateShareNotes(plan.scoutingNotes || "", 800) || undefined,
+      timeoutCues: plan.timeoutCues?.slice(0, 5).map((cue) => ({
+        id: cue.id,
+        title: cue.title.slice(0, 80),
+        detail: cue.detail.slice(0, 200),
+        coverage: cue.coverage.slice(0, 24),
+        targetsPattern: cue.targetsPattern?.slice(0, 24),
+        trigger: cue.trigger?.slice(0, 80),
+        ballHandlerRule: cue.ballHandlerRule?.slice(0, 100),
+        screenerRule: cue.screenerRule?.slice(0, 100),
+        weakPoint: cue.weakPoint?.slice(0, 100),
+        priority: cue.priority,
+        createdAt: cue.createdAt,
+      })),
     },
     entries: buildGameDayShareEntries(plan, plays),
     activeCategoryId,

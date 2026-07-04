@@ -241,8 +241,14 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   savePlayDocument: async (play) => {
+    const existing = await getStoredPlay(play.id);
     const updated = withPlayOwner({
+      ...(existing ?? play),
       ...play,
+      frames:
+        Array.isArray(play.frames) && play.frames.length > 0
+          ? play.frames
+          : (existing?.frames ?? play.frames ?? []),
       updatedAt: new Date().toISOString(),
     });
     await putStoredPlay(updated);

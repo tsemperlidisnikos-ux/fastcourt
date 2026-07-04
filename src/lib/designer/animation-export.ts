@@ -302,3 +302,105 @@ export async function exportPlayAnimationMp4(options: {
   }
   return new Blob([buffer], { type: "video/mp4" });
 }
+
+export function canExportPlayAnimationWebm() {
+  return (
+    typeof MediaRecorder !== "undefined" &&
+    typeof HTMLCanvasElement !== "undefined"
+  );
+}
+
+function pickWebmMimeType() {
+  const candidates = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+}
+
+export async function exportPlayAnimationWebm(options: {
+  play: PlayDocument;
+  fps?: number;
+  applySample: (sample: AnimationExportSample) => Promise<void>;
+  captureToTarget: (target: HTMLCanvasElement) => boolean;
+  onProgress?: (ratio: number) => void;
+  signal?: AbortSignal;
+}): Promise<Blob> {
+  if (!canExportPlayAnimationWebm()) {
+    throw new Error("This browser cannot record WebM video.");
+  }
+
+  const mimeType = pickWebmMimeType();
+  if (!mimeType) {
+    throw new Error("This browser cannot record WebM video.");
+  }
+
+  const fps = options.fps ?? 30;
+  const durationMs = getAnimationExportDurationMs(options.play);
+  const frameCount = Math.max(1, Math.ceil((durationMs / 1000) * fps));
+  const frameDelayMs = 1000 / fps;
+
+  const exportCanvas = document.createElement("canvas");
+  notifyDesignerExportStarting();
+
+  const firstSample = samplePlayAnimationAt(options.play, 0);
+  if (!firstSample) throw new Error("Could not sample animation.");
+  await options.applySample(firstSample);
+  if (!options.captureToTarget(exportCanvas)) {
+    throw new Error("Could not capture court frame.");
+  }
+
+  const stream = exportCanvas.captureStream(0);
+  const track = stream.getVideoTracks()[0] as MediaStreamTrack & {
+    requestFrame?: () => void;
+  };
+
+  const chunks: Blob[] = [];
+  const recorder = new MediaRecorder(stream, {
+    mimeType,
+    videoBitsPerSecond: 4_000_000,
+  });
+
+  const stopped = new Promise<Blob>((resolve, reject) => {
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
+    };
+    recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
+    recorder.onerror = () => {
+      reject(new Error("WebM recorder failed."));
+    };
+  });
+
+  recorder.start();
+
+  try {
+    for (let i = 0; i < frameCount; i++) {
+      if (options.signal?.aborted) throw new AnimationExportAborted();
+
+      if (i > 0) {
+        const sample = samplePlayAnimationAt(options.play, i * frameDelayMs);
+        if (!sample) throw new Error("Could not sample animation.");
+        await options.applySample(sample);
+        if (!options.captureToTarget(exportCanvas)) {
+          throw new Error("Could not capture court frame.");
+        }
+      }
+
+      track?.requestFrame?.();
+      options.onProgress?.((i + 1) / frameCount);
+      await waitForPaint();
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, Math.max(0, frameDelayMs - 2));
+      });
+    }
+  } finally {
+    if (recorder.state !== "inactive") recorder.stop();
+  }
+
+  const blob = await stopped;
+  if (!blob.size) {
+    throw new Error("Export produced an empty WebM video.");
+  }
+  return blob;
+}

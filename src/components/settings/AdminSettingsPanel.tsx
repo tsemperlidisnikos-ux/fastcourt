@@ -35,6 +35,7 @@ import { applyAdminRegistryToSession } from "@/lib/auth/admin-users";
 import { AdminLibraryContentModal } from "@/components/settings/AdminLibraryContentModal";
 import { AccountSystemSection } from "@/components/settings/AccountSystemSection";
 import { AppearanceSettingsSection } from "@/components/settings/AppearanceSettingsSection";
+import { LibraryNavModulesSection } from "@/components/settings/LibraryNavModulesSection";
 import { FieldsDetailsSettingsSection } from "@/components/settings/FieldsDetailsSettingsSection";
 import { BillingSection } from "@/components/settings/BillingSection";
 import { PdfBrandingSection } from "@/components/settings/PdfBrandingSection";
@@ -55,6 +56,10 @@ import {
   loadDefaultFieldsConfig,
   saveDefaultFieldsConfig,
 } from "@/lib/settings/default-fields";
+import {
+  loadLibraryNavModules,
+  saveLibraryNavModules,
+} from "@/lib/settings/library-nav-modules";
 import { clearAllFieldCategoryEntries } from "@/lib/settings/clear-field-categories";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { DefaultFieldsConfig } from "@/types/default-fields";
@@ -67,6 +72,7 @@ type NavId =
   | "all-users"
   | "team-organizations"
   | "billing"
+  | "library-modules"
   | "appearance"
   | "fields-details"
   | "pdf-branding"
@@ -82,6 +88,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { id: "all-users", label: "All users", kind: "embed" },
       { id: "team-organizations", label: "Team organizations", kind: "embed" },
       { id: "billing", label: "Billing & setup", kind: "embed" },
+      { id: "library-modules", label: "Library navigation", kind: "embed" },
       { id: "appearance", label: "Appearance", kind: "section" },
       { id: "fields-details", label: "Fields details", kind: "section" },
     ],
@@ -600,6 +607,9 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const [defaultFields, setDefaultFields] = useState<DefaultFieldsConfig>(() =>
     loadDefaultFieldsConfig(),
   );
+  const [libraryNavModules, setLibraryNavModules] = useState(() =>
+    loadLibraryNavModules(),
+  );
 
   useEffect(() => {
     const flag = "fc_fields_wiped_v2";
@@ -704,6 +714,13 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
     if (navId === "billing") {
       setBilling(billing, true);
       setDirty(false);
+      return;
+    }
+
+    if (navId === "library-modules") {
+      saveLibraryNavModules(libraryNavModules);
+      setDirty(false);
+      appNotice("Saved", "Library navigation updated.");
       return;
     }
 
@@ -1022,6 +1039,21 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
                     users={users.map((u) => drafts[u.id] ?? u)}
                     onChange={(next) => {
                       setBilling(next);
+                      setDirty(true);
+                    }}
+                  />
+                </div>
+              ) : null}
+
+              {navId === "library-modules" ? (
+                <div
+                  className="org-settings-embed"
+                  id="org-settings-embed-library-modules"
+                >
+                  <LibraryNavModulesSection
+                    config={libraryNavModules}
+                    onChange={(next) => {
+                      setLibraryNavModules(next);
                       setDirty(true);
                     }}
                   />

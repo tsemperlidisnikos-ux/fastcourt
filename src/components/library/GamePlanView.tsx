@@ -2,14 +2,16 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AddPlayToPlaybookModal } from "@/components/library/AddPlayToPlaybookModal";
 import { GamePlanHomeworkPanel } from "@/components/library/GamePlanHomeworkPanel";
+import { OpponentBoardPanel } from "@/components/library/OpponentBoardPanel";
 import { GameDayOverlay } from "@/components/library/GameDayOverlay";
 import { GamePlanBenchPrintOverlay } from "@/components/library/GamePlanBenchPrintOverlay";
 import { GamePlanSuggestModal } from "@/components/library/GamePlanSuggestModal";
 import { PrintPreviewIcon } from "@/components/library/PrintPreviewIcon";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
+import { TimeoutOverlay } from "@/components/library/TimeoutOverlay";
 import { GAME_PLAN_CATEGORIES } from "@/lib/game-plan/constants";
 import { computePrepPracticeDate } from "@/lib/game-plan/prep-practice";
 import {
@@ -22,7 +24,10 @@ import {
   resolveGamePlanEntryLabel,
   sortGamePlans,
 } from "@/lib/game-plan/game-plan-items";
-import { findOpponentHistory } from "@/lib/game-plan/opponent-history";
+import {
+  findOpponentHistory,
+  importScoutFromPreviousPlan,
+} from "@/lib/game-plan/opponent-history";
 import {
   buildGameDayCategories,
   mergeGameDayCategoryId,
@@ -41,6 +46,7 @@ import {
   copyShareResult,
   DEFAULT_SHARE_STAGE,
 } from "@/lib/share/share-link";
+import { buildTimeoutViewSlides } from "@/lib/game-plan/timeout-mode";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import {
   appConfirm,
@@ -81,6 +87,8 @@ function formatUpdated(iso: string) {
 
 export function GamePlanView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get("plan")?.trim() || null;
   const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const playerHomework = useOrganizerStore((s) => s.playerHomework);
   const plays = useOrganizerStore((s) => s.plays);
@@ -118,6 +126,7 @@ export function GamePlanView() {
   );
   const [benchPrintOpen, setBenchPrintOpen] = useState(false);
   const [gameDayOpen, setGameDayOpen] = useState(false);
+  const [timeoutOpen, setTimeoutOpen] = useState(false);
   const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
 
   const sortedPlans = useMemo(() => sortGamePlans(gamePlans), [gamePlans]);
@@ -152,6 +161,20 @@ export function GamePlanView() {
     );
   }, [selected]);
 
+  const suggestAnchorPlays = useMemo(() => {
+    if (!selected || !suggestCategory) return [];
+    const inCategory = selected.entries
+      .filter((entry) => entry.categoryId === suggestCategory && entry.playId)
+      .map((entry) => playMap.get(entry.playId!))
+      .filter((play): play is StoredPlay => !!play);
+    if (inCategory.length) return inCategory;
+    return selected.entries
+      .filter((entry) => entry.playId)
+      .slice(0, 2)
+      .map((entry) => playMap.get(entry.playId!))
+      .filter((play): play is StoredPlay => !!play);
+  }, [playMap, selected, suggestCategory]);
+
   const opponentHistory = useMemo(() => {
     if (!selected) return [];
     return findOpponentHistory(gamePlans, selected.opponent, {
@@ -184,6 +207,15 @@ export function GamePlanView() {
   useEffect(() => {
     setPage((current) => Math.min(current, Math.max(0, pageCount - 1)));
   }, [pageCount]);
+
+  useEffect(() => {
+    if (!planParam) return;
+    const exists = gamePlans.some((plan) => plan.id === planParam);
+    if (exists) {
+      setSelectedId(planParam);
+      setShowArchived(false);
+    }
+  }, [gamePlans, planParam]);
 
   async function handleCreate() {
     const opponent = await appPrompt({
@@ -309,7 +341,54 @@ export function GamePlanView() {
     if (!rematch) return;
     setSelectedId(rematch.id);
     setShowArchived(false);
-    appNotice("Rematch", `Created "${rematch.title}" for ${formatGamePlanDate(rematch.gameDate)}.`);
+    const boardCount = rematch.opponentBoard?.length ?? 0;
+    appNotice(
+      "Rematch",
+      `Created "${rematch.title}" for ${formatGamePlanDate(rematch.gameDate)}` +
+        (boardCount ? ` with ${boardCount} scout tag${boardCount === 1 ? "" : "s"}.` : "."),
+    );
+  }
+
+  async function handleImportScoutFromPlan(sourcePlanId: string) {
+    if (!selected) return;
+    const source = gamePlans.find((plan) => plan.id === sourcePlanId);
+    if (!source) return;
+
+    const sourceBoardCount = source.opponentBoard?.length ?? 0;
+    const hasSourceData =
+      sourceBoardCount > 0 ||
+      !!source.scoutingNotes?.trim() ||
+      !!source.postGameNotes?.trim();
+    if (!hasSourceData) {
+      appNotice(
+        "Import scout",
+        "That game plan has no opponent board or scouting notes to import.",
+      );
+      return;
+    }
+
+    const hasTargetData =
+      (selected.opponentBoard?.length ?? 0) > 0 || !!selected.scoutingNotes?.trim();
+
+    if (hasTargetData) {
+      const ok = await appConfirm({
+        title: "Import from previous game",
+        message: `Merge opponent board and scouting notes from ${formatGamePlanDate(source.gameDate)} into this plan?`,
+        confirmLabel: "Import",
+      });
+      if (!ok) return;
+    }
+
+    const patch = importScoutFromPreviousPlan(
+      selected,
+      source,
+      formatGamePlanDate(source.gameDate),
+    );
+    await updateGamePlan(selected.id, patch);
+    appNotice(
+      "Import scout",
+      `Merged scout data from ${formatGamePlanDate(source.gameDate)}.`,
+    );
   }
 
   async function handleStatusChange(status: GamePlanStatus) {
@@ -422,7 +501,13 @@ export function GamePlanView() {
     router.push(`/library?tab=practice&session=${session.id}`);
   }
 
+  const timeoutViewSlides = useMemo(() => {
+    if (!selected) return [];
+    return buildTimeoutViewSlides(selected, playMap);
+  }, [selected, playMap]);
+
   const canPrintBench = !!selected && gamePlanEntryCount(selected) > 0;
+  const canTimeoutMode = timeoutViewSlides.length > 0;
 
   return (
     <>
@@ -598,6 +683,14 @@ export function GamePlanView() {
                   )}
                   <button
                     type="button"
+                    className="fc-game-plan-action-btn fc-game-plan-timeout-btn"
+                    disabled={!canTimeoutMode}
+                    onClick={() => setTimeoutOpen(true)}
+                  >
+                    Timeout mode
+                  </button>
+                  <button
+                    type="button"
                     className="fc-game-plan-action-btn"
                     disabled={!canPrintBench}
                     onClick={() => void handleOpenGameDay()}
@@ -670,6 +763,21 @@ export function GamePlanView() {
                 </div>
               ) : null}
 
+              <OpponentBoardPanel
+                plan={selected}
+                plays={plays}
+                excludedPlayIds={excludedPlayIds}
+                onUpdateBoard={(opponentBoard) =>
+                  void updateGamePlan(selected.id, { opponentBoard })
+                }
+                onAddPlayToDefense={(playId) =>
+                  void addPlaysToGamePlanCategory(selected.id, "defense", [playId])
+                }
+                onAddPlaysToDefense={(playIds) =>
+                  void addPlaysToGamePlanCategory(selected.id, "defense", playIds)
+                }
+              />
+
               {opponentHistory.length ? (
                 <section className="fc-game-plan-opponent-history" aria-label="Opponent history">
                   <h3 className="fc-game-plan-opponent-history-title">
@@ -688,6 +796,9 @@ export function GamePlanView() {
                           </span>
                           <span className="fc-game-plan-opponent-history-meta">
                             {gamePlanEntryCount(plan)} plays · {gamePlanStatusLabel(plan.status)}
+                            {(plan.opponentBoard?.length ?? 0) > 0
+                              ? ` · ${plan.opponentBoard?.length} scout tag${plan.opponentBoard?.length === 1 ? "" : "s"}`
+                              : ""}
                           </span>
                           {plan.postGameNotes?.trim() ? (
                             <span className="fc-game-plan-opponent-history-note">
@@ -695,13 +806,22 @@ export function GamePlanView() {
                             </span>
                           ) : null}
                         </button>
-                        <button
-                          type="button"
-                          className="fc-game-plan-opponent-history-rematch"
-                          onClick={() => void handleRematch(plan.id)}
-                        >
-                          Rematch
-                        </button>
+                        <div className="fc-game-plan-opponent-history-actions">
+                          <button
+                            type="button"
+                            className="fc-game-plan-opponent-history-import"
+                            onClick={() => void handleImportScoutFromPlan(plan.id)}
+                          >
+                            Import
+                          </button>
+                          <button
+                            type="button"
+                            className="fc-game-plan-opponent-history-rematch"
+                            onClick={() => void handleRematch(plan.id)}
+                          >
+                            Rematch
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -868,6 +988,7 @@ export function GamePlanView() {
           open
           categoryId={suggestCategory}
           plays={plays}
+          anchorPlays={suggestAnchorPlays}
           excludedPlayIds={excludedPlayIds}
           onClose={() => setSuggestCategory(null)}
           onAdd={handleSuggestAdd}
@@ -886,13 +1007,23 @@ export function GamePlanView() {
         <GameDayOverlay
           plan={selected}
           plays={plays}
+          timeoutViewSlides={timeoutViewSlides}
           onClose={() => setGameDayOpen(false)}
+        />
+      ) : null}
+
+      {timeoutOpen && timeoutViewSlides.length ? (
+        <TimeoutOverlay
+          slides={timeoutViewSlides}
+          title={selected ? `${selected.title} timeout calls` : undefined}
+          onClose={() => setTimeoutOpen(false)}
         />
       ) : null}
 
       {presentPlay ? (
         <PresentationOverlay
           play={presentPlay}
+          simulateGuardRotation
           onClose={() => setPresentPlay(null)}
         />
       ) : null}

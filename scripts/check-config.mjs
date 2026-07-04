@@ -142,6 +142,24 @@ export const FEATURE_DOMAINS = [
     ],
   },
   {
+    id: "film-ai",
+    name: "Film Room — AI Assistant",
+    tests: [
+      "film-clip-analyze.test.ts",
+      "apply-ai-scout.test.ts",
+      "ai-play-pattern-match.test.ts",
+      "ai-openai-env.test.ts",
+    ],
+    modules: [
+      "src/app/api/film/analyze/route.ts",
+      "src/app/api/film/analyze/status/route.ts",
+      "src/components/film-room/FilmRoomAnalyzeModal.tsx",
+      "src/lib/film-room/apply-ai-scout-to-game-plan.ts",
+      "src/lib/film-room/ai-play-pattern-match.ts",
+      "src/lib/ai/env.ts",
+    ],
+  },
+  {
     id: "admin",
     name: "Admin & Data",
     tests: ["purge-data.test.ts"],
@@ -182,6 +200,15 @@ export const MANUAL_CHECKLIST = [
       "Export MP4 from Animation tab (Chrome/Edge)",
       "Whiteboard ink + eraser on frame",
       "Clear frame modal — black text on Cancel/Clear",
+    ],
+  },
+  {
+    area: "Film Room — AI Assistant",
+    steps: [
+      "Set OPENAI_API_KEY in .env.local or Vercel env vars",
+      "Upload MP4 clip (not YouTube-only for analyze)",
+      "Film Room → Analyze clip → AI scout read modal",
+      "Apply full scout → game plan opponent board + defense/offense plays",
     ],
   },
   {

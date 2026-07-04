@@ -16,6 +16,7 @@ import {
   nextAvailableJersey,
   rosterModeFromLibraryType,
 } from "@/lib/designer/player-limits";
+import type { DefenseMarkerStyle } from "@/lib/designer/defense-marker-style";
 import type { DesignerObject } from "@/types/designer";
 import {
   clamp01,
@@ -61,6 +62,11 @@ export const createObjectsSlice: DesignerSliceCreator = (set) => ({
             ? y
             : clamp01(y),
         label,
+        ...(kind === "defense"
+          ? state.activeDefenseStyle === "guard"
+            ? { defenseStyle: "guard" as const, rotation: 0 }
+            : { defenseStyle: "mark" as const }
+          : {}),
         ...(kind === "zone" ? { w: 0.12, h: 0.1 } : {}),
       };
       return updateCurrentFrame(
@@ -74,6 +80,51 @@ export const createObjectsSlice: DesignerSliceCreator = (set) => ({
     }),
 
   setShadowType: (type) => set({ activeShadowType: type }),
+
+  setActiveDefenseStyle: (style: DefenseMarkerStyle) =>
+    set({ activeDefenseStyle: style }),
+
+  setObjectDefenseStyle: (objectId, style) =>
+    set((state) =>
+      updateCurrentFrame(
+        state,
+        (f) => ({
+          ...f,
+          objects: f.objects.map((o) => {
+            if (o.id !== objectId || o.kind !== "defense") return o;
+            if (style === "guard") {
+              return {
+                ...o,
+                defenseStyle: "guard",
+                rotation: o.rotation ?? 0,
+              };
+            }
+            return { ...o, defenseStyle: "mark", rotation: undefined };
+          }),
+        }),
+        { recordUndo: true },
+      ),
+    ),
+
+  setObjectRotation: (
+    objectId,
+    rotation,
+    options?: { recordUndo?: boolean },
+  ) =>
+    set((state) =>
+      updateCurrentFrame(
+        state,
+        (f) => ({
+          ...f,
+          objects: f.objects.map((o) =>
+            o.id === objectId && o.kind === "defense" && o.defenseStyle === "guard"
+              ? { ...o, rotation: ((rotation % 360) + 360) % 360 }
+              : o,
+          ),
+        }),
+        { recordUndo: options?.recordUndo ?? false },
+      ),
+    ),
 
   beginShadowDraft: (x, y) =>
     set({ shadowDraft: { x1: x, y1: y, x2: x, y2: y } }),
@@ -191,7 +242,12 @@ export const createObjectsSlice: DesignerSliceCreator = (set) => ({
   selectObject: (objectId) =>
     set({ selectedObjectId: objectId, selectedActionId: null }),
 
-  resizeObjectScales: (objectId, scaleX, scaleY) =>
+  resizeObjectScales: (
+    objectId,
+    scaleX,
+    scaleY,
+    options?: { recordUndo?: boolean },
+  ) =>
     set((state) => {
       const court = { x: 0, y: 0, width: 1, height: 1 };
       return updateCurrentFrame(
@@ -221,7 +277,7 @@ export const createObjectsSlice: DesignerSliceCreator = (set) => ({
             return o;
           }),
         }),
-        { recordUndo: true },
+        { recordUndo: options?.recordUndo ?? false },
       );
     }),
 
@@ -305,6 +361,7 @@ export const createObjectsSlice: DesignerSliceCreator = (set) => ({
 
 export const objectsInitialState = {
   activeShadowType: "rect" as const,
+  activeDefenseStyle: "mark" as const,
   shadowDraft: null,
   activeZoneType: "paint" as const,
   zoneDraft: null,

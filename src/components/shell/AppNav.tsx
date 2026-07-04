@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { APP_BUILD } from "@/lib/config";
+import { loginSignedOutUrl } from "@/lib/auth/safe-next-path";
 import { resetLibraryOnSignOut } from "@/lib/cloud/library-sync";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
@@ -15,7 +16,6 @@ const NAV = [
 
 export function AppNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -26,7 +26,7 @@ export function AppNav() {
     }
     await resetLibraryOnSignOut();
     signOut();
-    router.replace("/login");
+    window.location.replace(loginSignedOutUrl());
   }
 
   return (

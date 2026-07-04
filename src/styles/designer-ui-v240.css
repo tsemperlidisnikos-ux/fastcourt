@@ -616,6 +616,7 @@
   color: #000000;
   cursor: pointer;
   padding: 0;
+  overflow: visible;
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -633,6 +634,23 @@
   box-shadow: none;
   background: #000000;
   color: #ffffff;
+}
+
+#screen-designer .shadow-type-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+#screen-designer .shadow-type-btn[data-defense-style="guard"] {
+  padding: 2px;
+}
+
+#screen-designer .shadow-type-btn.active[data-defense-style="guard"] svg path {
+  fill: #ffffff;
+}
+
+#screen-designer .shadow-type-btn.active[data-defense-style="guard"] svg circle {
+  fill: none;
 }
 
 #screen-designer .zone-type-bar {

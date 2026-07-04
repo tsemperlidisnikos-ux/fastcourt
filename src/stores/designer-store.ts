@@ -36,6 +36,8 @@ export const useDesignerStore = create<DesignerState>((set, get) =>
   selectedActionId: null,
   selectedObjectId: null,
   animRuntime: null,
+  simulateGuardRotation: false,
+  setSimulateGuardRotation: (value: boolean) => set({ simulateGuardRotation: value }),
   frameActionsDirty: false,
   ...whiteboardInitialState,
   undoStack: [],

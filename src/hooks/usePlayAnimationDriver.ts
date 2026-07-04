@@ -7,9 +7,14 @@ import {
   samplePlayAnimationAt,
   type AnimationExportSample,
 } from "@/lib/designer/animation-export";
+import { applyDefenseRotationToSample } from "@/lib/designer/defense-rotation-sim";
 import type { PlayDocument } from "@/types/designer";
 
-export function usePlayAnimationDriver(play: PlayDocument) {
+export function usePlayAnimationDriver(
+  play: PlayDocument,
+  options?: { simulateGuardRotation?: boolean },
+) {
+  const simulateGuardRotation = options?.simulateGuardRotation ?? false;
   const [playing, setPlaying] = useState(false);
   const [sample, setSample] = useState<AnimationExportSample | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -34,21 +39,29 @@ export function usePlayAnimationDriver(play: PlayDocument) {
     setSample(null);
   }, []);
 
+  const decorate = useCallback(
+    (sample: AnimationExportSample | null) =>
+      simulateGuardRotation ? applyDefenseRotationToSample(sample) : sample,
+    [simulateGuardRotation],
+  );
+
   const tick = useCallback(
     (now: number) => {
       const elapsed = now - startRef.current;
       if (elapsed >= durationMs) {
-        const end = samplePlayAnimationAt(play, Math.max(0, durationMs - 1));
+        const end = decorate(
+          samplePlayAnimationAt(play, Math.max(0, durationMs - 1)),
+        );
         setSample(end);
         setPlaying(false);
         cancelRaf();
         return;
       }
 
-      setSample(samplePlayAnimationAt(play, elapsed));
+      setSample(decorate(samplePlayAnimationAt(play, elapsed)));
       rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
     },
-    [cancelRaf, durationMs, play],
+    [cancelRaf, decorate, durationMs, play],
   );
 
   useEffect(() => {
@@ -58,12 +71,12 @@ export function usePlayAnimationDriver(play: PlayDocument) {
   const start = useCallback(() => {
     cancelRaf();
     if (!canPlay) return;
-    const initial = samplePlayAnimationAt(play, 0);
+    const initial = decorate(samplePlayAnimationAt(play, 0));
     setSample(initial);
     setPlaying(true);
     startRef.current = performance.now();
     rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
-  }, [canPlay, cancelRaf, play]);
+  }, [canPlay, cancelRaf, decorate, play]);
 
   useEffect(() => () => stop(), [stop]);
 

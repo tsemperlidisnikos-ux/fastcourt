@@ -3,7 +3,6 @@ import { ShareProviders } from "@/components/share/ShareProviders";
 import {
   APP_DESCRIPTION,
   APP_ICON_PATH,
-  APP_LOGO_PATH,
   APP_NAME,
   PWA_BACKGROUND_COLOR,
   PWA_THEME_COLOR,
@@ -54,9 +53,6 @@ export default function RootLayout({
       className="notranslate h-full antialiased"
       style={{ backgroundColor: PWA_BACKGROUND_COLOR }}
     >
-      <head>
-        <link rel="preload" href={APP_LOGO_PATH} as="image" fetchPriority="high" />
-      </head>
       <body className="notranslate min-h-full flex flex-col">
         <ShareProviders>{children}</ShareProviders>
       </body>

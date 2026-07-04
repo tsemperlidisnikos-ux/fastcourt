@@ -79,6 +79,7 @@ export function PwaBootstrap() {
     showAndroidInstall && !installHidden;
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "development") return;
     void registerServiceWorker((registration) => {
       setWaitingRegistration(registration);
     });

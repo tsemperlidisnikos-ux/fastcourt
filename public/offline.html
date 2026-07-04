@@ -61,11 +61,30 @@
     <main>
       <img src="/assets/landing/fastcourt-intro-mark.png" alt="" />
       <h1>You are offline</h1>
-      <p>
+      <p id="offline-detail">
         FastCourt needs a connection to sign in or sync cloud data. Your saved
         plays on this device may still be available after you reconnect.
       </p>
-      <button type="button" onclick="location.reload()">Try again</button>
+      <button type="button" id="offline-retry" onclick="retryOffline()">Try again</button>
     </main>
+    <script>
+      function retryOffline() {
+        if (navigator.onLine) {
+          location.replace("/login");
+          return;
+        }
+        location.reload();
+      }
+      (function () {
+        var detail = document.getElementById("offline-detail");
+        var title = document.querySelector("h1");
+        if (!detail || !title) return;
+        if (navigator.onLine) {
+          title.textContent = "Can't reach FastCourt";
+          detail.textContent =
+            "You appear to be online, but the app server did not respond. If you are developing locally, start npm run dev. Otherwise try again in a moment.";
+        }
+      })();
+    </script>
   </body>
 </html>

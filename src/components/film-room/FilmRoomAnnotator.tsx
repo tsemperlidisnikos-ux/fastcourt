@@ -1,6 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
+import { FilmRoomFramePreviewStrip } from "@/components/film-room/FilmRoomFramePreviewStrip";
+import { FilmRoomEventTagBar } from "@/components/film-room/FilmRoomEventTagBar";
+import { FilmRoomFloatingShuttleWheel } from "@/components/film-room/FilmRoomFloatingShuttleWheel";
+import { FilmRoomAddToGamePlanModal } from "@/components/film-room/FilmRoomAddToGamePlanModal";
+import { FilmRoomAnalyzeModal } from "@/components/film-room/FilmRoomAnalyzeModal";
 import { FilmRoomToolbar } from "@/components/film-room/FilmRoomToolbar";
 import { FilmRoomVideoControlDock } from "@/components/film-room/FilmRoomVideoControlDock";
 import {
@@ -10,24 +16,63 @@ import {
 import { VideoAnnotationCanvas } from "@/components/film-room/VideoAnnotationCanvas";
 import { filmRoomSourceLabel } from "@/lib/film-room/film-room-source";
 import {
+  canCaptureFilmFrames,
+  capturedFramesToPreviews,
+  captureFilmFramesAroundTime,
+  type FilmFramePreview,
+} from "@/lib/film-room/capture-film-frames";
+import { FILM_CLIP_ANALYZE_FRAME_COUNT } from "@/lib/film-room/capture-video-frames";
+import { buildFilmAnalyzeContext } from "@/lib/film-room/film-analyze-context";
+import { createFilmAnalysisRecord } from "@/lib/film-room/film-analysis-history";
+import {
+  FILM_EVENT_KEYBOARD_MAP,
+  selectFilmEventsForAnalyze,
+} from "@/lib/film-room/film-event-tags";
+import type { YouTubePlayerInstance } from "@/lib/film-room/youtube-iframe-api";
+import { analyzeFilmClip } from "@/lib/film-room/film-clip-analyze-client";
+import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
+import { appNotice } from "@/stores/dialog-store";
+import { withoutPenStrokesNearTime } from "@/lib/film-room/film-room-strokes";
+import { clampSeekTime } from "@/lib/film-room/shuttle-wheel";
+import {
   DEFAULT_FILM_ROOM_MARKUP_PRESET,
   filmRoomMarkupPreset,
   type FilmRoomMarkupPreset,
 } from "@/lib/film-room/markup-toolbar-presets";
+import { useAiAssistantStatus } from "@/hooks/useAiAssistantStatus";
 import { useFilmRoomStore } from "@/stores/film-room-store";
-import type { FilmRoomSession, VideoAnnotationStroke } from "@/types/film-room";
+import type {
+  FilmRoomSession,
+  FilmRoomEventKind,
+  FilmRoomAnalysisRecord,
+  VideoAnnotationStroke,
+} from "@/types/film-room";
+import type { FilmAnalyzeContext } from "@/lib/film-room/film-analyze-context";
 
 interface Props {
   session: FilmRoomSession;
+  initialSeekTime?: number | null;
 }
 
-export function FilmRoomAnnotator({ session }: Props) {
+export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const setStrokes = useFilmRoomStore((s) => s.setStrokes);
   const appendStroke = useFilmRoomStore((s) => s.appendStroke);
+  const addFilmEvent = useFilmRoomStore((s) => s.addFilmEvent);
+  const updateFilmEvent = useFilmRoomStore((s) => s.updateFilmEvent);
+  const undoLastFilmEvent = useFilmRoomStore((s) => s.undoLastFilmEvent);
+  const removeFilmEvent = useFilmRoomStore((s) => s.removeFilmEvent);
+  const appendAnalysisRecord = useFilmRoomStore((s) => s.appendAnalysisRecord);
+  const removeAnalysisRecord = useFilmRoomStore((s) => s.removeAnalysisRecord);
   const clearPenStrokes = useFilmRoomStore((s) => s.clearPenStrokes);
   const resolveUploadObjectUrl = useFilmRoomStore((s) => s.resolveUploadObjectUrl);
   const strokes = useFilmRoomStore(
     (s) => s.sessions.find((row) => row.id === session.id)?.strokes ?? session.strokes,
+  );
+  const events = useFilmRoomStore(
+    (s) => s.sessions.find((row) => row.id === session.id)?.events ?? session.events ?? [],
+  );
+  const analyses = useFilmRoomStore(
+    (s) => s.sessions.find((row) => row.id === session.id)?.analyses ?? session.analyses ?? [],
   );
 
   const [canvasEpoch, setCanvasEpoch] = useState(0);
@@ -51,6 +96,8 @@ export function FilmRoomAnnotator({ session }: Props) {
     setUndoStack([]);
     setRedoStack([]);
     setCanvasEpoch(0);
+    setShuttlePositionKey((key) => key + 1);
+    initialSeekAppliedRef.current = false;
   }, [session.id]);
   const playerShellRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<VideoPlaybackController | null>(null);
@@ -62,6 +109,26 @@ export function FilmRoomAnnotator({ session }: Props) {
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [autoClearOnScrub, setAutoClearOnScrub] = useState(false);
+  const [shuttlePositionKey, setShuttlePositionKey] = useState(0);
+  const [gamePlanModalOpen, setGamePlanModalOpen] = useState(false);
+  const [analyzeModalOpen, setAnalyzeModalOpen] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<FilmClipAnalysisResult | null>(
+    null,
+  );
+  const [analyzeBusy, setAnalyzeBusy] = useState(false);
+  const [analyzePhase, setAnalyzePhase] = useState<"capturing" | "analyzing" | null>(null);
+  const [captureProgress, setCaptureProgress] = useState({ current: 0, total: FILM_CLIP_ANALYZE_FRAME_COUNT });
+  const [analyzeContext, setAnalyzeContext] = useState<FilmAnalyzeContext | null>(null);
+  const [tagNoteDraft, setTagNoteDraft] = useState("");
+  const [framePreviews, setFramePreviews] = useState<FilmFramePreview[]>([]);
+  const [showFramePreviews, setShowFramePreviews] = useState(false);
+  const [historyPlayheadTime, setHistoryPlayheadTime] = useState<number | null>(null);
+  const aiStatus = useAiAssistantStatus();
+  const nativeVideoRef = useRef<HTMLVideoElement | null>(null);
+  const youtubePlayerRef = useRef<YouTubePlayerInstance | null>(null);
+  const youtubeCaptureRootRef = useRef<HTMLElement | null>(null);
+  const initialSeekAppliedRef = useRef(false);
 
   useEffect(() => {
     function syncFullscreen() {
@@ -166,10 +233,58 @@ export function FilmRoomAnnotator({ session }: Props) {
     setCurrentTime(time);
   }, []);
 
+  useEffect(() => {
+    if (initialSeekAppliedRef.current) return;
+    if (initialSeekTime == null || !Number.isFinite(initialSeekTime)) return;
+    if (duration <= 0 || !controllerRef.current) return;
+    initialSeekAppliedRef.current = true;
+    const next = clampSeekTime(initialSeekTime, duration);
+    seek(next);
+  }, [duration, initialSeekTime, seek]);
+
   const recordUndo = useCallback(() => {
     setUndoStack((stack) => [...stack, strokesRef.current]);
     setRedoStack([]);
   }, []);
+
+  const handleJogStart = useCallback(() => {
+    const controller = controllerRef.current;
+    controller?.pause();
+    const anchorTime = controller?.getCurrentTime() ?? currentTime;
+    if (!autoClearOnScrub) return;
+    const next = withoutPenStrokesNearTime(strokesRef.current, anchorTime);
+    if (next.length === strokesRef.current.length) return;
+    recordUndo();
+    setStrokes(session.id, next);
+    setCanvasEpoch((epoch) => epoch + 1);
+  }, [autoClearOnScrub, currentTime, recordUndo, session.id, setStrokes]);
+
+  const handleJog = useCallback(
+    (deltaSeconds: number) => {
+      const controller = controllerRef.current;
+      const now = controller?.getCurrentTime() ?? currentTime;
+      const dur = controller?.getDuration() ?? duration;
+      const next = clampSeekTime(now + deltaSeconds, dur);
+      controller?.seek(next);
+      setCurrentTime(next);
+    },
+    [currentTime, duration],
+  );
+
+  const handleSliderSeek = useCallback(
+    (time: number) => {
+      if (autoClearOnScrub) {
+        const next = withoutPenStrokesNearTime(strokesRef.current, time);
+        if (next.length !== strokesRef.current.length) {
+          recordUndo();
+          setStrokes(session.id, next);
+          setCanvasEpoch((epoch) => epoch + 1);
+        }
+      }
+      seek(time);
+    },
+    [autoClearOnScrub, recordUndo, seek, session.id, setStrokes],
+  );
 
   const applyStrokes = useCallback(
     (nextStrokes: VideoAnnotationStroke[]) => {
@@ -229,6 +344,117 @@ export function FilmRoomAnnotator({ session }: Props) {
     new Set(strokes.map((stroke) => stroke.time)),
   ).sort((a, b) => a - b);
 
+  const eventMarkerTimes = events.map((event) => ({ id: event.id, time: event.time }));
+
+  const handleTagAtPlayhead = useCallback(
+    (kind: FilmRoomEventKind, note?: string) => {
+      if (duration <= 0) return;
+      addFilmEvent(session.id, kind, currentTime, note);
+    },
+    [addFilmEvent, currentTime, duration, session.id],
+  );
+
+  const openAnalysisRecord = useCallback((record: FilmRoomAnalysisRecord) => {
+    setAnalysisResult(record.result);
+    setHistoryPlayheadTime(record.playheadTime);
+    setAnalyzeContext(
+      buildFilmAnalyzeContext(
+        record.coachTags.map((tag) => ({
+          id: `hist_${tag.time}_${tag.kind}`,
+          kind: tag.kind,
+          time: tag.time,
+          note: tag.note,
+          createdAt: record.createdAt,
+        })),
+        Array.from({ length: record.frameCount }, (_, index) =>
+          record.playheadTime - 1 + (index / Math.max(1, record.frameCount - 1)) * 2,
+        ),
+      ),
+    );
+    setAnalyzeModalOpen(true);
+  }, []);
+
+  const canAnalyzeClip = canCaptureFilmFrames(session.source);
+
+  async function handleAnalyzeClip() {
+    if (!canAnalyzeClip || analyzeBusy) return;
+    if (aiStatus.configured === false) {
+      appNotice(
+        "AI Assistant",
+        "OpenAI is not configured on this server. Add OPENAI_API_KEY to .env.local (local) or Vercel Environment Variables (production), then restart.",
+      );
+      return;
+    }
+    const video = nativeVideoRef.current;
+    if (session.source.kind !== "youtube" && !video) {
+      appNotice("Analyze clip", "Video is not ready yet. Try again in a moment.");
+      return;
+    }
+    if (session.source.kind === "youtube" && !youtubePlayerRef.current) {
+      appNotice("Analyze clip", "YouTube player is not ready yet. Try again in a moment.");
+      return;
+    }
+
+    setAnalyzeBusy(true);
+    setAnalyzePhase("capturing");
+    setCaptureProgress({ current: 0, total: FILM_CLIP_ANALYZE_FRAME_COUNT });
+    setShowFramePreviews(false);
+    try {
+      controllerRef.current?.pause();
+      const captured = await captureFilmFramesAroundTime({
+        source: session.source,
+        centerTime: currentTime,
+        video,
+        youtubePlayer: youtubePlayerRef.current,
+        youtubeCaptureRoot: youtubeCaptureRootRef.current,
+        count: FILM_CLIP_ANALYZE_FRAME_COUNT,
+        onProgress: (current, total) => setCaptureProgress({ current, total }),
+      });
+      const previews = capturedFramesToPreviews(captured);
+      setFramePreviews(previews);
+      setShowFramePreviews(true);
+      const coachTags = selectFilmEventsForAnalyze(events, currentTime);
+      const context = buildFilmAnalyzeContext(coachTags, captured.times);
+      setAnalyzeContext(context);
+      setAnalyzePhase("analyzing");
+      const result = await analyzeFilmClip({
+        frames: captured.frames,
+        frameTimes: captured.times,
+        timestamp: currentTime,
+        sessionTitle: session.title,
+        filmEvents: coachTags.map((event) => ({
+          kind: event.kind,
+          time: event.time,
+          note: event.note,
+        })),
+      });
+      setHistoryPlayheadTime(null);
+      setAnalysisResult(result);
+      appendAnalysisRecord(
+        session.id,
+        createFilmAnalysisRecord({
+          playheadTime: currentTime,
+          result,
+          frameCount: captured.frames.length,
+          coachTags: coachTags.map((tag) => ({
+            kind: tag.kind,
+            time: tag.time,
+            note: tag.note,
+          })),
+        }),
+      );
+      setAnalyzeModalOpen(true);
+    } catch (err) {
+      appNotice(
+        "Analyze clip",
+        err instanceof Error ? err.message : "Analysis failed.",
+      );
+    } finally {
+      setAnalyzeBusy(false);
+      setAnalyzePhase(null);
+    }
+  }
+
   return (
     <div className="fc-film-annotator">
       <header className="fc-film-annotator-head">
@@ -237,7 +463,62 @@ export function FilmRoomAnnotator({ session }: Props) {
           <p className="fc-film-annotator-meta">
             {filmRoomSourceLabel(session.source)} · {strokes.length} annotation
             {strokes.length === 1 ? "" : "s"}
+            {events.length > 0 ? (
+              <>
+                {" "}
+                · {events.length} event tag{events.length === 1 ? "" : "s"}
+              </>
+            ) : null}
+            {analyses.length > 0 ? (
+              <>
+                {" "}
+                · {analyses.length} analysis{analyses.length === 1 ? "" : "es"}
+              </>
+            ) : null}
+            {aiStatus.loading ? null : aiStatus.configured ? (
+              <> · AI ready</>
+            ) : (
+              <> · AI off</>
+            )}
           </p>
+          {!aiStatus.loading && !aiStatus.configured ? (
+            <p className="fc-film-ai-setup-hint">
+              Set <code>OPENAI_API_KEY</code> to enable Analyze clip.
+            </p>
+          ) : null}
+          {session.source.kind === "youtube" ? (
+            <p className="fc-film-ai-setup-hint">
+              YouTube analyze uses visible-player capture — upload MP4 if frames look blank.
+            </p>
+          ) : null}
+        </div>
+        <div className="fc-film-annotator-actions">
+          <button
+            type="button"
+            className="fc-film-analyze-btn"
+            disabled={!canAnalyzeClip || analyzeBusy || aiStatus.configured === false}
+            title={
+              !canAnalyzeClip
+                ? "Video source not supported for AI analyze"
+                : aiStatus.configured === false
+                  ? "Add OPENAI_API_KEY to enable AI Assistant"
+                  : `AI Coaching Assistant — ${FILM_CLIP_ANALYZE_FRAME_COUNT} frames + nearby coach tags`
+            }
+            onClick={() => void handleAnalyzeClip()}
+          >
+            {analyzePhase === "capturing"
+              ? `Capturing ${captureProgress.current}/${captureProgress.total}…`
+              : analyzePhase === "analyzing"
+                ? "Analyzing…"
+                : "Analyze clip"}
+          </button>
+          <button
+            type="button"
+            className="fc-film-game-plan-btn"
+            onClick={() => setGamePlanModalOpen(true)}
+          >
+            Add to game plan
+          </button>
         </div>
       </header>
 
@@ -246,7 +527,24 @@ export function FilmRoomAnnotator({ session }: Props) {
         className="fc-film-player-shell"
         tabIndex={-1}
         onKeyDown={(e) => {
-          if (e.code !== "Space" && e.key !== " ") return;
+          if (e.code !== "Space" && e.key !== " ") {
+            const target = e.target as HTMLElement;
+            if (
+              target.tagName !== "INPUT" &&
+              target.tagName !== "TEXTAREA" &&
+              !e.metaKey &&
+              !e.ctrlKey &&
+              !e.altKey
+            ) {
+              const kind = FILM_EVENT_KEYBOARD_MAP[e.key];
+              if (kind) {
+                e.preventDefault();
+                handleTagAtPlayhead(kind, tagNoteDraft.trim() || undefined);
+                if (tagNoteDraft.trim()) setTagNoteDraft("");
+              }
+            }
+            return;
+          }
           if (!isFilmFullscreen()) return;
           e.preventDefault();
           e.stopPropagation();
@@ -263,11 +561,43 @@ export function FilmRoomAnnotator({ session }: Props) {
           onClear={clearPenDrawings}
         />
 
+        <FilmRoomEventTagBar
+          currentTime={currentTime}
+          events={events}
+          noteDraft={tagNoteDraft}
+          disabled={duration <= 0}
+          canUndo={events.length > 0}
+          onNoteChange={setTagNoteDraft}
+          onTag={handleTagAtPlayhead}
+          onUndoLast={() => undoLastFilmEvent(session.id)}
+          onUpdate={(eventId, patch) => updateFilmEvent(session.id, eventId, patch)}
+          onRemove={(eventId) => removeFilmEvent(session.id, eventId)}
+          onSeek={handleSliderSeek}
+        />
+
+        <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />
+
+        <FilmRoomAnalysisHistoryPanel
+          analyses={analyses}
+          onOpen={openAnalysisRecord}
+          onSeek={handleSliderSeek}
+          onRemove={(recordId) => removeAnalysisRecord(session.id, recordId)}
+        />
+
         <div className="fc-film-stage">
           <div ref={overlayRef} className="fc-film-video-stack">
             <FilmRoomVideoSurface
               source={session.source}
               uploadSrc={uploadSrc}
+              onNativeVideo={(video) => {
+                nativeVideoRef.current = video;
+              }}
+              onYouTubePlayer={(player) => {
+                youtubePlayerRef.current = player;
+              }}
+              onYouTubeCaptureRoot={(element) => {
+                youtubeCaptureRootRef.current = element;
+              }}
               onController={handleController}
               onTimeUpdate={setCurrentTime}
               onDuration={setDuration}
@@ -289,14 +619,29 @@ export function FilmRoomAnnotator({ session }: Props) {
                 onEraserGestureStart={handleEraserGestureStart}
               />
             ) : null}
+            <FilmRoomFloatingShuttleWheel
+              key={`${session.id}-${shuttlePositionKey}`}
+              boundsRef={overlayRef}
+              boundsWidth={overlaySize.width}
+              boundsHeight={overlaySize.height}
+              disabled={duration <= 0}
+              playing={playing}
+              onTogglePlay={togglePlay}
+              onJogStart={handleJogStart}
+              onJog={handleJog}
+              onJogEnd={() => undefined}
+            />
             <FilmRoomVideoControlDock
               playing={playing}
               currentTime={currentTime}
               duration={duration}
               markerTimes={markerTimes}
+              eventMarkerTimes={eventMarkerTimes}
               fullscreen={fullscreen}
+              autoClearOnScrub={autoClearOnScrub}
+              onToggleAutoClear={() => setAutoClearOnScrub((value) => !value)}
               onTogglePlay={togglePlay}
-              onSeek={seek}
+              onSeek={handleSliderSeek}
               onToggleFullscreen={() => void toggleFullscreen()}
             />
           </div>
@@ -304,9 +649,34 @@ export function FilmRoomAnnotator({ session }: Props) {
       </div>
 
       <p className="fc-film-hint">
-        Draw while paused or playing — marks appear when playback reaches that moment (like Video
-        Pencil). Press <kbd>F</kbd> or ⛶ for fullscreen; <kbd>Space</kbd> play/pause in fullscreen.
+        Hold the wheel to move it; rotate to jog. Use the timeline for quick jumps. Press <kbd>F</kbd>{" "}
+        or ⛶ for fullscreen; <kbd>Space</kbd> play/pause in fullscreen.
       </p>
+
+      <FilmRoomAddToGamePlanModal
+        open={gamePlanModalOpen}
+        sessionId={session.id}
+        sessionTitle={session.title}
+        currentTime={currentTime}
+        onClose={() => setGamePlanModalOpen(false)}
+      />
+
+      {analysisResult ? (
+        <FilmRoomAnalyzeModal
+          open={analyzeModalOpen}
+          sessionId={session.id}
+          sessionTitle={session.title}
+          currentTime={historyPlayheadTime ?? currentTime}
+          analysis={analysisResult}
+          analyzeContext={analyzeContext}
+          onClose={() => {
+            setAnalyzeModalOpen(false);
+            setAnalysisResult(null);
+            setAnalyzeContext(null);
+            setHistoryPlayheadTime(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

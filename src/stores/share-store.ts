@@ -21,6 +21,7 @@ export interface PracticeShareSession {
   };
   items: SharePracticeItem[];
   stageRef: { width: number; height: number };
+  sessionId?: string;
 }
 
 export interface GamePlanShareSession {
@@ -67,6 +68,7 @@ export interface GameDayShareSession {
     location?: string;
     homeAway?: string;
     scoutingNotes?: string;
+    timeoutCues?: import("@/types/library-meta").GamePlanTimeoutCue[];
   };
   entries: ShareGamePlanEntry[];
   activeCategoryId?: import("@/types/library-meta").GamePlanCategoryId;

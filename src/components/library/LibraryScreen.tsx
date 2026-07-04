@@ -31,27 +31,18 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import { useSettingsStore } from "@/stores/settings-store";
-
-type LibraryTab = "draw" | "playbooks" | "gameplan" | "fields" | "practice" | "players";
-
-function parseTab(raw: string | null): LibraryTab {
-  if (
-    raw === "playbooks" ||
-    raw === "gameplan" ||
-    raw === "fields" ||
-    raw === "practice" ||
-    raw === "players"
-  ) {
-    return raw;
-  }
-  return "draw";
-}
+import { useLibraryNavModules } from "@/hooks/useLibraryNavModules";
+import {
+  libraryScreenTabHref,
+  resolveLibraryScreenTab,
+} from "@/lib/settings/library-nav-modules";
 
 export function LibraryScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const tab = parseTab(searchParams.get("tab"));
+  const navModules = useLibraryNavModules();
+  const tab = resolveLibraryScreenTab(searchParams.get("tab"), navModules);
   const mounted = useClientMounted();
   const [onboardingSuppressed, setOnboardingSuppressed] = useState(false);
   const onboardingOpen =
@@ -79,6 +70,19 @@ export function LibraryScreen() {
   useEffect(() => {
     applySettings();
   }, [applySettings, tab]);
+
+  useEffect(() => {
+    const raw = searchParams.get("tab");
+    const resolved = resolveLibraryScreenTab(raw, navModules);
+    const href = libraryScreenTabHref(resolved);
+    const current =
+      resolved === "draw"
+        ? !raw || raw === "draw"
+        : raw === resolved;
+    if (!current) {
+      router.replace(href, { scroll: false });
+    }
+  }, [navModules, router, searchParams]);
 
   useEffect(() => {
     void (async () => {

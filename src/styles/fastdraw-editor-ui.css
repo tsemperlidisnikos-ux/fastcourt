@@ -12,7 +12,7 @@
   --fd-editor-sidebar-font: calc(15px * var(--fd-editor-ui-scale));
   --fd-editor-sidebar-font-sm: calc(12px * var(--fd-editor-ui-scale));
   --fd-editor-sidebar-font-xs: calc(11px * var(--fd-editor-ui-scale));
-  --fd-editor-frame-strip-width: 207px;
+  --fd-editor-frame-strip-width: 248px;
   --fd-editor-frame-thumb-height: calc(186px * var(--fd-editor-ui-scale));
   --fd-editor-frame-min-height: calc(248px * var(--fd-editor-ui-scale));
   --fd-editor-canvas-bg: #ffffff;
@@ -1233,16 +1233,20 @@
 }
 
 #screen-designer .ds-sidebar-tabs {
-  display: none;
+  display: none !important;
 }
 
 #screen-designer .ds-sidebar-tab-pane {
   display: none !important;
   padding: 12px 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
-#screen-designer .ds-sidebar-tab-pane#sidebar-tab-frames {
-  display: block !important;
+#screen-designer .ds-sidebar-tab-pane.is-active {
+  display: flex !important;
+  flex-direction: column;
 }
 
 #screen-designer #sidebar-tab-frames .ds-thumb-list-vertical {
@@ -1465,7 +1469,7 @@
 @media (max-width: 1100px) {
   #screen-designer {
     --fd-editor-sidebar-width: 305px;
-    --fd-editor-frame-strip-width: 190px;
+    --fd-editor-frame-strip-width: 228px;
     --fd-editor-frame-thumb-height: 170px;
     --fd-editor-frame-min-height: 228px;
   }
@@ -1488,7 +1492,7 @@
   #screen-designer {
     --fd-editor-sidebar-width: 272px;
     --fd-editor-notes-width: 220px;
-    --fd-editor-frame-strip-width: 173px;
+    --fd-editor-frame-strip-width: 210px;
     --fd-editor-frame-thumb-height: calc(147px * var(--fd-editor-ui-scale));
     --fd-editor-frame-min-height: calc(193px * var(--fd-editor-ui-scale));
   }

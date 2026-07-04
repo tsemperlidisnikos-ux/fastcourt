@@ -150,6 +150,14 @@ export interface DesignerObject {
 
   scaleY?: number;
 
+  /** Defense marker: X label (mark) or rotatable guard wings (guard). */
+
+  defenseStyle?: "mark" | "guard";
+
+  /** Guard facing direction in degrees (0 = toward top of court). */
+
+  rotation?: number;
+
 }
 
 

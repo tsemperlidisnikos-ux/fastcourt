@@ -16,6 +16,7 @@ import {
   loadPracticeLivePrefs,
   savePracticeLivePrefs,
 } from "@/lib/practice/live-prefs";
+import { publishPracticeLiveState } from "@/lib/practice/live-broadcast";
 import { playPracticeTimerAlert } from "@/lib/practice/timer-alert";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { PracticeSession } from "@/types/library-meta";
@@ -82,6 +83,14 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
   const timerFiredRef = useRef(-1);
 
   const current: ResolvedPracticeRow | null = rows[index] ?? null;
+
+  useEffect(() => {
+    publishPracticeLiveState({
+      sessionId: session.id,
+      currentIndex: index,
+      completed: [...completed],
+    });
+  }, [session.id, index, completed]);
 
   useEffect(() => {
     if (mounted && rows.length === 0) {

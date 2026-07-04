@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useMemo, useState } from "react";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import {
+  enrichSuggestionsWithPlayDna,
   gamePlanSuggestModalTitle,
   suggestPlaysForGamePlanCategory,
 } from "@/lib/game-plan/suggest-plays";
@@ -14,6 +15,7 @@ interface Props {
   open: boolean;
   categoryId: GamePlanCategoryId;
   plays: StoredPlay[];
+  anchorPlays?: StoredPlay[];
   excludedPlayIds: ReadonlySet<string>;
   onClose: () => void;
   onAdd: (playIds: string[]) => void;
@@ -28,14 +30,25 @@ export function GamePlanSuggestModal(props: Props) {
 function GamePlanSuggestModalBody({
   categoryId,
   plays,
+  anchorPlays = [],
   excludedPlayIds,
   onClose,
   onAdd,
 }: Props) {
-  const suggestions = useMemo(
-    () => suggestPlaysForGamePlanCategory(plays, categoryId, excludedPlayIds),
-    [plays, categoryId, excludedPlayIds],
-  );
+  const suggestions = useMemo(() => {
+    const tagMatches = suggestPlaysForGamePlanCategory(
+      plays,
+      categoryId,
+      excludedPlayIds,
+    );
+    if (!anchorPlays.length) return tagMatches;
+    return enrichSuggestionsWithPlayDna(
+      tagMatches,
+      anchorPlays,
+      plays,
+      excludedPlayIds,
+    );
+  }, [anchorPlays, categoryId, excludedPlayIds, plays]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   function toggle(id: string) {
@@ -59,7 +72,10 @@ function GamePlanSuggestModalBody({
       <div className="fc-game-plan-suggest-panel">
         <header className="fc-game-plan-suggest-header">
           <h2>{gamePlanSuggestModalTitle(categoryId)}</h2>
-          <p>Matched from play tags, series, and titles.</p>
+          <p>
+            Matched from tags, titles
+            {anchorPlays.length ? " and Play DNA vs plays already in this category" : ""}.
+          </p>
         </header>
         <div className="fc-game-plan-suggest-body">
           {!suggestions.length ? (

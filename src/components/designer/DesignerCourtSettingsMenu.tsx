@@ -7,6 +7,7 @@ interface ExportHandlers {
   exportingAnim?: boolean;
   onShareLink: () => void;
   onExportVideo: () => void;
+  onExportWebm?: () => void;
   onExportImages: () => void;
   onEmbedCode: () => void;
   onDownload: () => void;
@@ -58,6 +59,16 @@ export function DesignerCourtSettingsMenu({
               >
                 MP4
               </button>
+              {exportHandlers.onExportWebm ? (
+                <button
+                  type="button"
+                  disabled={exportHandlers.exportingAnim}
+                  title="Export play animation as WebM video"
+                  onClick={exportHandlers.onExportWebm}
+                >
+                  WebM
+                </button>
+              ) : null}
               <button type="button" onClick={exportHandlers.onExportImages}>
                 Images
               </button>

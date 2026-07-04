@@ -1,11 +1,13 @@
 import type { SessionUser } from "@/types/auth";
 import type { StoredPlay } from "@/types/library";
+import { usesOrganizationSharedLibrary } from "@/lib/cloud/library-owner";
 
-/** Each signed-in user with their own library row keeps private plays. */
+/** Solo libraries filter by owner; org coaches see the full shared team row. */
 export function usesPersonalPlayOwnership(
   user: SessionUser,
   libraryOwnerUserId: string,
 ): boolean {
+  if (usesOrganizationSharedLibrary(user, libraryOwnerUserId)) return false;
   return user.id === libraryOwnerUserId;
 }
 

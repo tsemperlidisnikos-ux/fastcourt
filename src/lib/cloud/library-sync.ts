@@ -6,7 +6,7 @@ import {
   fetchCloudUserLibrary,
   saveCloudUserLibrary,
 } from "@/lib/cloud/library-cloud";
-import { resolveLibraryCloudUserId } from "@/lib/cloud/library-owner";
+import { resolveLibraryCloudUserId, syncTeamLibraryLink } from "@/lib/cloud/library-owner";
 import { EMPTY_ORGANIZER_META } from "@/lib/cloud/library-meta-types";
 import { mergeOrganizerMeta } from "@/lib/cloud/merge-meta";
 import { mergePlaysByUpdatedAt, playsSyncable } from "@/lib/cloud/merge-plays";
@@ -14,10 +14,6 @@ import {
   filterByTombstones,
   mergeLibraryTombstones,
 } from "@/lib/cloud/merge-tombstones";
-import {
-  findOrganizationMembership,
-  organizationGrantsAppAccess,
-} from "@/lib/auth/org-access";
 import {
   clearLocalLibraryCache,
   prepareLibraryCacheForUser,
@@ -137,22 +133,7 @@ async function ensureProfileOrganization(
   supabase: SupabaseClient,
   user: SessionUser,
 ): Promise<void> {
-  if (user.accessSource !== "organization" || !user.organizationId) return;
-
-  const membership = findOrganizationMembership(user.email);
-  if (!membership || !organizationGrantsAppAccess(membership)) return;
-
-  const orgName = membership.organizationName.trim();
-  if (!orgName) return;
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ organization: orgName })
-    .eq("id", user.id);
-
-  if (error) {
-    console.warn("FastCourt: profile organization sync failed", error.message);
-  }
+  await syncTeamLibraryLink(supabase, user);
 }
 
 export interface LibrarySyncResult {
@@ -236,6 +217,9 @@ export async function prepareLibrarySessionForUser(
   setCloudLibrarySession(true);
   const client = supabase ?? createClient();
   const libraryOwnerUserId = await resolveLibraryCloudUserId(user, { supabase: client });
+  if (client) {
+    await ensureProfileOrganization(client, user);
+  }
   const scopeChanged = prepareLibraryCacheForUser(user, libraryOwnerUserId);
   const sessionChanged = shouldResetLibraryCache(
     prevSessionUserId,
@@ -293,6 +277,17 @@ export async function syncLibraryForUser(
 
   const { snapshot } = remoteResult;
   let remotePlays = snapshot.plays.filter(playsSyncable);
+
+  if (libraryOwnerUserId !== user.id) {
+    const personalRemote = await fetchCloudUserLibrary(supabase, user.id);
+    if (personalRemote.ok && personalRemote.snapshot.plays.length > 0) {
+      remotePlays = mergePlaysByUpdatedAt(
+        remotePlays,
+        personalRemote.snapshot.plays.filter(playsSyncable),
+      );
+    }
+  }
+
   remotePlays = scopePlaysForUser(remotePlays, user, libraryOwnerUserId);
   const mergedTombstones = mergeLibraryTombstones(localTombstones, snapshot.tombstones);
 

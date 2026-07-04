@@ -8,9 +8,17 @@ import {
   putFilmRoomBlob,
   putFilmRoomSession,
 } from "@/lib/film-room/film-room-idb";
+import {
+  appendFilmAnalysisRecord,
+  removeFilmAnalysisRecord as dropAnalysisRecord,
+} from "@/lib/film-room/film-analysis-history";
+import { findLastFilmEvent } from "@/lib/film-room/film-event-tags";
 import type {
   FilmRoomSession,
   FilmRoomVideoSource,
+  FilmRoomEvent,
+  FilmRoomEventKind,
+  FilmRoomAnalysisRecord,
   VideoAnnotationStroke,
 } from "@/types/film-room";
 import { withoutPenStrokes } from "@/lib/film-room/film-room-strokes";
@@ -33,6 +41,21 @@ interface FilmRoomState {
   updateSessionTitle: (id: string, title: string) => Promise<void>;
   setStrokes: (id: string, strokes: VideoAnnotationStroke[]) => void;
   appendStroke: (id: string, stroke: VideoAnnotationStroke) => void;
+  addFilmEvent: (
+    id: string,
+    kind: FilmRoomEventKind,
+    time: number,
+    note?: string,
+  ) => void;
+  updateFilmEvent: (
+    id: string,
+    eventId: string,
+    patch: { kind?: FilmRoomEventKind; time?: number; note?: string },
+  ) => void;
+  undoLastFilmEvent: (id: string) => void;
+  removeFilmEvent: (id: string, eventId: string) => void;
+  appendAnalysisRecord: (id: string, record: FilmRoomAnalysisRecord) => void;
+  removeAnalysisRecord: (id: string, recordId: string) => void;
   clearPenStrokes: (id: string) => void;
   removeSession: (id: string) => Promise<void>;
   resolveUploadObjectUrl: (blobId: string) => Promise<string | null>;
@@ -69,6 +92,8 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
         mimeType: file.type || undefined,
       },
       strokes: [],
+      events: [],
+      analyses: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -86,6 +111,8 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
       title: title.trim() || "Untitled clip",
       source,
       strokes: [],
+      events: [],
+      analyses: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -124,6 +151,105 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
     if (!existing) return;
     const strokes = [...existing.strokes, stroke];
     const next = { ...existing, strokes, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  addFilmEvent(id, kind, time, note) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const event: FilmRoomEvent = {
+      id: newId("film_evt"),
+      kind,
+      time: Math.max(0, time),
+      note: note?.trim() || undefined,
+      createdAt: Date.now(),
+    };
+    const events = [...(existing.events ?? []), event];
+    const next = { ...existing, events, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  removeFilmEvent(id, eventId) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const events = (existing.events ?? []).filter((row) => row.id !== eventId);
+    if (events.length === (existing.events ?? []).length) return;
+    const next = { ...existing, events, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  updateFilmEvent(id, eventId, patch) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const events = (existing.events ?? []).map((row) => {
+      if (row.id !== eventId) return row;
+      return {
+        ...row,
+        ...(patch.kind ? { kind: patch.kind } : {}),
+        ...(typeof patch.time === "number" && Number.isFinite(patch.time)
+          ? { time: Math.max(0, patch.time) }
+          : {}),
+        ...(patch.note !== undefined
+          ? { note: patch.note.trim() || undefined }
+          : {}),
+      };
+    });
+    const next = { ...existing, events, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  undoLastFilmEvent(id) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const last = findLastFilmEvent(existing.events ?? []);
+    if (!last) return;
+    const events = (existing.events ?? []).filter((row) => row.id !== last.id);
+    const next = { ...existing, events, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  appendAnalysisRecord(id, record) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const next = appendFilmAnalysisRecord(existing, record);
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  removeAnalysisRecord(id, recordId) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const next = dropAnalysisRecord(existing, recordId);
+    if (next === existing) return;
     set((s) => ({
       sessions: s.sessions.map((row) => (row.id === id ? next : row)),
     }));

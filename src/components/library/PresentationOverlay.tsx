@@ -11,11 +11,16 @@ import "@/styles/fc-presentation.css";
 interface Props {
   play: StoredPlay;
   onClose: () => void;
+  simulateGuardRotation?: boolean;
 }
 
-export function PresentationOverlay({ play, onClose }: Props) {
+export function PresentationOverlay({
+  play,
+  onClose,
+  simulateGuardRotation = false,
+}: Props) {
   const [frameIndex, setFrameIndex] = useState(0);
-  const animation = usePlayAnimationDriver(play);
+  const animation = usePlayAnimationDriver(play, { simulateGuardRotation });
 
   const chainFrames = useMemo(
     () => framesForDesignerThumbnails(play.frames),

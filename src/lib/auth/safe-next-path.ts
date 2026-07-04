@@ -16,6 +16,23 @@ export function applySafeNextPath(url: URL, next: string | null | undefined) {
 
 export const PASSWORD_RECOVERY_LOGIN_PATH = "/login?recovery=1";
 
+export const LOGIN_SIGNED_OUT_PARAM = "signed_out";
+
+export function isLoginSignedOut(
+  searchParams: Pick<URLSearchParams, "get"> | null | undefined,
+) {
+  return searchParams?.get(LOGIN_SIGNED_OUT_PARAM) === "1";
+}
+
+export function loginSignedOutUrl(next?: string | null) {
+  const url = new URL("/login", "http://local");
+  url.searchParams.set(LOGIN_SIGNED_OUT_PARAM, "1");
+  if (next) {
+    url.searchParams.set("next", safeNextPath(next));
+  }
+  return `${url.pathname}${url.search}`;
+}
+
 export function isPasswordRecoveryLogin(
   pathname: string,
   recoveryParam: string | null | undefined,

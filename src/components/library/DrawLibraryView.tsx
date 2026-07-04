@@ -15,6 +15,7 @@ import {
 } from "@/components/library/DuplicateMergeModal";
 import { PresentationOverlay } from "@/components/library/PresentationOverlay";
 import { useLibrarySplitResizer } from "@/hooks/useLibrarySplitResizer";
+import { patchStoredPlayFromDetails } from "@/lib/library/convert";
 import {
   matchesLibraryCleanFilter,
   type LibraryCleanFilter,
@@ -77,6 +78,9 @@ export function DrawLibraryView() {
   const { resizerProps } = useLibrarySplitResizer();
   const addPlayToPlaybook = useOrganizerStore((s) => s.addPlayToPlaybook);
   const createPlaybook = useOrganizerStore((s) => s.createPlaybook);
+  const libraryPlays = useOrganizerStore((s) => s.plays);
+  const metaHydrated = useOrganizerStore((s) => s.hydrated);
+  const loadMeta = useOrganizerStore((s) => s.loadMeta);
 
   const [sortId, setSortId] = useLibrarySortId();
   const [filter, setFilter] = useState("all");
@@ -110,6 +114,10 @@ export function DrawLibraryView() {
   const [contextMenu, setContextMenu] = useState<LibraryPlayContextMenuState | null>(
     null,
   );
+
+  useEffect(() => {
+    if (!metaHydrated) void loadMeta();
+  }, [metaHydrated, loadMeta]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -270,6 +278,10 @@ export function DrawLibraryView() {
     };
   }, [previewId, getPlayDocument, libraryHydrated]);
 
+  useEffect(() => {
+    setEditDetailsOpen(false);
+  }, [previewId]);
+
   const itemIds = useMemo(() => new Set(items.map((item) => item.id)), [items]);
   const effectiveSelectedIds = useMemo(() => {
     const next = new Set([...selectedIds].filter((id) => itemIds.has(id)));
@@ -277,7 +289,10 @@ export function DrawLibraryView() {
   }, [itemIds, selectedIds]);
   const effectivePreviewId =
     previewId && itemIds.has(previewId) ? previewId : null;
-  const previewPlay = effectivePreviewId ? (selectedPlay ?? null) : null;
+  const previewPlay =
+    effectivePreviewId && selectedPlay?.id === effectivePreviewId
+      ? selectedPlay
+      : null;
 
   function toggleRow(id: string) {
     setSelectedIds((prev) => {
@@ -415,6 +430,10 @@ export function DrawLibraryView() {
   async function handleContextChangeSeries(playId: string, series: string) {
     const targetIds = resolveContextTargetIds(playId);
     await applyFieldToPlays(targetIds, () => ({ series }));
+    if (previewId && targetIds.includes(previewId)) {
+      const doc = await getPlayDocument(previewId);
+      setSelectedPlay(doc ?? null);
+    }
   }
 
   async function handleContextCreatePlaybook(playId: string) {
@@ -616,6 +635,11 @@ export function DrawLibraryView() {
         <div {...resizerProps} id="org-split-resizer" />
         <LibraryPreviewPanel
           play={previewPlay}
+          libraryPlays={libraryPlays}
+          onSelectPlay={(playId) => {
+            setPreviewId(playId);
+            setSelectedIds(new Set([playId]));
+          }}
           onEditDetails={
             previewPlay ? () => setEditDetailsOpen(true) : undefined
           }
@@ -707,7 +731,7 @@ export function DrawLibraryView() {
           }}
         />
       ) : null}
-      {previewPlay ? (
+      {previewPlay && previewId ? (
         <PlayDetailsModal
           open={editDetailsOpen}
           mode="edit"
@@ -725,20 +749,9 @@ export function DrawLibraryView() {
           }}
           onClose={() => setEditDetailsOpen(false)}
           onSubmit={async (details) => {
-            const updated = {
-              ...previewPlay,
-              title: details.title,
-              type: details.type,
-              team: details.team,
-              series: details.series,
-              tags: details.tags,
-              courtType: details.courtType,
-              courtView: details.courtView,
-              season: details.season,
-              playNotes: details.playNotes || undefined,
-              videoUrl: details.videoUrl || undefined,
-              updatedAt: new Date().toISOString(),
-            };
+            const doc = await getPlayDocument(previewId);
+            if (!doc) return;
+            const updated = patchStoredPlayFromDetails(doc, details);
             await savePlayDocument(updated);
             setSelectedPlay(updated);
             setEditDetailsOpen(false);

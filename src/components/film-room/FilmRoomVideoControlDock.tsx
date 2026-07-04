@@ -5,7 +5,10 @@ interface Props {
   currentTime: number;
   duration: number;
   markerTimes: number[];
+  eventMarkerTimes?: Array<{ id: string; time: number }>;
   fullscreen: boolean;
+  autoClearOnScrub: boolean;
+  onToggleAutoClear: () => void;
   onTogglePlay: () => void;
   onSeek: (time: number) => void;
   onToggleFullscreen: () => void;
@@ -24,13 +27,28 @@ export function FilmRoomVideoControlDock({
   currentTime,
   duration,
   markerTimes,
+  eventMarkerTimes = [],
   fullscreen,
+  autoClearOnScrub,
+  onToggleAutoClear,
   onTogglePlay,
   onSeek,
   onToggleFullscreen,
 }: Props) {
+  const scrubDisabled = duration <= 0;
+
   return (
     <div className="fc-film-video-controls-dim" aria-label="Video playback controls">
+      <button
+        type="button"
+        className={`fc-film-video-controls-autoclear${autoClearOnScrub ? " is-active" : ""}`}
+        onClick={onToggleAutoClear}
+        title="Auto clear drawings when scrubbing"
+        aria-label="Auto clear on scrub"
+        aria-pressed={autoClearOnScrub}
+      >
+        AC
+      </button>
       <button
         type="button"
         className="fc-film-video-controls-play"
@@ -49,15 +67,26 @@ export function FilmRoomVideoControlDock({
           max={Math.max(duration, 0.01)}
           step={0.05}
           value={Math.min(currentTime, duration || 0)}
+          disabled={scrubDisabled}
           onChange={(e) => onSeek(Number(e.target.value))}
           aria-label="Scrub video"
         />
         <div className="fc-film-video-controls-markers" aria-hidden="true">
+          {eventMarkerTimes.map((marker) => {
+            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
+            return (
+              <span
+                key={marker.id}
+                className="fc-film-video-controls-marker is-event"
+                style={{ left: `${pct}%` }}
+              />
+            );
+          })}
           {markerTimes.map((time) => {
             const pct = duration > 0 ? (time / duration) * 100 : 0;
             return (
               <span
-                key={time}
+                key={`ink-${time}`}
                 className="fc-film-video-controls-marker"
                 style={{ left: `${pct}%` }}
               />

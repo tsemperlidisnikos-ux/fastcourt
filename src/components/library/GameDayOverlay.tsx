@@ -16,6 +16,9 @@ import {
   subscribeGameDayLivePoll,
 } from "@/lib/game-plan/game-day-live";
 import { formatGamePlanDate, formatGamePlanHomeAway } from "@/lib/game-plan/game-plan-items";
+import type { TimeoutViewSlide } from "@/lib/game-plan/timeout-mode";
+import { GameDayCounterStrip } from "@/components/library/GameDayCounterStrip";
+import { TimeoutOverlay } from "@/components/library/TimeoutOverlay";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { GamePlan, GamePlanCategoryId } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
@@ -24,6 +27,7 @@ import "@/styles/fc-game-day.css";
 interface Props {
   plan: GamePlan;
   plays: StoredPlay[];
+  timeoutViewSlides?: TimeoutViewSlide[];
   onClose: () => void;
 }
 
@@ -31,6 +35,7 @@ function GameDayBoard({
   title,
   meta,
   scoutingNotes,
+  timeoutCues,
   categories,
   activeIndex,
   readOnly = false,
@@ -38,11 +43,14 @@ function GameDayBoard({
   onPrev,
   onNext,
   onClose,
+  onTimeoutMode,
+  canTimeoutMode = false,
   badge = "Game day",
 }: {
   title: string;
   meta: string;
   scoutingNotes?: string;
+  timeoutCues?: GamePlan["timeoutCues"];
   categories: GameDayCategoryGroup[];
   activeIndex: number;
   readOnly?: boolean;
@@ -50,6 +58,8 @@ function GameDayBoard({
   onPrev?: () => void;
   onNext?: () => void;
   onClose: () => void;
+  onTimeoutMode?: () => void;
+  canTimeoutMode?: boolean;
   badge?: string;
 }) {
   const active = categories[activeIndex] ?? categories[0];
@@ -65,6 +75,7 @@ function GameDayBoard({
             <strong>Keys</strong> {scoutingNotes.trim()}
           </p>
         ) : null}
+        <GameDayCounterStrip cues={timeoutCues} />
         <button type="button" className="fc-game-day-close" onClick={onClose}>
           ✕ Close
         </button>
@@ -90,6 +101,14 @@ function GameDayBoard({
         </div>
         {!readOnly ? (
           <div className="fc-game-day-nav">
+            <button
+              type="button"
+              className="fc-game-day-nav-btn fc-game-day-timeout-btn"
+              disabled={!canTimeoutMode}
+              onClick={onTimeoutMode}
+            >
+              Timeout
+            </button>
             <button
               type="button"
               className="fc-game-day-nav-btn"
@@ -131,7 +150,12 @@ function GameDayBoard({
   );
 }
 
-export function GameDayOverlay({ plan, plays, onClose }: Props) {
+export function GameDayOverlay({
+  plan,
+  plays,
+  timeoutViewSlides = [],
+  onClose,
+}: Props) {
   const updateGamePlan = useOrganizerStore((s) => s.updateGamePlan);
   const mounted = useClientMounted();
   const categories = useMemo(
@@ -146,6 +170,7 @@ export function GameDayOverlay({ plan, plays, onClose }: Props) {
   }, [categories, plan.gameDay?.activeCategoryId, plan.id]);
 
   const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [timeoutOpen, setTimeoutOpen] = useState(false);
 
   const pushCategory = useCallback(
     (index: number) => {
@@ -186,17 +211,29 @@ export function GameDayOverlay({ plan, plays, onClose }: Props) {
   if (!mounted || !categories.length) return null;
 
   return createPortal(
-    <GameDayBoard
-      title={plan.title}
-      meta={metaParts.join(" · ")}
-      scoutingNotes={plan.scoutingNotes}
-      categories={categories}
-      activeIndex={activeIndex}
-      onSelectIndex={pushCategory}
-      onPrev={() => pushCategory(Math.max(0, activeIndex - 1))}
-      onNext={() => pushCategory(Math.min(categories.length - 1, activeIndex + 1))}
-      onClose={onClose}
-    />,
+    <>
+      <GameDayBoard
+        title={plan.title}
+        meta={metaParts.join(" · ")}
+        scoutingNotes={plan.scoutingNotes}
+        timeoutCues={plan.timeoutCues}
+        categories={categories}
+        activeIndex={activeIndex}
+        onSelectIndex={pushCategory}
+        onPrev={() => pushCategory(Math.max(0, activeIndex - 1))}
+        onNext={() => pushCategory(Math.min(categories.length - 1, activeIndex + 1))}
+        onClose={onClose}
+        canTimeoutMode={timeoutViewSlides.length > 0}
+        onTimeoutMode={() => setTimeoutOpen(true)}
+      />
+      {timeoutOpen && timeoutViewSlides.length ? (
+        <TimeoutOverlay
+          slides={timeoutViewSlides}
+          title={`${plan.title} timeout calls`}
+          onClose={() => setTimeoutOpen(false)}
+        />
+      ) : null}
+    </>,
     document.body,
   );
 }

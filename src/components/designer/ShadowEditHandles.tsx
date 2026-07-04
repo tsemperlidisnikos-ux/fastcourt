@@ -63,6 +63,7 @@ export function ShadowEditHandles({ object, court, courtType }: Props) {
   function applyCornerDrag(
     corner: Corner,
     e: Konva.KonvaEventObject<DragEvent>,
+    recordUndo = false,
   ) {
     const node = e.target;
     const localX = Math.abs(node.x() - center.x);
@@ -74,7 +75,7 @@ export function ShadowEditHandles({ object, court, courtType }: Props) {
       nextScaleX = uniform;
       nextScaleY = uniform;
     }
-    resizeObjectScales(object.id, nextScaleX, nextScaleY);
+    resizeObjectScales(object.id, nextScaleX, nextScaleY, { recordUndo });
     const { dx, dy } = cornerOffsets(
       corner,
       base.halfW * nextScaleX,
@@ -108,7 +109,7 @@ export function ShadowEditHandles({ object, court, courtType }: Props) {
             }}
             onDragEnd={(e) => {
               e.cancelBubble = true;
-              applyCornerDrag(corner, e);
+              applyCornerDrag(corner, e, true);
             }}
           />
         );

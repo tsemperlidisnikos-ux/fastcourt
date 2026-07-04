@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { PrintPreviewIcon } from "@/components/library/PrintPreviewIcon";
 import { mergeCourtViewSettings } from "@/lib/designer/court-view-settings";
 import { getLibraryPreviewThumbSize } from "@/lib/library/library-preview-thumb-size";
@@ -10,6 +10,10 @@ import { canInlineEmbedVideo } from "@/lib/library/video-url";
 import { VideoEmbed } from "@/components/library/VideoEmbed";
 import { VideoWatchButton } from "@/components/library/VideoWatchButton";
 import type { StoredPlay } from "@/types/library";
+import {
+  findSimilarPlays,
+  formatSimilarityScore,
+} from "@/lib/library/play-dna";
 
 const CourtFrameThumbnail = dynamic(
   () =>
@@ -26,6 +30,8 @@ const CourtFrameThumbnail = dynamic(
 
 interface Props {
   play: StoredPlay | null;
+  libraryPlays?: StoredPlay[];
+  onSelectPlay?: (playId: string) => void;
   onEditDetails?: () => void;
   onDuplicate?: () => void;
   onAddToPlaybook?: () => void;
@@ -51,6 +57,8 @@ function frameCountLabel(count: number) {
 
 export function LibraryPreviewPanel({
   play,
+  libraryPlays = [],
+  onSelectPlay,
   onEditDetails,
   onDuplicate,
   onAddToPlaybook,
@@ -61,6 +69,11 @@ export function LibraryPreviewPanel({
   onTogglePin,
 }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
+
+  const similarPlays = useMemo(() => {
+    if (!play || libraryPlays.length < 2) return [];
+    return findSimilarPlays(play, libraryPlays, { limit: 4 });
+  }, [libraryPlays, play]);
 
   useEffect(() => {
     const split = document.getElementById("org-library-split");
@@ -328,6 +341,28 @@ export function LibraryPreviewPanel({
           <div className="org-preview-video-embed" id="library-preview-video-embed">
             <VideoEmbed videoUrl={play.videoUrl} title={play.title} compact />
           </div>
+        ) : null}
+
+        {similarPlays.length ? (
+          <section className="fc-play-dna-panel" aria-label="Similar plays">
+            <h3 className="fc-play-dna-title">Similar plays</h3>
+            <ul className="fc-play-dna-list">
+              {similarPlays.map(({ play: match, score }) => (
+                <li key={match.id}>
+                  <button
+                    type="button"
+                    className="fc-play-dna-item"
+                    onClick={() => onSelectPlay?.(match.id)}
+                  >
+                    <span className="fc-play-dna-item-title">{match.title}</span>
+                    <span className="fc-play-dna-item-score">
+                      {formatSimilarityScore(score)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         <div

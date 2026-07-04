@@ -6,6 +6,8 @@ import type {
   GamePlanStatus,
 } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
+import { normalizeOpponentTendencies } from "@/lib/game-plan/opponent-board";
+import { normalizeTimeoutCues } from "@/lib/game-plan/game-day-timeout-cues";
 
 export function newGamePlanEntryId() {
   return `gpe_${crypto.randomUUID()}`;
@@ -34,6 +36,8 @@ export function normalizeGamePlan(raw: GamePlan): GamePlan {
           notes: entry.notes?.trim() || undefined,
         }))
       : [],
+    opponentBoard: normalizeOpponentTendencies(raw.opponentBoard),
+    timeoutCues: normalizeTimeoutCues(raw.timeoutCues),
     status: raw.status === "ready" || raw.status === "archived" ? raw.status : "draft",
   };
 }

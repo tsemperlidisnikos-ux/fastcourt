@@ -3,30 +3,44 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { APP_BUILD } from "@/lib/config";
 import { useAppLogoSrc } from "@/hooks/useAppLogoSrc";
+import { useLibraryNavModules } from "@/hooks/useLibraryNavModules";
+import {
+  isLibraryNavModuleEnabled,
+} from "@/lib/settings/library-nav-modules";
+import {
+  LIBRARY_NAV_TABS,
+  type LibraryNavTabId,
+} from "@/lib/library/library-nav-tabs";
 import { PracticeSheetOverlay } from "@/components/library/PracticeSheetOverlay";
 import { UserMenu } from "@/components/shell/UserMenu";
 import { useLibraryStore } from "@/stores/library-store";
 import { useSettingsStore } from "@/stores/settings-store";
 
-const TABS = [
-  { id: "draw", label: "LIBRARY", href: "/library" },
-  { id: "playbooks", label: "PLAYBOOKS", href: "/library?tab=playbooks" },
-  { id: "gameplan", label: "GAME PLAN", shortLabel: "PLAN", href: "/library?tab=gameplan" },
-  { id: "fields", label: "FIELDS", href: "/library?tab=fields" },
-  { id: "practice", label: "PRACTICE", href: "/library?tab=practice" },
-  { id: "players", label: "PLAYERS", href: "/library?tab=players" },
-] as const;
+export type { LibraryNavTabId };
 
-type TabId = (typeof TABS)[number]["id"];
+function isNavTabActive(
+  tab: (typeof LIBRARY_NAV_TABS)[number],
+  pathname: string,
+  activeTab: LibraryNavTabId,
+) {
+  if (tab.id === "film-room") return pathname.startsWith("/film-room");
+  return pathname.startsWith("/library") && activeTab === tab.id;
+}
 
-export function FdAppHeader({ activeTab = "draw" }: { activeTab?: TabId }) {
+export function FdAppHeader({ activeTab = "draw" }: { activeTab?: LibraryNavTabId }) {
   const pathname = usePathname();
   const [practiceSheetOpen, setPracticeSheetOpen] = useState(false);
   const pdfBrand = useSettingsStore((s) => s.pdfBrand);
   const appLogoSrc = useAppLogoSrc();
+  const navModules = useLibraryNavModules();
+
+  const visibleTabs = useMemo(
+    () => LIBRARY_NAV_TABS.filter((tab) => isLibraryNavModuleEnabled(navModules, tab.id)),
+    [navModules],
+  );
 
   const clubName = pdfBrand.clubName.trim();
   const clubLogo = pdfBrand.logoDataUrl?.trim() ?? "";
@@ -90,9 +104,8 @@ export function FdAppHeader({ activeTab = "draw" }: { activeTab?: TabId }) {
           </div>
           <div className="fd-main-tabs-row">
             <nav className="fd-main-tabs org-main-tabs" aria-label="Library sections">
-              {TABS.map((tab) => {
-                const active =
-                  pathname.startsWith("/library") && activeTab === tab.id;
+              {visibleTabs.map((tab) => {
+                const active = isNavTabActive(tab, pathname, activeTab);
                 return (
                   <Link
                     key={tab.id}
@@ -113,17 +126,6 @@ export function FdAppHeader({ activeTab = "draw" }: { activeTab?: TabId }) {
                 );
               })}
             </nav>
-            <div className="fd-main-tabs-film-room-slot">
-              <Link
-                href="/film-room"
-                className={`fd-main-tab org-main-tab fd-main-tab-film-room${
-                  pathname.startsWith("/film-room") ? " active" : ""
-                }`}
-                data-fd-tab="film-room"
-              >
-                FILM ROOM
-              </Link>
-            </div>
             <div
               className="fd-main-tabs-actions"
               id="fd-main-tabs-actions"

@@ -4,6 +4,7 @@ import {
   libraryDbNameForScope,
 } from "@/lib/library/idb-scope";
 import type { FilmRoomSession } from "@/types/film-room";
+import { normalizeFilmRoomSession } from "@/lib/film-room/film-room-session";
 
 const DB_VERSION = 1;
 
@@ -72,7 +73,7 @@ async function getFilmRoomDb(): Promise<IDBPDatabase<FilmRoomDB>> {
 export async function listFilmRoomSessions(): Promise<FilmRoomSession[]> {
   const db = await getFilmRoomDb();
   const rows = await db.getAllFromIndex("sessions", "by-updated");
-  return rows.sort((a, b) => b.updatedAt - a.updatedAt);
+  return rows.map(normalizeFilmRoomSession).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export async function getFilmRoomSession(

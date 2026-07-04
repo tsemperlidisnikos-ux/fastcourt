@@ -11,6 +11,9 @@ export interface PendingTeamInvite {
   organizationId: string;
   memberId: string;
   status: string;
+  teamAdminEmail: string;
+  coachSeats?: number;
+  expiresAt?: string | null;
 }
 
 function normalizeEmail(email: string) {
@@ -47,6 +50,9 @@ export function lookupInviteByToken(token: string): PendingTeamInvite | null {
           organizationId: org.id,
           memberId: coach.id,
           status: coach.status,
+          teamAdminEmail: org.teamAdminEmail,
+          coachSeats: org.coachSeats,
+          expiresAt: org.expiresAt,
         };
       }
     }
@@ -63,6 +69,9 @@ export function lookupInviteByToken(token: string): PendingTeamInvite | null {
           organizationId: org.id,
           memberId: player.id,
           status: player.status,
+          teamAdminEmail: org.teamAdminEmail,
+          coachSeats: org.coachSeats,
+          expiresAt: org.expiresAt,
         };
       }
     }
@@ -75,6 +84,9 @@ export function lookupInviteByToken(token: string): PendingTeamInvite | null {
         organizationId: org.id,
         memberId: `admin-${org.id}`,
         status: "invited",
+        teamAdminEmail: org.teamAdminEmail,
+        coachSeats: org.coachSeats,
+        expiresAt: org.expiresAt,
       };
     }
   }

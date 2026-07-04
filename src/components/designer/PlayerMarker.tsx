@@ -4,11 +4,17 @@ import { useRef } from "react";
 import { Circle, Group, Line, Text } from "react-konva";
 import type Konva from "konva";
 import { ConeMarker } from "@/components/designer/ConeMarker";
+import { GuardMarkerGlyph } from "@/components/designer/GuardMarkerGlyph";
+import { GuardRotationHandleLocal } from "@/components/designer/DefenseRotationHandle";
 import { ShadowMarker } from "@/components/designer/ShadowMarker";
 import { ZoneMarker } from "@/components/designer/ZoneMarker";
 import { OBJECT_COLORS } from "@/lib/designer/constants";
 import { DEFAULT_APP_FONT_KONVA } from "@/lib/config";
-import { formatDefenseDisplayLabel } from "@/lib/designer/player-limits";
+import {
+  guardHitRadius,
+  normalizeDefenseMarkerStyle,
+} from "@/lib/designer/defense-marker-style";
+import { formatDefenseDisplayLabel, normalizeDefenseLabel } from "@/lib/designer/player-limits";
 import { getEditorPlayerJerseyFontSize } from "@/lib/designer/action-geometry";
 import { editorBallRingOuterRadiusFromFontSize, fastDrawBallRingOuterRadiusPx } from "@/lib/designer/player-ball-ring";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -123,6 +129,9 @@ export function PlayerMarker({
   const isOffense = object.kind === "offense";
   const isDefense = object.kind === "defense";
   const isPlayer = isOffense || isDefense;
+  const defenseStyle = normalizeDefenseMarkerStyle(object.defenseStyle);
+  const isGuardDefense = isDefense && defenseStyle === "guard";
+  const guardRotation = object.rotation ?? 0;
   const circleDisplayMode = playerDisplay === "circle";
   const showCircleRing = compact
     ? circleDisplayMode
@@ -130,20 +139,22 @@ export function PlayerMarker({
   const ringRadius = radius * 1.12;
   const hasBallRing = isOffense && !!object.hasBall;
   const offenseCircle = isOffense && showCircleRing && !hasBallRing;
-  const defenseCircle = isDefense && (showCircleRing || !compact);
+  const defenseCircle = isDefense && !isGuardDefense && (showCircleRing || !compact);
   const showMarkerRing = offenseCircle || defenseCircle;
   const labelRadius =
     isPlayer && (showCircleRing || showMarkerRing) ? ringRadius : radius;
-  const jerseyText = isDefense
-    ? formatDefenseDisplayLabel(object.label)
-    : object.label ?? "";
-  const textFrameRadius = showMarkerRing ? ringRadius : labelRadius;
+  const jerseyText = isGuardDefense
+    ? normalizeDefenseLabel(object.label ?? "") ?? ""
+    : isDefense
+      ? formatDefenseDisplayLabel(object.label)
+      : object.label ?? "";
+  const textFrameRadius = isGuardDefense || showMarkerRing ? ringRadius : labelRadius;
   const jerseyBoxHeight = textFrameRadius * 2;
   const jerseyBoxWidth =
     jerseyText.length > 1
       ? Math.max(textFrameRadius * 2.5, fontSize * 0.58 * jerseyText.length)
       : textFrameRadius * 2;
-  const displayFontSize = showMarkerRing
+  const displayFontSize = isGuardDefense || showMarkerRing
     ? Math.min(
         fontSize,
         Math.round(ringRadius * (jerseyText.length > 1 ? 1.15 : 1.22)),
@@ -153,9 +164,11 @@ export function PlayerMarker({
   const offenseRingStroke = "#000000";
   const jerseyFontStyle = "bold";
   const markerHitRadius =
-    isPlayer && (showCircleRing || showMarkerRing)
-      ? ringRadius + 5
-      : radius + 6;
+    isGuardDefense
+      ? guardHitRadius(ringRadius) + 5
+      : isPlayer && (showCircleRing || showMarkerRing)
+        ? ringRadius + 5
+        : radius + 6;
   const resolvedBallMode =
     ballRingMode ?? (compact ? "thumbnail" : "editor");
   const ballRingRadius =
@@ -212,6 +225,20 @@ export function PlayerMarker({
         fill="rgba(0,0,0,0.001)"
         listening={hitListening}
       />
+      {isGuardDefense ? (
+        <Group rotation={guardRotation} listening={false}>
+          <GuardMarkerGlyph
+            mode="konva"
+            circleRadius={ringRadius}
+            label={jerseyText}
+            labelFontSize={displayFontSize}
+            labelBoxWidth={jerseyBoxWidth}
+            labelBoxHeight={jerseyBoxHeight}
+            compact={compact}
+            compactStrokeWidth={compactStrokeWidth}
+          />
+        </Group>
+      ) : null}
       {isDefense && defenseCircle ? (
         <Circle
           radius={ringRadius}
@@ -232,7 +259,7 @@ export function PlayerMarker({
           listening={false}
         />
       ) : null}
-      {isPlayer && jerseyText ? (
+      {isPlayer && jerseyText && !isGuardDefense ? (
         <Text
           text={jerseyText}
           fontSize={displayFontSize}
@@ -311,7 +338,26 @@ export function PlayerMarker({
           scaleY={object.scaleY ?? 1}
         />
       ) : null}
-      {selected && isPlayer && !showCircleRing && !hasBallRing ? (
+      {selected && isGuardDefense ? (
+        <Circle
+          x={0}
+          y={0}
+          radius={guardHitRadius(ringRadius)}
+          stroke="#64748b"
+          strokeWidth={markerStroke}
+          dash={[5, 4]}
+          fill="transparent"
+          listening={false}
+        />
+      ) : null}
+      {selected && isGuardDefense && !compact ? (
+        <GuardRotationHandleLocal
+          objectId={object.id}
+          ringRadius={ringRadius}
+          rotation={guardRotation}
+        />
+      ) : null}
+      {selected && isPlayer && !showCircleRing && !hasBallRing && !isGuardDefense ? (
         <Circle
           x={0}
           y={0}

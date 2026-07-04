@@ -3,9 +3,11 @@
 import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useClientMounted } from "@/hooks/useClientMounted";
+import { GameDayCounterStrip } from "@/components/library/GameDayCounterStrip";
 import {
   buildGameDayCategoriesFromShareEntries,
 } from "@/lib/game-plan/game-day";
+import { normalizeTimeoutCues } from "@/lib/game-plan/game-day-timeout-cues";
 import { useSyncedGameDayIndex } from "@/components/library/GameDayOverlay";
 import { formatGamePlanDate, formatGamePlanHomeAway } from "@/lib/game-plan/game-plan-items";
 import { useShareStore } from "@/stores/share-store";
@@ -15,6 +17,7 @@ function GameDayBoard({
   title,
   meta,
   scoutingNotes,
+  timeoutCues,
   categories,
   activeIndex,
   liveSync,
@@ -23,6 +26,7 @@ function GameDayBoard({
   title: string;
   meta: string;
   scoutingNotes?: string;
+  timeoutCues?: ReturnType<typeof normalizeTimeoutCues>;
   categories: ReturnType<typeof buildGameDayCategoriesFromShareEntries>;
   activeIndex: number;
   liveSync?: boolean;
@@ -41,6 +45,7 @@ function GameDayBoard({
             <strong>Keys</strong> {scoutingNotes.trim()}
           </p>
         ) : null}
+        <GameDayCounterStrip cues={timeoutCues} />
         <button type="button" className="fc-game-day-close" onClick={onClose}>
           ✕ Close
         </button>
@@ -120,6 +125,7 @@ export function GameDayShareOverlay() {
       title={session.plan.title}
       meta={metaParts.join(" · ")}
       scoutingNotes={session.plan.scoutingNotes}
+      timeoutCues={normalizeTimeoutCues(session.plan.timeoutCues)}
       categories={categories}
       activeIndex={activeIndex}
       liveSync={!!session.syncToken}

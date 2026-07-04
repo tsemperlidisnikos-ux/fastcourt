@@ -14,7 +14,6 @@ import { useDesignerUnsavedGuard } from "@/lib/designer/use-designer-unsaved-gua
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { blockNativeContextMenu } from "@/lib/ui/context-menu-policy";
-import { ActionSequencePanel } from "@/components/designer/ActionSequencePanel";
 import { ActionTimeline } from "@/components/designer/ActionTimeline";
 import { CourtWhiteboardToolbar } from "@/components/designer/CourtWhiteboardToolbar";
 import { NotesFormatToolbar } from "@/components/designer/NotesFormatToolbar";
@@ -23,6 +22,11 @@ import { ConeToolIcon } from "@/components/designer/ConeMarker";
 import { DesignerToolIcon } from "@/components/designer/DesignerToolIcon";
 import { LineTypeBar } from "@/components/designer/LineTypeBar";
 import { ShadowTypeBar } from "@/components/designer/ShadowTypeBar";
+import { DefenseStyleBar } from "@/components/designer/DefenseStyleBar";
+import {
+  normalizeDefenseMarkerStyle,
+  type DefenseMarkerStyle,
+} from "@/lib/designer/defense-marker-style";
 import { ImportFrameModal } from "@/components/designer/ImportFrameModal";
 import {
   PlayDetailsModal,
@@ -35,6 +39,8 @@ import { downloadBlob, downloadDataUrl, sanitizeExportFilename } from "@/lib/des
 import {
   AnimationExportAborted,
   exportPlayAnimationMp4,
+  exportPlayAnimationWebm,
+  canExportPlayAnimationWebm,
   canExportPlayAnimationMp4,
   playHasExportableAnimation,
   waitForPaint,
@@ -125,7 +131,6 @@ export function DesignerScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get("item");
-  const initialPanel = searchParams.get("panel");
   const getPlayDocument = useLibraryStore((s) => s.getPlayDocument);
   const savePlayDocument = useLibraryStore((s) => s.savePlayDocument);
   const libraryItems = useLibraryStore((s) => s.items);
@@ -156,6 +161,10 @@ export function DesignerScreen() {
   const courtZoom = useDesignerStore((s) => s.courtZoom);
   const activeShadowType = useDesignerStore((s) => s.activeShadowType);
   const setShadowType = useDesignerStore((s) => s.setShadowType);
+  const activeDefenseStyle = useDesignerStore((s) => s.activeDefenseStyle);
+  const setActiveDefenseStyle = useDesignerStore((s) => s.setActiveDefenseStyle);
+  const setObjectDefenseStyle = useDesignerStore((s) => s.setObjectDefenseStyle);
+  const selectedObjectId = useDesignerStore((s) => s.selectedObjectId);
   const undo = useDesignerStore((s) => s.undo);
   const redo = useDesignerStore((s) => s.redo);
   const undoStack = useDesignerStore((s) => s.undoStack);
@@ -184,9 +193,6 @@ export function DesignerScreen() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [printPlay, setPrintPlay] = useState<StoredPlay | null>(null);
   const [importFrameOpen, setImportFrameOpen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<"frames" | "anim">(() =>
-    initialPanel === "anim" ? "anim" : "frames",
-  );
   const [sidebarCompact, setSidebarCompact] = useState(() => {
     try {
       return localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1";
@@ -225,6 +231,21 @@ export function DesignerScreen() {
   const appLogoSrc = useAppLogoSrc();
 
   const currentFrame = play.frames[currentFrameIndex];
+  const selectedDefenseObject = currentFrame?.objects.find(
+    (o) => o.id === selectedObjectId && o.kind === "defense",
+  );
+  const defenseStyleBarValue = selectedDefenseObject
+    ? normalizeDefenseMarkerStyle(selectedDefenseObject.defenseStyle)
+    : activeDefenseStyle;
+  const handleDefenseStyleChange = useCallback(
+    (style: DefenseMarkerStyle) => {
+      setActiveDefenseStyle(style);
+      if (selectedDefenseObject) {
+        setObjectDefenseStyle(selectedDefenseObject.id, style);
+      }
+    },
+    [selectedDefenseObject, setActiveDefenseStyle, setObjectDefenseStyle],
+  );
   const selectedAction = currentFrame?.actions.find(
     (a) => a.id === selectedActionId,
   );
@@ -649,6 +670,69 @@ export function DesignerScreen() {
     }
   }
 
+  async function handleExportAnimationWebm() {
+    setMenuOpen(false);
+    if (!canExportPlayAnimationWebm()) {
+      appNotice(
+        "Export not supported",
+        "This browser cannot record WebM video. Try Chrome or Edge.",
+      );
+      return;
+    }
+
+    if (!playHasExportableAnimation(play)) {
+      appNotice(
+        "Nothing to export",
+        "Add at least one action to a frame before exporting animation.",
+      );
+      return;
+    }
+
+    const startFrameIndex = currentFrameIndex;
+    const abort = new AbortController();
+    exportAnimAbortRef.current = abort;
+    setExportingAnim(true);
+    setExportAnimProgress(0);
+    selectAction(null);
+
+    try {
+      const blob = await exportPlayAnimationWebm({
+        play,
+        fps: 30,
+        signal: abort.signal,
+        onProgress: setExportAnimProgress,
+        applySample: async (sample) => {
+          flushSync(() => {
+            selectFrame(sample.frameIndex);
+            setAnimRuntime(sample.runtime);
+          });
+          await waitForPaint();
+        },
+        captureToTarget: (target) => courtRef.current?.blitToCanvas(target) ?? false,
+      });
+
+      const filename = `${sanitizeExportFilename(play.title)}_animation.webm`;
+      downloadBlob(blob, filename);
+      appNotice("Export complete", `Saved ${filename}`);
+    } catch (error) {
+      if (error instanceof AnimationExportAborted) {
+        appNotice("Export cancelled", "Animation export was stopped.");
+        return;
+      }
+      appNotice(
+        "Export failed",
+        error instanceof Error ? error.message : "Could not export animation.",
+      );
+    } finally {
+      setAnimRuntime(null);
+      selectFrame(startFrameIndex);
+      selectAction(null);
+      setExportingAnim(false);
+      setExportAnimProgress(0);
+      exportAnimAbortRef.current = null;
+    }
+  }
+
   async function handleDownloadPlay() {
     setMenuOpen(false);
     const doc = await getCurrentStoredPlay();
@@ -756,6 +840,7 @@ export function DesignerScreen() {
                   exportingAnim,
                   onShareLink: () => void handleShareLink(),
                   onExportVideo: () => void handleExportAnimationMp4(),
+                  onExportWebm: () => void handleExportAnimationWebm(),
                   onExportImages: () => void handleExportAllFramesPng(),
                   onEmbedCode: () => void handleCreateEmbedCode(),
                   onDownload: () => void handleDownloadPlay(),
@@ -867,6 +952,14 @@ export function DesignerScreen() {
                           <ShadowTypeBar
                             value={activeShadowType}
                             onChange={setShadowType}
+                          />
+                        ) : null}
+                        {t.id === "defense" &&
+                        (currentTool === "defense" ||
+                          (currentTool === "select" && selectedDefenseObject)) ? (
+                          <DefenseStyleBar
+                            value={defenseStyleBarValue}
+                            onChange={handleDefenseStyleChange}
                           />
                         ) : null}
                       </div>
@@ -1104,83 +1197,46 @@ export function DesignerScreen() {
           </div>
         </aside>
 
-        <aside className="ds-sidebar-panel" aria-label="Frames and settings">
-          <div className="ds-sidebar-tabs" role="tablist">
-            <button
-              type="button"
-              className={`ds-sidebar-tab${sidebarTab === "frames" ? " active" : ""}`}
-              data-tab="frames"
-              role="tab"
-              aria-selected={sidebarTab === "frames"}
-              onClick={() => setSidebarTab("frames")}
-            >
-              Frames
-            </button>
-            <button
-              type="button"
-              className={`ds-sidebar-tab${sidebarTab === "anim" ? " active" : ""}`}
-              data-tab="anim"
-              role="tab"
-              aria-selected={sidebarTab === "anim"}
-              onClick={() => setSidebarTab("anim")}
-            >
-              Animation
-            </button>
-          </div>
-          {sidebarTab === "frames" ? (
-            <div
-              className="ds-sidebar-tab-pane is-active"
-              id="sidebar-tab-frames"
-              role="tabpanel"
-            >
-              <div className="ds-thumb-list-vertical" id="frames-container">
-                {thumbnailFrames.map((frame, index) => {
-                  const active = index === currentFrameIndex;
-                  return (
-                    <div
-                      key={frame.id}
-                      role="button"
-                      tabIndex={0}
-                      className={`ds-thumb-item${active ? " active" : ""}`}
-                      onClick={() => selectFrame(index)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          selectFrame(index);
-                        }
-                      }}
-                    >
-                      <div className="ds-thumb-frame-label">
-                        {frame.name || `Frame ${index + 1}`}
-                      </div>
-                      <div className="ds-thumb-court">
-                        <CourtFrameThumbnail
-                          courtType={play.courtType}
-                          frame={frame}
-                          size="lg"
-                          alt={frame.name}
-                          courtView={play.courtView}
-                        />
-                      </div>
+        <aside className="ds-sidebar-panel" aria-label="Frames">
+          <div
+            className="ds-sidebar-tab-pane is-active"
+            id="sidebar-tab-frames"
+            role="tabpanel"
+          >
+            <div className="ds-thumb-list-vertical" id="frames-container">
+              {thumbnailFrames.map((frame, index) => {
+                const active = index === currentFrameIndex;
+                return (
+                  <div
+                    key={frame.id}
+                    role="button"
+                    tabIndex={0}
+                    className={`ds-thumb-item${active ? " active" : ""}`}
+                    onClick={() => selectFrame(index)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        selectFrame(index);
+                      }
+                    }}
+                  >
+                    <div className="ds-thumb-frame-label">
+                      {frame.name || `Frame ${index + 1}`}
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="ds-thumb-court">
+                      <CourtFrameThumbnail
+                        courtType={play.courtType}
+                        frame={frame}
+                        size="lg"
+                        alt={frame.name}
+                        courtView={play.courtView}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ) : (
-            <div
-              className="ds-sidebar-tab-pane is-active"
-              id="sidebar-tab-anim"
-              role="tabpanel"
-            >
-              <ActionSequencePanel
-                playback={animationPlayback}
-                exportingAnim={exportingAnim}
-                canExportMp4={canExportPlayAnimationMp4()}
-                onExportMp4={() => void handleExportAnimationMp4()}
-              />
-            </div>
-          )}
+          </div>
         </aside>
       </div>
       <PlayDetailsModal

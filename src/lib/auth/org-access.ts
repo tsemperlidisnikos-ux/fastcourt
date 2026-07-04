@@ -3,6 +3,7 @@ import type { SessionUser } from "@/types/auth";
 import type { OrgMemberRole, TeamOrganization } from "@/types/team-org";
 import {
   loadTeamOrganizations,
+  newOrganization,
   saveTeamOrganizations,
 } from "@/lib/auth/team-organizations";
 
@@ -153,6 +154,10 @@ export function acceptTeamInvite(
     memberRole: OrgMemberKind;
     organizationId: string;
     memberId: string;
+    organizationName?: string;
+    teamAdminEmail?: string;
+    coachSeats?: number;
+    expiresAt?: string | null;
   },
   userEmail: string,
 ): AcceptTeamInviteResult {
@@ -167,9 +172,47 @@ export function acceptTeamInvite(
   }
 
   const orgs = loadTeamOrganizations();
-  const orgIndex = orgs.findIndex((org) => org.id === invite.organizationId);
+  let orgIndex = orgs.findIndex((org) => org.id === invite.organizationId);
   if (orgIndex < 0) {
-    return { ok: false, reason: "This team invitation is no longer valid." };
+    const adminEmail = normalizeEmail(invite.teamAdminEmail ?? "");
+    const orgName = invite.organizationName?.trim() ?? "";
+    if (!adminEmail || !orgName) {
+      return { ok: false, reason: "This team invitation is no longer valid." };
+    }
+
+    const stub = newOrganization({
+      name: orgName,
+      teamAdminEmail: adminEmail,
+      coachSeats: invite.coachSeats ?? 10,
+      expiresAt: invite.expiresAt ?? null,
+    });
+    stub.id = invite.organizationId;
+    if (invite.memberRole === "coach") {
+      stub.coaches = [
+        {
+          id: invite.memberId,
+          email: normalizedInvite,
+          role: "coach",
+          status: "invited",
+          inviteToken: invite.token,
+        },
+      ];
+    } else if (invite.memberRole === "player") {
+      stub.players = [
+        {
+          id: invite.memberId,
+          email: normalizedInvite,
+          role: "player",
+          status: "invited",
+          inviteToken: invite.token,
+        },
+      ];
+    } else {
+      stub.teamAdminInviteToken = invite.token;
+    }
+    orgs.push(stub);
+    orgIndex = orgs.length - 1;
+    saveTeamOrganizations(orgs);
   }
 
   const org = orgs[orgIndex]!;

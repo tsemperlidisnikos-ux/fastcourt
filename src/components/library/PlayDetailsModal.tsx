@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { CourtSettingsPanel } from "@/components/designer/CourtSettingsPanel";
 import { VideoEmbed, VideoProviderBadge } from "@/components/library/VideoEmbed";
@@ -78,11 +78,16 @@ const PREVIEW_FRAME = createFrame("Preview", 1);
 
 export function PlayDetailsModal(props: Props) {
   const mounted = useClientMounted();
+  const [openEpoch, setOpenEpoch] = useState(0);
+
+  useEffect(() => {
+    if (props.open) setOpenEpoch((epoch) => epoch + 1);
+  }, [props.open]);
+
   if (!props.open || !mounted) return null;
-  const initialKey = JSON.stringify(props.initial ?? {});
   return (
     <PlayDetailsModalBody
-      key={`${props.mode}:${initialKey}`}
+      key={`${props.mode}:${openEpoch}`}
       {...props}
     />
   );

@@ -1,4 +1,5 @@
 import type { FormationKey } from "@/lib/designer/formations";
+import type { DefenseMarkerStyle } from "@/lib/designer/defense-marker-style";
 import type { ShadowType } from "@/lib/designer/shadow-geometry";
 import type { ZoneType } from "@/lib/designer/zone-geometry";
 import type {
@@ -31,6 +32,7 @@ export interface DesignerState {
   lineDraft: DesignerAction | null;
   freehandDraft: number[] | null;
   activeShadowType: ShadowType;
+  activeDefenseStyle: DefenseMarkerStyle;
   shadowDraft: { x1: number; y1: number; x2: number; y2: number } | null;
   activeZoneType: ZoneType;
   zoneDraft: { x1: number; y1: number; x2: number; y2: number } | null;
@@ -45,6 +47,9 @@ export interface DesignerState {
     lineProgress: number;
     showActiveLine?: boolean;
   } | null;
+  /** Preview-only: rotate guard defenders toward ball during animation. */
+  simulateGuardRotation: boolean;
+  setSimulateGuardRotation: (value: boolean) => void;
   frameActionsDirty: boolean;
   libraryItemType: LibraryItemType;
   loadPlay: (
@@ -81,6 +86,13 @@ export interface DesignerState {
   clearWhiteboardStrokes: () => void;
   placeObject: (kind: ObjectKind, x: number, y: number) => void;
   setShadowType: (type: ShadowType) => void;
+  setActiveDefenseStyle: (style: DefenseMarkerStyle) => void;
+  setObjectDefenseStyle: (objectId: string, style: DefenseMarkerStyle) => void;
+  setObjectRotation: (
+    objectId: string,
+    rotation: number,
+    options?: { recordUndo?: boolean },
+  ) => void;
   beginShadowDraft: (x: number, y: number) => void;
   updateShadowDraft: (x: number, y: number) => void;
   commitShadowDraft: () => void;
@@ -91,7 +103,12 @@ export interface DesignerState {
   commitZoneDraft: () => void;
   cancelZoneDraft: () => void;
   selectObject: (objectId: string | null) => void;
-  resizeObjectScales: (objectId: string, scaleX: number, scaleY: number) => void;
+  resizeObjectScales: (
+    objectId: string,
+    scaleX: number,
+    scaleY: number,
+    options?: { recordUndo?: boolean },
+  ) => void;
   assignPlayerBall: (objectId: string) => void;
   moveObject: (objectId: string, x: number, y: number) => void;
   removeObject: (objectId: string) => void;

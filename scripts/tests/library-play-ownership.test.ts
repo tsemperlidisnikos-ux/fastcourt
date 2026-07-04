@@ -54,4 +54,22 @@ assert.deepEqual(
   ["mine"],
 );
 
+const orgCoach: SessionUser = {
+  ...soloCoach,
+  id: "coach-b",
+  email: "b@club.com",
+  accessSource: "organization",
+  orgMemberRole: "coach",
+};
+
+assert.equal(usesPersonalPlayOwnership(orgCoach, "admin-uuid"), false);
+assert.deepEqual(
+  filterPlaysForLibraryScope(
+    [play("mine", "coach-a"), play("theirs", "coach-b")],
+    orgCoach,
+    "admin-uuid",
+  ).map((p) => p.id),
+  ["mine", "theirs"],
+);
+
 console.log("library-play-ownership.test.ts: ok");

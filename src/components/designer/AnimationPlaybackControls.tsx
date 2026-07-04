@@ -2,6 +2,7 @@
 
 import type { useFrameAnimationPlayback } from "@/hooks/useFrameAnimationPlayback";
 import { PlaybackSpeedPopover } from "@/components/designer/PlaybackSpeedPopover";
+import { useDesignerStore } from "@/stores/designer-store";
 
 interface Props {
   playback: ReturnType<typeof useFrameAnimationPlayback>;
@@ -15,6 +16,8 @@ export function AnimationPlaybackControls({
   className = "",
 }: Props) {
   const { playing, paused, phaseLabel, canPlay, togglePlayPause } = playback;
+  const simulateGuardRotation = useDesignerStore((s) => s.simulateGuardRotation);
+  const setSimulateGuardRotation = useDesignerStore((s) => s.setSimulateGuardRotation);
 
   const inactive = disabled || !canPlay;
   const showPause = playing && !paused;
@@ -49,6 +52,14 @@ export function AnimationPlaybackControls({
         <div className="ds-court-playback-phase">{phaseLabel}</div>
       </div>
       <div className="ds-court-playback-util">
+        <label className="ds-court-playback-rotation-toggle" title="Rotate guards toward ball during preview">
+          <input
+            type="checkbox"
+            checked={simulateGuardRotation}
+            onChange={(e) => setSimulateGuardRotation(e.target.checked)}
+          />
+          <span>Guard rotation</span>
+        </label>
         <PlaybackSpeedPopover />
       </div>
     </div>

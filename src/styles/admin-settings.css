@@ -231,6 +231,43 @@
   z-index: 1;
 }
 
+.fc-admin-settings .admin-library-nav-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.fc-admin-settings .admin-library-nav-module-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--od-border, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.fc-admin-settings .admin-library-nav-module-row input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.fc-admin-settings .admin-library-nav-module-label {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.fc-admin-settings .admin-library-nav-module-hint {
+  grid-column: 2;
+  font-size: 12px;
+  color: #64748b;
+}
+
 .fc-admin-settings #org-settings-embed-all-users .admin-all-users-head-actions {
   flex-shrink: 0;
   display: flex;

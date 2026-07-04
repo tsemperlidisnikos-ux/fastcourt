@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useLayoutEffect, useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
 import { TrialExpiredGate } from "@/components/billing/TrialExpiredGate";
 import { AppNav } from "@/components/shell/AppNav";
-import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AuthProvider, useAuthBooted } from "@/components/auth/AuthProvider";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { AppBootLoading } from "@/components/ui/AppBootLoading";
+import { loginSignedOutUrl } from "@/lib/auth/safe-next-path";
 import {
   getAuthHydratedSnapshot,
   subscribeAuthHydration,
@@ -34,8 +35,8 @@ function AppContent({
 }
 
 function AppGate({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
+  const authBooted = useAuthBooted();
   const session = useAuthStore((s) => s.session);
   const playerShareSession = useShareStore((s) => s.playerShareSession);
   const practiceShareSession = useShareStore((s) => s.practiceShareSession);
@@ -56,12 +57,15 @@ function AppGate({ children }: { children: React.ReactNode }) {
     () => false,
   );
 
-  useEffect(() => {
-    if (cloud || !hydrated) return;
-    if (!session) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-    }
-  }, [cloud, hydrated, session, router, pathname]);
+  const authReady = cloud ? authBooted : authBooted && hydrated;
+  const needsLogin = authReady && !session && !playerShareActive;
+  const loginUrl = loginSignedOutUrl(pathname || "/library");
+
+  useLayoutEffect(() => {
+    if (!needsLogin) return;
+    if (window.location.pathname.startsWith("/login")) return;
+    window.location.replace(loginUrl);
+  }, [needsLogin, loginUrl]);
 
   const fullBleed =
     pathname.startsWith("/library") ||
@@ -69,20 +73,11 @@ function AppGate({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/film-room") ||
     pathname.startsWith("/settings");
 
-  if (cloud) {
-    return (
-      <>
-        <TrialExpiredGate />
-        <AppContent fullBleed={fullBleed}>{children}</AppContent>
-      </>
-    );
-  }
-
-  if (!hydrated) {
+  if (!authBooted || (!cloud && !hydrated)) {
     return <AppBootLoading />;
   }
 
-  if (!session && !playerShareActive) {
+  if (needsLogin) {
     return <AppBootLoading label="Redirecting to login…" />;
   }
 

@@ -43,6 +43,7 @@ export function ShareBootstrap() {
         session: payload.session,
         items: payload.items,
         stageRef: payload.stageRef,
+        sessionId: payload.sessionId,
       });
     } else if (payload.type === "gameplan") {
       setGamePlanShareSession({

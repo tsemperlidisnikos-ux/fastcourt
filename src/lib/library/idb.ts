@@ -6,6 +6,7 @@ import {
 import type { StoredPlay } from "@/types/library";
 
 const DB_VERSION = 1;
+/** Legacy DB name from pre-scope builds; purged on cloud login via library-sync. */
 const LEGACY_DB_NAME = "fastcourt_library_v1";
 
 interface FastCourtLibraryDB extends DBSchema {

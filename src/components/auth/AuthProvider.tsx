@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAccessError } from "@/lib/auth/access";
 import { enforceDeviceAccessAsync } from "@/lib/auth/device-access";
@@ -20,6 +20,12 @@ import { useSettingsStore } from "@/stores/settings-store";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const AUTH_BOOTSTRAP_MS = 12_000;
+
+const AuthBootContext = createContext(false);
+
+export function useAuthBooted() {
+  return useContext(AuthBootContext);
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -218,5 +224,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return <AppBootLoading />;
   }
 
-  return children;
+  return <AuthBootContext.Provider value={booted}>{children}</AuthBootContext.Provider>;
 }

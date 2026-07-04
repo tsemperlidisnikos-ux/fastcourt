@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
@@ -8,6 +8,7 @@ import { PresentationOverlay } from "@/components/library/PresentationOverlay";
 import { VideoEmbed } from "@/components/library/VideoEmbed";
 import { VideoWatchButton } from "@/components/library/VideoWatchButton";
 import { canInlineEmbedVideo } from "@/lib/library/video-url";
+import { subscribePracticeLiveState } from "@/lib/practice/live-broadcast";
 import { shareMinifiedToStoredPlay } from "@/lib/share/share-link";
 import { useShareStore } from "@/stores/share-store";
 import type { StoredPlay } from "@/types/library";
@@ -30,7 +31,18 @@ export function PracticeShareOverlay() {
     (s) => s.clearPracticeShareSession,
   );
   const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
+  const [liveIndex, setLiveIndex] = useState<number | null>(null);
+  const [liveCompleted, setLiveCompleted] = useState<Set<number>>(new Set());
   const mounted = useClientMounted();
+
+  useEffect(() => {
+    if (!session?.sessionId) return;
+    return subscribePracticeLiveState((payload) => {
+      if (payload.sessionId !== session.sessionId) return;
+      setLiveIndex(payload.currentIndex);
+      setLiveCompleted(new Set(payload.completed));
+    });
+  }, [session?.sessionId]);
 
   const totalMin = useMemo(
     () =>
@@ -81,8 +93,13 @@ export function PracticeShareOverlay() {
               : null;
             const name = play?.title || entry.cueLabel || `Block ${index + 1}`;
             const kind = play?.type === "drill" ? "Drill" : play ? "Play" : "Block";
+            const liveCurrent = liveIndex === index;
+            const liveDone = liveCompleted.has(index);
             return (
-              <article key={index} className="practice-share-card">
+              <article
+                key={index}
+                className={`practice-share-card${liveCurrent ? " is-live-current" : ""}${liveDone ? " is-live-done" : ""}`}
+              >
                 <div className="practice-share-card-num">{index + 1}</div>
                 <div className="practice-share-card-thumb">
                   {play?.frames?.[0] ? (

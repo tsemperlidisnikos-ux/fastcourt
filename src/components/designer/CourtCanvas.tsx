@@ -11,6 +11,7 @@ import {
 } from "react-konva";
 import type Konva from "konva";
 import { isAnimActionActive } from "@/lib/designer/animation-engine";
+import { simulateGuardRotations } from "@/lib/designer/defense-rotation-sim";
 import {
   computeCourtViewLayout,
   clampPlacementNorm,
@@ -306,8 +307,12 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
   }));
 
   const animRuntime = useDesignerStore((s) => s.animRuntime);
+  const simulateGuardRotation = useDesignerStore((s) => s.simulateGuardRotation);
   const frame = play.frames[currentFrameIndex];
-  const displayObjects = animRuntime?.objects ?? frame?.objects ?? [];
+  const displayObjects = useMemo(() => {
+    const objects = animRuntime?.objects ?? frame?.objects ?? [];
+    return simulateGuardRotation ? simulateGuardRotations(objects) : objects;
+  }, [animRuntime?.objects, frame?.objects, simulateGuardRotation]);
   const selectedAction = frame?.actions.find((a) => a.id === selectedActionId);
   const selectedObject = frame?.objects.find((o) => o.id === selectedObjectId);
   const whiteboardActive = tool === "whiteboard";
@@ -686,7 +691,6 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
     tool === "select" &&
     selectedObject &&
     (selectedObject.kind === "shadow" || selectedObject.kind === "zone");
-
   const previewDraft =
     lineDraft && (tool === "shoot" || tool === "line")
       ? {

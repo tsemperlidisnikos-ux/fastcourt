@@ -24,7 +24,7 @@ export const PROFILE_SELECT_COLUMNS =
   "id, email, display_name, role, expires_at, access_type, trial_days, created_at, organization, stripe_customer_id, stripe_subscription_id, updated_at";
 
 export function profileToSessionUser(profile: ProfileRow): SessionUser {
-  return {
+  const user: SessionUser = {
     id: profile.id,
     email: profile.email,
     displayName: profile.display_name || profile.email,
@@ -33,6 +33,13 @@ export function profileToSessionUser(profile: ProfileRow): SessionUser {
     expiresAt: profile.expires_at,
     organizationName: profile.organization ?? undefined,
   };
+
+  if (profile.organization?.trim()) {
+    user.orgMemberRole = profile.role === "team_admin" ? "team_admin" : "coach";
+    user.accessSource = "organization";
+  }
+
+  return applyOrganizationAccess(user);
 }
 
 export function profileToAuthSession(profile: ProfileRow): AuthSession {

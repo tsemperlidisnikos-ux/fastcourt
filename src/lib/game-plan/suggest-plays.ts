@@ -1,4 +1,8 @@
 import { gamePlanCategoryLabel } from "@/lib/game-plan/constants";
+import {
+  findSimilarPlays,
+  formatSimilarityScore,
+} from "@/lib/library/play-dna";
 import type { GamePlanCategoryId } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
 
@@ -107,4 +111,47 @@ export function suggestPlaysForGamePlanCategory(
 
 export function gamePlanSuggestModalTitle(categoryId: GamePlanCategoryId) {
   return `Suggest for ${gamePlanCategoryLabel(categoryId)}`;
+}
+
+/** Merge tag-based suggestions with Play DNA matches from anchor plays in the plan. */
+export function enrichSuggestionsWithPlayDna(
+  tagSuggestions: GamePlanPlaySuggestion[],
+  anchorPlays: StoredPlay[],
+  allPlays: StoredPlay[],
+  excludedPlayIds: ReadonlySet<string>,
+  limit = 8,
+): GamePlanPlaySuggestion[] {
+  const merged = new Map<string, GamePlanPlaySuggestion>();
+  for (const row of tagSuggestions) {
+    merged.set(row.play.id, row);
+  }
+
+  for (const anchor of anchorPlays) {
+    const similar = findSimilarPlays(anchor, allPlays, {
+      limit: 4,
+      minScore: 0.45,
+    });
+    for (const { play, score } of similar) {
+      if (excludedPlayIds.has(play.id)) continue;
+      const dnaScore = Math.round(score * 20);
+      const reason = `DNA ~ ${anchor.title} (${formatSimilarityScore(score)})`;
+      const existing = merged.get(play.id);
+      if (!existing) {
+        merged.set(play.id, { play, score: dnaScore, reasons: [reason] });
+        continue;
+      }
+      merged.set(play.id, {
+        ...existing,
+        score: existing.score + dnaScore,
+        reasons: [...new Set([...existing.reasons, reason])],
+      });
+    }
+  }
+
+  return [...merged.values()]
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.play.title.localeCompare(b.play.title);
+    })
+    .slice(0, limit);
 }

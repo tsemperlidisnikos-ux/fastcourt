@@ -78,6 +78,45 @@ export interface GamePlanEntry {
   notes?: string;
 }
 
+/** Opponent scouting tag on the game plan board (e.g. "They run BOB"). */
+export type OpponentTendencyKind =
+  | "blob"
+  | "slob"
+  | "ato"
+  | "zone"
+  | "press"
+  | "transition"
+  | "halfcourt"
+  | "other";
+
+export interface OpponentTendency {
+  id: string;
+  kind: OpponentTendencyKind;
+  label: string;
+  notes?: string;
+  filmSessionId?: string;
+  /** Video timestamp (seconds) when tagged from Film Room. */
+  filmTimestamp?: number;
+  createdAt: string;
+}
+
+/** AI / film-room counter saved for Game Day & timeout huddles. */
+export interface GamePlanTimeoutCue {
+  id: string;
+  title: string;
+  detail: string;
+  coverage: string;
+  targetsPattern?: string;
+  trigger?: string;
+  ballHandlerRule?: string;
+  screenerRule?: string;
+  weakPoint?: string;
+  priority?: "high" | "medium" | "low";
+  sourceFilmSessionId?: string;
+  sourceFilmTimestamp?: number;
+  createdAt: string;
+}
+
 export interface GamePlan {
   id: string;
   title: string;
@@ -89,6 +128,10 @@ export interface GamePlan {
   scoutingNotes?: string;
   postGameNotes?: string;
   entries: GamePlanEntry[];
+  /** Scout tags for what the opponent runs; drives defensive play suggestions. */
+  opponentBoard?: OpponentTendency[];
+  /** Counter calls from Film Room AI — shown in Game Day / timeout mode. */
+  timeoutCues?: GamePlanTimeoutCue[];
   status: GamePlanStatus;
   gameDay?: {
     activeCategoryId?: GamePlanCategoryId;

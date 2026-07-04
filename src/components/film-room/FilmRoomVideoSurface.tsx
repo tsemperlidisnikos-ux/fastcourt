@@ -21,6 +21,9 @@ interface Props {
   source: FilmRoomVideoSource;
   uploadSrc?: string | null;
   onController: (controller: VideoPlaybackController | null) => void;
+  onNativeVideo?: (video: HTMLVideoElement | null) => void;
+  onYouTubePlayer?: (player: YouTubePlayerInstance | null) => void;
+  onYouTubeCaptureRoot?: (element: HTMLElement | null) => void;
   onTimeUpdate?: (time: number) => void;
   onDuration?: (duration: number) => void;
   onPlayingChange?: (playing: boolean) => void;
@@ -44,6 +47,9 @@ export function FilmRoomVideoSurface({
   source,
   uploadSrc,
   onController,
+  onNativeVideo,
+  onYouTubePlayer,
+  onYouTubeCaptureRoot,
   onTimeUpdate,
   onDuration,
   onPlayingChange,
@@ -72,9 +78,15 @@ export function FilmRoomVideoSurface({
   }, [onController]);
 
   useEffect(() => {
-    if (source.kind === "youtube") return;
+    if (source.kind === "youtube") {
+      onNativeVideo?.(null);
+      return;
+    }
+    onYouTubePlayer?.(null);
+    onYouTubeCaptureRoot?.(null);
+    onNativeVideo?.(videoRef.current);
     publishNativeController();
-  }, [source, uploadSrc, publishNativeController]);
+  }, [onNativeVideo, onYouTubeCaptureRoot, onYouTubePlayer, publishNativeController, source, uploadSrc]);
 
   useEffect(() => {
     if (source.kind !== "youtube" || !ytHostRef.current) return;
@@ -90,6 +102,8 @@ export function FilmRoomVideoSurface({
           return;
         }
         ytPlayerRef.current = readyPlayer;
+        onYouTubePlayer?.(readyPlayer);
+        onYouTubeCaptureRoot?.(ytHostRef.current);
         onController({
           getCurrentTime: () => readyPlayer.getCurrentTime(),
           getDuration: () => readyPlayer.getDuration(),
@@ -111,9 +125,11 @@ export function FilmRoomVideoSurface({
       cancelled = true;
       ytPlayerRef.current?.destroy();
       ytPlayerRef.current = null;
+      onYouTubePlayer?.(null);
+      onYouTubeCaptureRoot?.(null);
       onController(null);
     };
-  }, [source, onController, onDuration, onPlayingChange]);
+  }, [source, onController, onDuration, onPlayingChange, onYouTubeCaptureRoot, onYouTubePlayer]);
 
   useEffect(() => {
     const tick = () => {
@@ -164,6 +180,7 @@ export function FilmRoomVideoSurface({
           setNativeDuration(dur);
           onDuration?.(dur);
           publishNativeController();
+          onNativeVideo?.(e.currentTarget);
         }}
         onPlay={() => onPlayingChange?.(true)}
         onPause={() => onPlayingChange?.(false)}

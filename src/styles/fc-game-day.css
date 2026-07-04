@@ -56,6 +56,103 @@
   text-align: left;
 }
 
+.fc-game-day-counters {
+  max-width: 980px;
+  margin: 16px auto 0;
+  padding: 0 20px;
+  text-align: left;
+}
+
+.fc-game-day-counters-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.fc-game-day-counter-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.fc-game-day-counter-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(147, 197, 253, 0.35);
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.fc-game-day-counter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.fc-game-day-counter-coverage {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fc-game-day-counter-pattern {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #bfdbfe;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.fc-game-day-counter-priority {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.25);
+  color: #fecaca;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fc-game-day-counter-name {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.fc-game-day-counter-detail {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.fc-game-day-counter-rules {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #e2e8f0;
+}
+
+.fc-game-day-counter-rules strong {
+  color: #93c5fd;
+  margin-right: 4px;
+}
+
 .fc-game-day-close {
   margin-top: 14px;
   padding: 8px 12px;
@@ -123,6 +220,11 @@
 .fc-game-day-nav-btn.primary {
   background: #16a34a;
   border-color: #22c55e;
+}
+
+.fc-game-day-timeout-btn:not(:disabled) {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(147, 197, 253, 0.45);
 }
 
 .fc-game-day-nav-btn:disabled {
