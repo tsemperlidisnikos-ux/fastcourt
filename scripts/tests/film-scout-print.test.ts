@@ -35,6 +35,13 @@ const sampleResult = {
     spacingFixes: [],
     timingCorrections: [],
   },
+  disruption: {
+    detected: true,
+    coverage: "ice" as const,
+    whatBroke: "ICE forced baseline on side PNR",
+    suggestedRead: "reject",
+    confidence: "high" as const,
+  },
 };
 
 describe("film scout print model", () => {
@@ -66,6 +73,8 @@ describe("film scout print model", () => {
     assert.match(model.clips[0]?.clipLink ?? "", /film-room\?session=film_sess_1/);
     assert.match(model.clips[0]?.clipLink ?? "", /t=92/);
     assert.equal(model.clips[0]?.coachingSections[0]?.categoryId, "counters");
+    assert.ok(model.clips[0]?.disruption?.headline);
+    assert.equal(model.clips[0]?.disruption?.suggestedRead, "reject");
   });
 
   it("sorts session analyses by playhead time", () => {
@@ -75,6 +84,8 @@ describe("film scout print model", () => {
       source: { kind: "youtube", videoId: "abc", originalUrl: "https://youtu.be/abc" },
       strokes: [],
       events: [],
+      disruptions: [],
+      bookmarks: [],
       analyses: [
         {
           id: "a2",
@@ -119,6 +130,8 @@ describe("film scout print model", () => {
       source: { kind: "upload", blobId: "x", fileName: "x.mp4" },
       strokes: [],
       events: [],
+      disruptions: [],
+      bookmarks: [],
       analyses: [],
       createdAt: 1,
       updatedAt: 1,

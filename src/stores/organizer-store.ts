@@ -36,6 +36,7 @@ import {
 } from "@/lib/game-plan/player-homework-ack";
 import type { HomeworkAckType } from "@/lib/game-plan/player-homework-ack";
 import { buildPracticeSessionFromGamePlan } from "@/lib/game-plan/prep-practice";
+import type { DisruptionPracticeEntry } from "@/lib/film-room/film-practice-disruption";
 import {
   createGamePlanDraft,
   duplicateGamePlan,
@@ -165,6 +166,10 @@ interface OrganizerState {
   ) => Promise<void>;
   deletePracticeSession: (id: string) => Promise<void>;
   addPracticeItems: (sessionId: string, playIds: string[]) => Promise<void>;
+  addDisruptionReadsToPractice: (
+    sessionId: string,
+    entries: DisruptionPracticeEntry[],
+  ) => Promise<number>;
   addPlaybookToSession: (sessionId: string, playbookId: string) => Promise<void>;
   addPracticeCueBlock: (
     sessionId: string,
@@ -931,6 +936,39 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     });
     await setPracticeData({ sessions });
     set({ practiceSessions: sessions });
+  },
+
+  addDisruptionReadsToPractice: async (sessionId, entries) => {
+    if (!entries.length) return 0;
+    const playsById = new Map(get().plays.map((p) => [p.id, p]));
+    let addedCount = 0;
+    const sessions = get().practiceSessions.map((s) => {
+      if (s.id !== sessionId) return s;
+      const existing = new Set(s.items.map((i) => i.playId).filter(Boolean));
+      const added: PracticeSessionItem[] = [];
+      for (const entry of entries) {
+        if (existing.has(entry.playId)) continue;
+        const play = playsById.get(entry.playId);
+        if (!play) continue;
+        added.push({
+          id: newPracticeItemId(),
+          playId: entry.playId,
+          durationMin: entry.durationMin ?? defaultPracticeItemDuration(play),
+          notes: entry.notes?.trim() || "",
+        });
+        existing.add(entry.playId);
+        addedCount += 1;
+      }
+      if (!added.length) return s;
+      return normalizePracticeSession({
+        ...s,
+        items: [...s.items, ...added],
+        updatedAt: new Date().toISOString(),
+      });
+    });
+    await setPracticeData({ sessions });
+    set({ practiceSessions: sessions });
+    return addedCount;
   },
 
   addPlaybookToSession: async (sessionId, playbookId) => {

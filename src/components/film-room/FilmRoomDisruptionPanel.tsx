@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { buildDesignerHref } from "@/lib/designer/designer-deep-link";
 import { detectFilmDisruption } from "@/lib/film-room/film-disruption-detector";
 import { comparePlayIdealToDisruption } from "@/lib/film-room/film-play-ideal-compare";
+import {
+  buildDisruptionPracticeEntries,
+  disruptionPracticeSessionTitle,
+} from "@/lib/film-room/film-practice-disruption";
 import { suggestOffensePlaysForDisruption } from "@/lib/film-room/film-offense-variation-match";
+import { appNotice } from "@/stores/dialog-store";
+import { useOrganizerStore } from "@/stores/organizer-store";
 import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
 import type { FilmRoomDisruption } from "@/types/film-room";
 import type { StoredPlay } from "@/types/library";
@@ -15,6 +22,7 @@ interface Props {
   disruptionTags: FilmRoomDisruption[];
   plays?: StoredPlay[];
   sessionId?: string;
+  sessionTitle?: string;
   timestamp?: number;
 }
 
@@ -23,8 +31,18 @@ export function FilmRoomDisruptionPanel({
   disruptionTags,
   plays = [],
   sessionId,
+  sessionTitle,
   timestamp,
 }: Props) {
+  const router = useRouter();
+  const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
+  const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
+  const addDisruptionReadsToPractice = useOrganizerStore(
+    (s) => s.addDisruptionReadsToPractice,
+  );
+  const updatePracticeSession = useOrganizerStore((s) => s.updatePracticeSession);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [practiceBusy, setPracticeBusy] = useState(false);
   const assessment = useMemo(
     () =>
       detectFilmDisruption({
@@ -53,6 +71,45 @@ export function FilmRoomDisruptionPanel({
       comparePlayIdealToDisruption(match.play, analysis),
     );
   }, [analysis, offenseMatches]);
+
+  const practiceEntries = useMemo(() => {
+    if (!offenseMatches.length) return [];
+    return buildDisruptionPracticeEntries(offenseMatches, assessment, analysis);
+  }, [analysis, assessment, offenseMatches]);
+
+  async function handleAddToPractice(createNew: boolean) {
+    if (!practiceEntries.length) {
+      appNotice("Practice", "No matching offense plays to add.");
+      return;
+    }
+    setPracticeBusy(true);
+    try {
+      let sessionIdTarget = selectedSessionId;
+      if (createNew || !sessionIdTarget) {
+        const session = await createPracticeSession();
+        await updatePracticeSession(session.id, {
+          title: disruptionPracticeSessionTitle(sessionTitle ?? "Film reads"),
+          notes: assessment.headline,
+        });
+        sessionIdTarget = session.id;
+      }
+      const added = await addDisruptionReadsToPractice(
+        sessionIdTarget,
+        practiceEntries,
+      );
+      appNotice(
+        "Practice",
+        added
+          ? `Added ${added} read${added === 1 ? "" : "s"} to practice.`
+          : "Those plays are already in the session.",
+      );
+      if (added) {
+        router.push(`/library?tab=practice&session=${encodeURIComponent(sessionIdTarget)}`);
+      }
+    } finally {
+      setPracticeBusy(false);
+    }
+  }
 
   const showPanel =
     assessment.detected ||
@@ -177,6 +234,45 @@ export function FilmRoomDisruptionPanel({
           Tag offense plays with read names (reject, slip, backdoor…) to match
           automatically.
         </p>
+      ) : null}
+
+      {practiceEntries.length ? (
+        <div className="fc-film-disruption-practice">
+          <h5 className="fc-film-disruption-reads-title">Practice planner</h5>
+          {practiceSessions.length ? (
+            <label className="fc-film-disruption-practice-select">
+              <span>Session</span>
+              <select
+                value={selectedSessionId || practiceSessions[0]?.id || ""}
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+              >
+                {practiceSessions.map((session) => (
+                  <option key={session.id} value={session.id}>
+                    {session.title} ({session.date})
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <div className="fc-film-disruption-practice-actions">
+            <button
+              type="button"
+              className="fc-film-disruption-practice-btn"
+              disabled={practiceBusy}
+              onClick={() => void handleAddToPractice(false)}
+            >
+              Add reads to practice
+            </button>
+            <button
+              type="button"
+              className="fc-film-disruption-practice-btn secondary"
+              disabled={practiceBusy}
+              onClick={() => void handleAddToPractice(true)}
+            >
+              New practice session
+            </button>
+          </div>
+        </div>
       ) : null}
 
       {sessionId && typeof timestamp === "number" ? (

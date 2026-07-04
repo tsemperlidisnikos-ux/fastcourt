@@ -2399,3 +2399,53 @@
   line-height: 1.45;
   color: #64748b;
 }
+
+.fc-film-disruption-practice {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #fecaca;
+}
+
+.fc-film-disruption-practice-select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: #475569;
+}
+
+.fc-film-disruption-practice-select select {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.fc-film-disruption-practice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-film-disruption-practice-btn {
+  padding: 7px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-film-disruption-practice-btn.secondary {
+  background: #fff;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.fc-film-disruption-practice-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

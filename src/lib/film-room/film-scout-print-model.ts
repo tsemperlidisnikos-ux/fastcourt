@@ -8,7 +8,11 @@ import {
 } from "@/lib/film-room/film-counter-playbook";
 import { buildFilmRoomDeepLink, formatFilmTimestamp } from "@/lib/film-room/film-game-plan-link";
 import { FILM_ROOM_EVENT_LABELS } from "@/lib/film-room/film-event-tags";
-import { normalizeFilmBookmarks } from "@/lib/film-room/film-room-bookmarks";
+import {
+  FILM_ROOM_DISRUPTION_LABELS,
+} from "@/lib/film-room/film-disruption-tags";
+import { detectFilmDisruption } from "@/lib/film-room/film-disruption-detector";
+import { normalizeFilmBookmarks, FILM_DISRUPTION_BOOKMARK_LABEL } from "@/lib/film-room/film-room-bookmarks";
 import { filmRoomSourceLabel } from "@/lib/film-room/film-room-source";
 import type {
   FilmClipAnalysisResult,
@@ -21,6 +25,21 @@ export interface FilmScoutPrintCoachTag {
   time: string;
   label: string;
   note?: string;
+}
+
+export interface FilmScoutPrintDisruptionTag {
+  time: string;
+  label: string;
+  note?: string;
+}
+
+export interface FilmScoutPrintDisruption {
+  headline: string;
+  reason: string;
+  whatBroke?: string;
+  suggestedRead?: string;
+  coverageLabel?: string;
+  offenseReads: string[];
 }
 
 export interface FilmScoutPrintTendency {
@@ -55,6 +74,8 @@ export interface FilmScoutPrintClipBlock {
   tendencies: FilmScoutPrintTendency[];
   patterns: FilmScoutPrintPattern[];
   coachTags: FilmScoutPrintCoachTag[];
+  disruptionTags: FilmScoutPrintDisruptionTag[];
+  disruption?: FilmScoutPrintDisruption;
   coachingSections: FilmScoutPrintCoachingSection[];
 }
 
@@ -63,6 +84,7 @@ export interface FilmScoutPrintChapter {
   label: string;
   note?: string;
   clipLink: string;
+  kind?: "chapter" | "disruption";
 }
 
 export interface FilmScoutPrintModel {
@@ -81,6 +103,7 @@ export interface FilmScoutPrintClipInput {
   playheadTime: number;
   result: FilmClipAnalysisResult;
   coachTags?: FilmRoomAnalysisRecord["coachTags"];
+  disruptionTags?: FilmRoomAnalysisRecord["disruptionTags"];
 }
 
 function confidencePct(value: number) {
@@ -97,6 +120,50 @@ function counterMetaLines(counter: FilmClipCounterSuggestion): string[] {
   if (counter.screenerRule) lines.push(`Screener / big: ${counter.screenerRule}`);
   if (counter.weakPoint) lines.push(`They want: ${counter.weakPoint}`);
   return lines;
+}
+
+function mapDisruptionTags(
+  tags: FilmRoomAnalysisRecord["disruptionTags"] | undefined,
+): FilmScoutPrintDisruptionTag[] {
+  if (!tags?.length) return [];
+  return tags.map((tag) => ({
+    time: formatFilmTimestamp(tag.time),
+    label: FILM_ROOM_DISRUPTION_LABELS[tag.kind] ?? tag.kind,
+    note: tag.note?.trim() || undefined,
+  }));
+}
+
+function mapDisruptionBlock(
+  result: FilmClipAnalysisResult,
+  disruptionTags: FilmRoomAnalysisRecord["disruptionTags"] | undefined,
+): FilmScoutPrintDisruption | undefined {
+  const assessment = detectFilmDisruption({
+    disruptionTags: disruptionTags?.map((tag, index) => ({
+      id: `print_${index}`,
+      kind: tag.kind,
+      time: tag.time,
+      note: tag.note,
+      createdAt: Date.now(),
+    })),
+    playPatterns: result.playPatterns,
+    counters: result.coaching.counters,
+    aiDisruption: result.disruption,
+    aiSummary: result.summary,
+  });
+  if (!assessment.detected && !result.disruption?.detected) return undefined;
+  const coverageLabel = assessment.coverage
+    ? COUNTER_COVERAGE_LABELS[assessment.coverage] ?? assessment.coverage
+    : undefined;
+  return {
+    headline: assessment.headline,
+    reason: assessment.reason,
+    whatBroke: result.disruption?.whatBroke,
+    suggestedRead:
+      result.disruption?.suggestedRead ??
+      assessment.suggestedReads[0]?.label,
+    coverageLabel,
+    offenseReads: assessment.suggestedReads.map((read) => read.label),
+  };
 }
 
 function mapCoachTags(
@@ -162,6 +229,8 @@ export function buildFilmScoutPrintClipBlock(
       notes: row.notes?.trim() || undefined,
     })),
     coachTags: mapCoachTags(input.coachTags),
+    disruptionTags: mapDisruptionTags(input.disruptionTags),
+    disruption: mapDisruptionBlock(input.result, input.disruptionTags),
     coachingSections: mapCoachingSections(input.result),
   };
 }
@@ -216,6 +285,7 @@ function mapSessionChapters(
     label: bookmark.label,
     note: bookmark.note,
     clipLink: `${origin.replace(/\/$/, "")}${buildFilmRoomDeepLink(session.id, bookmark.time)}`,
+    kind: bookmark.kind ?? (bookmark.label.includes(FILM_DISRUPTION_BOOKMARK_LABEL) ? "disruption" : "chapter"),
   }));
 }
 
@@ -254,6 +324,7 @@ export function buildFilmScoutPrintModelFromSession(input: {
           playheadTime: record.playheadTime,
           result: record.result,
           coachTags: record.coachTags,
+          disruptionTags: record.disruptionTags,
         }),
       ),
   };

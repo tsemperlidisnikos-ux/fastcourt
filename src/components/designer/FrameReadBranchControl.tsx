@@ -76,13 +76,14 @@ export function FrameReadBranchControl({
             <span>Coverage trigger</span>
             <select
               value={coverage || "other"}
-              onChange={(e) =>
+              onChange={(e) => {
+                const coverage = e.target.value as CounterCoverageId;
                 onSetReadBranch({
-                  label: label || defaultReadLabelForDisruption(e.target.value),
-                  coverage: e.target.value,
+                  label: label || defaultReadLabelForDisruption(coverage),
+                  coverage,
                   parentFrameId: readBranch?.parentFrameId,
-                })
-              }
+                });
+              }}
             >
               {READ_COVERAGE_OPTIONS.map((option) => (
                 <option key={option} value={option}>

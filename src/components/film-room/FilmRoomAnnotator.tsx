@@ -48,7 +48,7 @@ import {
 } from "@/lib/film-room/markup-toolbar-presets";
 import { useAiAssistantStatus } from "@/hooks/useAiAssistantStatus";
 import { buildFilmScoutPrintModelFromSession } from "@/lib/film-room/film-scout-print-model";
-import { defaultFilmBookmarkLabel } from "@/lib/film-room/film-room-bookmarks";
+import { defaultFilmBookmarkLabel, FILM_DISRUPTION_BOOKMARK_LABEL } from "@/lib/film-room/film-room-bookmarks";
 import {
   resolvePdfCoverTeam,
   resolvePdfFooterText,
@@ -539,6 +539,16 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           })),
         }),
       );
+      if (result.disruption?.detected) {
+        const note = result.disruption.whatBroke || result.disruption.summary;
+        addFilmBookmark(
+          session.id,
+          currentTime,
+          FILM_DISRUPTION_BOOKMARK_LABEL,
+          note,
+          "disruption",
+        );
+      }
       setAnalyzeModalOpen(true);
     } catch (err) {
       appNotice(

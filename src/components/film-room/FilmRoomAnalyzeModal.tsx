@@ -336,6 +336,12 @@ function FilmRoomAnalyzeModalBody({
         time: tag.time,
         note: tag.note,
       })) ?? [];
+    const disruptionTags =
+      analyzeContext?.disruptionTags.map((tag) => ({
+        kind: tag.kind,
+        time: tag.time,
+        note: tag.note,
+      })) ?? [];
     setScoutPrintModel(
       buildFilmScoutPrintModel({
         session: {
@@ -351,6 +357,7 @@ function FilmRoomAnalyzeModalBody({
             playheadTime: currentTime,
             result: analysis,
             coachTags,
+            disruptionTags,
           },
         ],
       }),
@@ -401,6 +408,7 @@ function FilmRoomAnalyzeModalBody({
             disruptionTags={analyzeContext?.disruptionTags ?? []}
             plays={plays}
             sessionId={sessionId}
+            sessionTitle={sessionTitle}
             timestamp={currentTime}
           />
 

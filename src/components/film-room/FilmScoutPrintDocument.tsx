@@ -27,7 +27,10 @@ export function FilmScoutPrintDocument({ model }: { model: FilmScoutPrintModel }
           <h2 className="fc-film-scout-print-chapters-title">Chapters</h2>
           <ul className="fc-film-scout-print-chapter-list">
             {model.chapters.map((chapter) => (
-              <li key={`${chapter.timeLabel}-${chapter.label}`} className="fc-film-scout-print-chapter-row">
+              <li
+                key={`${chapter.timeLabel}-${chapter.label}`}
+                className={`fc-film-scout-print-chapter-row${chapter.kind === "disruption" ? " is-disruption" : ""}`}
+              >
                 <span className="fc-film-scout-print-chapter-time">{chapter.timeLabel}</span>
                 <span className="fc-film-scout-print-chapter-label">{chapter.label}</span>
                 {chapter.note ? (
@@ -107,6 +110,53 @@ export function FilmScoutPrintDocument({ model }: { model: FilmScoutPrintModel }
                     </span>
                     {row.notes ? (
                       <p className="fc-film-scout-print-pattern-note">{row.notes}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {clip.disruption ? (
+            <div className="fc-film-scout-print-block fc-film-scout-print-disruption">
+              <h3 className="fc-film-scout-print-block-title">Play disrupted</h3>
+              <p className="fc-film-scout-print-disruption-headline">{clip.disruption.headline}</p>
+              <p>{clip.disruption.reason}</p>
+              {clip.disruption.coverageLabel ? (
+                <p>
+                  <strong>Coverage:</strong> {clip.disruption.coverageLabel}
+                </p>
+              ) : null}
+              {clip.disruption.whatBroke ? (
+                <p>
+                  <strong>What broke:</strong> {clip.disruption.whatBroke}
+                </p>
+              ) : null}
+              {clip.disruption.suggestedRead ? (
+                <p>
+                  <strong>Read:</strong> {clip.disruption.suggestedRead}
+                </p>
+              ) : null}
+              {clip.disruption.offenseReads.length ? (
+                <ul className="fc-film-scout-print-disruption-reads">
+                  {clip.disruption.offenseReads.map((read) => (
+                    <li key={read}>{read}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+
+          {clip.disruptionTags.length ? (
+            <div className="fc-film-scout-print-block">
+              <h3 className="fc-film-scout-print-block-title">Disruption tags</h3>
+              <ul className="fc-film-scout-print-tag-list">
+                {clip.disruptionTags.map((tag, tagIndex) => (
+                  <li key={`${tag.time}-${tagIndex}`}>
+                    <span className="fc-film-scout-print-tag-time">{tag.time}</span>
+                    <span className="fc-film-scout-print-tag-label">{tag.label}</span>
+                    {tag.note ? (
+                      <span className="fc-film-scout-print-tag-note"> — {tag.note}</span>
                     ) : null}
                   </li>
                 ))}
