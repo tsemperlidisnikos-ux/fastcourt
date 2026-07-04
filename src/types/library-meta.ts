@@ -14,6 +14,10 @@ export interface PracticeSessionItem {
   durationMin: number;
   notes?: string;
   videoUrl?: string;
+  /** Coach call shown prominently in Practice Live (e.g. "Reject / snake"). */
+  liveCall?: string;
+  /** Designer frame index for read-branch thumbnail in live mode. */
+  designerFrameIndex?: number;
 }
 
 export interface PracticeSession {
@@ -123,6 +127,10 @@ export interface GamePlanFilmRef {
   timestamp?: number;
   label: string;
   detail?: string;
+  /** Linked offense play for Designer read-frame evidence. */
+  playId?: string;
+  frameIndex?: number;
+  readLabel?: string;
   createdAt: string;
 }
 

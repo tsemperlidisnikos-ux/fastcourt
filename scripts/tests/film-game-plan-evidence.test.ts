@@ -5,6 +5,7 @@ import { buildAiScoutGamePlanPatch } from "../../src/lib/film-room/apply-ai-scou
 import {
   collectGamePlanFilmEvidence,
   createAiScoutFilmRef,
+  createDisruptionFilmRef,
   mergeFilmRefs,
   normalizeFilmRefs,
 } from "../../src/lib/film-room/film-game-plan-evidence.ts";
@@ -104,5 +105,27 @@ describe("film game plan evidence", () => {
     assert.equal(patch.filmRefs?.[0]?.sessionId, "film_scout");
     assert.equal(patch.filmRefs?.[0]?.timestamp, 72);
     assert.match(patch.filmRefs?.[0]?.label ?? "", /1:12/);
+  });
+
+  it("createDisruptionFilmRef stores designer read frame link", () => {
+    const ref = createDisruptionFilmRef({
+      sessionId: "film_1",
+      timestamp: 48,
+      label: "Horns Reject",
+      detail: "ICE side denied middle",
+      playId: "play_reject",
+      frameIndex: 3,
+      readLabel: "Reject / snake",
+    });
+    const normalized = normalizeFilmRefs([ref])[0];
+    assert.equal(normalized?.playId, "play_reject");
+    assert.equal(normalized?.frameIndex, 3);
+    assert.equal(normalized?.readLabel, "Reject / snake");
+
+    const plan = createGamePlanDraft("Rival", "Varsity");
+    plan.filmRefs = [ref];
+    const items = collectGamePlanFilmEvidence(plan);
+    assert.equal(items[0]?.playId, "play_reject");
+    assert.equal(items[0]?.frameIndex, 3);
   });
 });

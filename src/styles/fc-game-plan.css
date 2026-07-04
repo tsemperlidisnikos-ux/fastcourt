@@ -316,6 +316,31 @@
   color: #fff;
 }
 
+#screen-organizer .fc-game-plan-film-evidence-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+#screen-organizer .fc-game-plan-film-evidence-designer {
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #b91c1c;
+  background: #fff;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+
+#screen-organizer .fc-game-plan-film-evidence-designer:hover {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
 #screen-organizer .fc-game-plan-postgame-notes {
   margin: 0 18px 12px;
   padding: 12px 14px;

@@ -26,6 +26,13 @@ export function normalizePracticeItem(
     durationMin: Math.max(1, Number(raw.durationMin) || 10),
     notes: raw.notes || "",
     videoUrl: raw.videoUrl || "",
+    liveCall: raw.liveCall?.trim() || undefined,
+    designerFrameIndex:
+      typeof raw.designerFrameIndex === "number" &&
+      Number.isFinite(raw.designerFrameIndex) &&
+      raw.designerFrameIndex >= 0
+        ? Math.floor(raw.designerFrameIndex)
+        : undefined,
   };
 }
 

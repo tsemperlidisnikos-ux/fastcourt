@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar";
+import { FilmRoomPossessionPlaylist } from "@/components/film-room/FilmRoomPossessionPlaylist";
 import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
 import { FilmRoomFramePreviewStrip } from "@/components/film-room/FilmRoomFramePreviewStrip";
 import { FilmRoomEventTagBar } from "@/components/film-room/FilmRoomEventTagBar";
@@ -732,6 +733,14 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           }
           onRemove={(bookmarkId) => removeFilmBookmark(session.id, bookmarkId)}
           onSeek={handleSliderSeek}
+        />
+
+        <FilmRoomPossessionPlaylist
+          bookmarks={bookmarks}
+          currentTime={currentTime}
+          disabled={duration <= 0}
+          onSeek={handleSliderSeek}
+          onPlay={() => controllerRef.current?.play()}
         />
 
         <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />

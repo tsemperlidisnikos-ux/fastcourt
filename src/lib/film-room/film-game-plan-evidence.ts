@@ -19,6 +19,9 @@ export interface GamePlanFilmEvidenceItem {
   title: string;
   detail?: string;
   source: GamePlanFilmEvidenceSource;
+  playId?: string;
+  frameIndex?: number;
+  readLabel?: string;
 }
 
 export function newGamePlanFilmRefId() {
@@ -52,6 +55,14 @@ export function normalizeFilmRefs(
       timestamp,
       label: label.slice(0, 120),
       detail: row.detail?.trim()?.slice(0, 240) || undefined,
+      playId: row.playId?.trim() || undefined,
+      frameIndex:
+        typeof row.frameIndex === "number" &&
+        Number.isFinite(row.frameIndex) &&
+        row.frameIndex >= 0
+          ? Math.floor(row.frameIndex)
+          : undefined,
+      readLabel: row.readLabel?.trim()?.slice(0, 80) || undefined,
       createdAt: row.createdAt || new Date().toISOString(),
     });
   }
@@ -75,6 +86,9 @@ export function createGamePlanFilmRef(input: {
   timestamp?: number;
   label: string;
   detail?: string;
+  playId?: string;
+  frameIndex?: number;
+  readLabel?: string;
 }): GamePlanFilmRef {
   return {
     id: newGamePlanFilmRefId(),
@@ -87,6 +101,14 @@ export function createGamePlanFilmRef(input: {
         : undefined,
     label: input.label.trim().slice(0, 120),
     detail: input.detail?.trim()?.slice(0, 240) || undefined,
+    playId: input.playId?.trim() || undefined,
+    frameIndex:
+      input.frameIndex != null &&
+      Number.isFinite(input.frameIndex) &&
+      input.frameIndex >= 0
+        ? Math.floor(input.frameIndex)
+        : undefined,
+    readLabel: input.readLabel?.trim()?.slice(0, 80) || undefined,
     createdAt: new Date().toISOString(),
   };
 }
@@ -157,6 +179,9 @@ function evidenceFromRef(row: GamePlanFilmRef): GamePlanFilmEvidenceItem {
     title: row.label,
     detail: row.detail,
     source: "ref",
+    playId: row.playId,
+    frameIndex: row.frameIndex,
+    readLabel: row.readLabel,
   };
 }
 
@@ -201,6 +226,27 @@ export function collectGamePlanFilmEvidence(plan: GamePlan): GamePlanFilmEvidenc
 
 export function gamePlanHasFilmEvidence(plan: GamePlan): boolean {
   return collectGamePlanFilmEvidence(plan).length > 0;
+}
+
+export function createDisruptionFilmRef(input: {
+  sessionId: string;
+  timestamp: number;
+  label: string;
+  detail?: string;
+  playId: string;
+  frameIndex?: number;
+  readLabel?: string;
+}): GamePlanFilmRef {
+  const timeLabel = formatFilmTimestamp(input.timestamp);
+  return createGamePlanFilmRef({
+    sessionId: input.sessionId,
+    timestamp: input.timestamp,
+    label: input.label.trim() || (timeLabel ? `Read @ ${timeLabel}` : "Disruption read"),
+    detail: input.detail?.trim()?.slice(0, 240) || undefined,
+    playId: input.playId,
+    frameIndex: input.frameIndex,
+    readLabel: input.readLabel,
+  });
 }
 
 export function createAiScoutFilmRef(

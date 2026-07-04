@@ -65,5 +65,6 @@ describe("film-practice-disruption", () => {
     assert.equal(entries.length, 1);
     assert.equal(entries[0]?.playId, "p1");
     assert.equal(entries[0]?.durationMin, 8);
+    assert.equal(entries[0]?.liveCall, "Reject / snake");
   });
 });

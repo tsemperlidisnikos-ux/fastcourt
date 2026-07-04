@@ -33,6 +33,7 @@ export function PracticeShareOverlay() {
   const [presentPlay, setPresentPlay] = useState<StoredPlay | null>(null);
   const [liveIndex, setLiveIndex] = useState<number | null>(null);
   const [liveCompleted, setLiveCompleted] = useState<Set<number>>(new Set());
+  const [liveCall, setLiveCall] = useState<string | null>(null);
   const mounted = useClientMounted();
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function PracticeShareOverlay() {
       if (payload.sessionId !== session.sessionId) return;
       setLiveIndex(payload.currentIndex);
       setLiveCompleted(new Set(payload.completed));
+      setLiveCall(payload.liveCall?.trim() || null);
     });
   }, [session?.sessionId]);
 
@@ -71,6 +73,11 @@ export function PracticeShareOverlay() {
           <p className="practice-share-meta" id="practice-share-meta">
             {metaParts.join(" · ")}
           </p>
+          {liveCall && liveIndex != null ? (
+            <p className="practice-share-live-call" id="practice-share-live-call">
+              Live call: <strong>{liveCall}</strong>
+            </p>
+          ) : null}
           {session.session.notes?.trim() ? (
             <p className="practice-share-notes" id="practice-share-notes">
               {session.session.notes}

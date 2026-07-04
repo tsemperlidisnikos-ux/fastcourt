@@ -7,6 +7,7 @@ import {
   type GamePlanFilmEvidenceItem,
 } from "@/lib/film-room/film-game-plan-evidence";
 import { buildFilmRoomDeepLink } from "@/lib/film-room/film-game-plan-link";
+import { buildDesignerHref } from "@/lib/designer/designer-deep-link";
 import { useFilmRoomStore } from "@/stores/film-room-store";
 import type { GamePlan } from "@/types/library-meta";
 
@@ -69,13 +70,28 @@ export function GamePlanFilmEvidencePanel({ plan }: Props) {
                   <span className="fc-game-plan-film-evidence-detail">{item.detail}</span>
                 ) : null}
               </div>
-              <Link
-                className="fc-game-plan-film-evidence-open"
-                href={href}
-                title="Open clip in Film Room"
-              >
-                Watch clip ↗
-              </Link>
+              <div className="fc-game-plan-film-evidence-actions">
+                <Link
+                  className="fc-game-plan-film-evidence-open"
+                  href={href}
+                  title="Open clip in Film Room"
+                >
+                  Watch clip ↗
+                </Link>
+                {item.playId ? (
+                  <Link
+                    className="fc-game-plan-film-evidence-designer"
+                    href={buildDesignerHref(item.playId, item.frameIndex ?? 0)}
+                    title={
+                      item.readLabel
+                        ? `Open read frame: ${item.readLabel}`
+                        : "Open linked play in Designer"
+                    }
+                  >
+                    {item.readLabel ? `${item.readLabel} frame ↗` : "Designer ↗"}
+                  </Link>
+                ) : null}
+              </div>
             </li>
           );
         })}

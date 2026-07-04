@@ -843,6 +843,174 @@
   color: #b91c1c;
 }
 
+.fc-film-disruption-frame-link.is-read {
+  color: #b91c1c;
+}
+
+#screen-film-room .fc-film-possession-playlist,
+#screen-organizer .fc-film-possession-playlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #fff;
+}
+
+#screen-film-room .fc-film-possession-playlist-head,
+#screen-organizer .fc-film-possession-playlist-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#screen-film-room .fc-film-possession-playlist-title,
+#screen-organizer .fc-film-possession-playlist-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+#screen-film-room .fc-film-possession-playlist-filters,
+#screen-organizer .fc-film-possession-playlist-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#screen-film-room .fc-film-possession-playlist-filter,
+#screen-organizer .fc-film-possession-playlist-filter {
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-possession-playlist-filter.is-active,
+#screen-organizer .fc-film-possession-playlist-filter.is-active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+#screen-film-room .fc-film-possession-playlist-actions,
+#screen-organizer .fc-film-possession-playlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+#screen-film-room .fc-film-possession-playlist-btn,
+#screen-organizer .fc-film-possession-playlist-btn {
+  padding: 5px 10px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-possession-playlist-btn.secondary,
+#screen-organizer .fc-film-possession-playlist-btn.secondary {
+  background: #fff;
+  color: #2563eb;
+}
+
+#screen-film-room .fc-film-possession-playlist-count,
+#screen-organizer .fc-film-possession-playlist-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+#screen-film-room .fc-film-possession-playlist-list,
+#screen-organizer .fc-film-possession-playlist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+#screen-film-room .fc-film-possession-playlist-item-btn,
+#screen-organizer .fc-film-possession-playlist-item-btn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 6px 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-possession-playlist-item.is-active .fc-film-possession-playlist-item-btn,
+#screen-organizer .fc-film-possession-playlist-item.is-active .fc-film-possession-playlist-item-btn {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+#screen-film-room .fc-film-possession-playlist-item.is-disruption .fc-film-possession-playlist-item-btn,
+#screen-organizer .fc-film-possession-playlist-item.is-disruption .fc-film-possession-playlist-item-btn {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+#screen-film-room .fc-film-possession-playlist-time,
+#screen-organizer .fc-film-possession-playlist-time {
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+#screen-film-room .fc-film-possession-playlist-label,
+#screen-organizer .fc-film-possession-playlist-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+#screen-film-room .fc-film-possession-playlist-badge,
+#screen-organizer .fc-film-possession-playlist-badge {
+  grid-column: 3;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #b91c1c;
+}
+
+#screen-film-room .fc-film-possession-playlist-note,
+#screen-organizer .fc-film-possession-playlist-note {
+  grid-column: 2 / -1;
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-possession-playlist-empty,
+#screen-organizer .fc-film-possession-playlist-empty {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
 #screen-film-room .fc-film-event-bar,
 #screen-organizer .fc-film-event-bar {
   display: flex;

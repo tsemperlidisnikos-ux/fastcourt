@@ -8,6 +8,8 @@ export interface DisruptionPracticeEntry {
   playId: string;
   notes: string;
   durationMin?: number;
+  liveCall?: string;
+  designerFrameIndex?: number;
 }
 
 export function buildDisruptionPracticeNotes(
@@ -30,11 +32,17 @@ export function buildDisruptionPracticeEntries(
   assessment: FilmDisruptionAssessment,
   analysis: FilmClipAnalysisResult,
 ): DisruptionPracticeEntry[] {
-  return offenseMatches.map((match) => ({
-    playId: match.play.id,
-    notes: buildDisruptionPracticeNotes(match, assessment, analysis),
-    durationMin: 8,
-  }));
+  return offenseMatches.map((match) => {
+    const compare = comparePlayIdealToDisruption(match.play, analysis);
+    return {
+      playId: match.play.id,
+      notes: buildDisruptionPracticeNotes(match, assessment, analysis),
+      durationMin: 8,
+      liveCall: match.readLabel?.trim() || undefined,
+      designerFrameIndex:
+        compare.readFrameIndex ?? compare.primaryFrameIndex ?? undefined,
+    };
+  });
 }
 
 export function disruptionPracticeSessionTitle(sessionTitle: string) {
@@ -58,6 +66,13 @@ export function mergeDisruptionPracticeItems(
       playId: entry.playId,
       durationMin: entry.durationMin ?? 8,
       notes: entry.notes,
+      liveCall: entry.liveCall?.trim() || undefined,
+      designerFrameIndex:
+        typeof entry.designerFrameIndex === "number" &&
+        Number.isFinite(entry.designerFrameIndex) &&
+        entry.designerFrameIndex >= 0
+          ? Math.floor(entry.designerFrameIndex)
+          : undefined,
     });
   }
   return [...existing, ...added];

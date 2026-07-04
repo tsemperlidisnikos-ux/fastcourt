@@ -2,6 +2,8 @@ export interface PracticeLiveBroadcast {
   sessionId: string;
   currentIndex: number;
   completed: number[];
+  /** Coach call for the active block (disruption reads). */
+  liveCall?: string;
 }
 
 const CHANNEL_NAME = "fastcourt-practice-live";

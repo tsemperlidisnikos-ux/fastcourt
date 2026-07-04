@@ -7,6 +7,10 @@ import { PresentationOverlay } from "@/components/library/PresentationOverlay";
 import { VideoWatchButton } from "@/components/library/VideoWatchButton";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import {
+  formatPracticeLiveCall,
+  resolvePracticeDisruptionCue,
+} from "@/lib/practice/practice-disruption-cue";
+import {
   getPracticeItemVideoUrl,
   isPracticeBlockRunnable,
   resolvePracticeSessionItems,
@@ -85,12 +89,19 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
   const current: ResolvedPracticeRow | null = rows[index] ?? null;
 
   useEffect(() => {
+    const row = rows[index];
+    let liveCall: string | undefined;
+    if (row) {
+      const cue = resolvePracticeDisruptionCue(row.item);
+      liveCall = cue ? formatPracticeLiveCall(cue) ?? undefined : undefined;
+    }
     publishPracticeLiveState({
       sessionId: session.id,
       currentIndex: index,
       completed: [...completed],
+      liveCall,
     });
-  }, [session.id, index, completed]);
+  }, [session.id, index, completed, rows]);
 
   useEffect(() => {
     if (mounted && rows.length === 0) {
@@ -208,7 +219,18 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
   const { item, play } = current;
   const kind = play ? (play.type === "drill" ? "Drill" : "Play") : "Block";
   const blockName = play?.title || item.cueLabel || "Block";
-  const cue = (item.notes || "").trim();
+  const disruptionCue = resolvePracticeDisruptionCue(item);
+  const liveCall = disruptionCue ? formatPracticeLiveCall(disruptionCue) : null;
+  const cue = disruptionCue ? null : (item.notes || "").trim();
+  const liveFrameIndex =
+    disruptionCue?.designerFrameIndex ??
+    (play?.frames?.length ? 0 : undefined);
+  const liveFrame =
+    play?.frames?.[
+      typeof liveFrameIndex === "number" && liveFrameIndex >= 0
+        ? liveFrameIndex
+        : 0
+    ];
   const videoUrl = getPracticeItemVideoUrl(item, play);
   const doneCount = completed.size;
   const progressPct = rows.length
@@ -318,7 +340,13 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
               {index + 1}
             </div>
             <div className="practice-live-thumb-wrap" id="practice-live-thumb">
-              {play?.frames?.[0] ? (
+              {liveFrame ? (
+                <CourtFrameThumbnail
+                  frame={liveFrame}
+                  courtType={play!.courtType}
+                  size="lg"
+                />
+              ) : play?.frames?.[0] ? (
                 <CourtFrameThumbnail
                   frame={play.frames[0]}
                   courtType={play.courtType}
@@ -337,9 +365,27 @@ export function PracticeLiveOverlay({ session, onClose }: Props) {
               {kind} · {Number(item.durationMin) || 0} min
               {play?.series ? ` · ${play.series}` : ""}
             </div>
+            {liveCall ? (
+              <div
+                id="practice-live-disruption-call"
+                className="practice-live-disruption-call"
+              >
+                <span className="practice-live-disruption-call-label">Call</span>
+                <span className="practice-live-disruption-call-text">{liveCall}</span>
+              </div>
+            ) : null}
+            {disruptionCue?.broke ? (
+              <p className="practice-live-disruption-context">
+                <strong>Broke:</strong> {disruptionCue.broke}
+              </p>
+            ) : null}
             {cue ? (
               <div id="practice-live-cue" className="practice-live-cue">
                 {cue}
+              </div>
+            ) : disruptionCue?.filmRead && !liveCall ? (
+              <div id="practice-live-cue" className="practice-live-cue">
+                {disruptionCue.filmRead}
               </div>
             ) : null}
 

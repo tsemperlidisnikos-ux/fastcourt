@@ -955,6 +955,13 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
           playId: entry.playId,
           durationMin: entry.durationMin ?? defaultPracticeItemDuration(play),
           notes: entry.notes?.trim() || "",
+          liveCall: entry.liveCall?.trim() || undefined,
+          designerFrameIndex:
+            typeof entry.designerFrameIndex === "number" &&
+            Number.isFinite(entry.designerFrameIndex) &&
+            entry.designerFrameIndex >= 0
+              ? Math.floor(entry.designerFrameIndex)
+              : undefined,
         });
         existing.add(entry.playId);
         addedCount += 1;

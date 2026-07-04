@@ -29,8 +29,10 @@ import {
 import { mergeCoachTagsIntoScoutingNotes } from "@/lib/film-room/film-event-tags";
 import {
   createAiScoutFilmRef,
+  createDisruptionFilmRef,
   mergeFilmRefs,
 } from "@/lib/film-room/film-game-plan-evidence";
+import { comparePlayIdealToDisruption } from "@/lib/film-room/film-play-ideal-compare";
 import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
 import type { GamePlan, GamePlanCategoryId, GamePlanFilmRef, GamePlanTimeoutCue, OpponentTendency } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
@@ -241,11 +243,16 @@ export function buildAiScoutGamePlanPatch(
     }
   }
 
+  const incomingFilmRefs = [
+    createAiScoutFilmRef(sessionId, timestamp, analysis.summary),
+  ];
+
   if (includeOffensePlays) {
     const assessment = detectFilmDisruption({
       disruptionTags: disruptionTags ? [...disruptionTags] : [],
       playPatterns: patternPicks,
       counters: resolveSelectedCounters(analysis, selectedCoachingKeys),
+      aiDisruption: analysis.disruption,
       aiSummary: analysis.summary,
     });
     if (assessment.suggestedReads.length) {
@@ -270,6 +277,21 @@ export function buildAiScoutGamePlanPatch(
             ? gamePlanCategoryForPattern(assessment.pattern)
             : "halfcourt",
         });
+        if (assessment.detected && sessionId) {
+          const compare = comparePlayIdealToDisruption(match.play, analysis);
+          incomingFilmRefs.push(
+            createDisruptionFilmRef({
+              sessionId,
+              timestamp,
+              label: match.readLabel?.trim() || match.play.title,
+              detail: assessment.headline,
+              playId: match.play.id,
+              frameIndex:
+                compare.readFrameIndex ?? compare.primaryFrameIndex ?? undefined,
+              readLabel: match.readLabel,
+            }),
+          );
+        }
       }
     }
   }
@@ -315,9 +337,7 @@ export function buildAiScoutGamePlanPatch(
       ? mergeTimeoutCues(plan.timeoutCues, newTimeoutCues)
       : undefined;
 
-  const filmRefs = mergeFilmRefs(plan.filmRefs, [
-    createAiScoutFilmRef(sessionId, timestamp, analysis.summary),
-  ]);
+  const filmRefs = mergeFilmRefs(plan.filmRefs, incomingFilmRefs);
 
   return {
     opponentBoard: board,
