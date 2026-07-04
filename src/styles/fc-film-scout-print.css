@@ -1,0 +1,345 @@
+.fc-film-scout-print-body {
+  padding: 16px;
+  overflow: auto;
+}
+
+.fc-film-scout-print-doc {
+  width: 8.5in;
+  min-height: 11in;
+  margin: 0 auto;
+  padding: 0.45in 0.5in;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+  font-family: var(--fd-font, Arial, Helvetica, sans-serif);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fc-film-scout-print-header {
+  text-align: center;
+  margin-bottom: 0.35in;
+  padding-bottom: 0.2in;
+  border-bottom: 2px solid #111;
+}
+
+.fc-film-scout-print-team {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4b5563;
+}
+
+.fc-film-scout-print-title {
+  margin: 0.1in 0 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.fc-film-scout-print-meta {
+  margin: 0.1in 0 0;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.fc-film-scout-print-session-link {
+  margin: 0.08in 0 0;
+  font-size: 10px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.fc-film-scout-print-chapters {
+  margin-bottom: 0.3in;
+  page-break-inside: avoid;
+}
+
+.fc-film-scout-print-chapters-title {
+  margin: 0 0 0.1in;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fc-film-scout-print-chapter-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fc-film-scout-print-chapter-row {
+  display: grid;
+  grid-template-columns: 0.7in 1fr;
+  gap: 0.08in 0.12in;
+  padding: 0.08in 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fc-film-scout-print-chapter-time {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc-film-scout-print-chapter-label {
+  font-weight: 700;
+}
+
+.fc-film-scout-print-chapter-note {
+  grid-column: 2;
+  font-size: 10px;
+  color: #64748b;
+}
+
+.fc-film-scout-print-chapter-row .fc-film-scout-print-clip-link {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.fc-film-scout-print-clip {
+  margin-bottom: 0.35in;
+  page-break-inside: avoid;
+}
+
+.fc-film-scout-print-clip + .fc-film-scout-print-clip {
+  padding-top: 0.25in;
+  border-top: 1px solid #d1d5db;
+}
+
+.fc-film-scout-print-clip-head {
+  margin-bottom: 0.14in;
+}
+
+.fc-film-scout-print-clip-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.fc-film-scout-print-clip-link {
+  margin: 0.04in 0 0;
+  font-size: 9px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.fc-film-scout-print-summary {
+  margin-bottom: 0.16in;
+  padding: 0.12in 0.14in;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.fc-film-scout-print-summary strong {
+  display: block;
+  margin-bottom: 0.04in;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+.fc-film-scout-print-summary p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.fc-film-scout-print-block {
+  margin-bottom: 0.14in;
+}
+
+.fc-film-scout-print-block-title {
+  margin: 0 0 0.06in;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #111827;
+}
+
+.fc-film-scout-print-tag-list,
+.fc-film-scout-print-tendency-list,
+.fc-film-scout-print-pattern-list,
+.fc-film-scout-print-coaching-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fc-film-scout-print-tag-list li,
+.fc-film-scout-print-tendency-list li,
+.fc-film-scout-print-pattern-list li {
+  margin-bottom: 0.05in;
+}
+
+.fc-film-scout-print-tag-time,
+.fc-film-scout-print-confidence {
+  display: inline-block;
+  min-width: 2.2em;
+  margin-right: 0.08in;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #374151;
+}
+
+.fc-film-scout-print-tag-label,
+.fc-film-scout-print-tendency-label,
+.fc-film-scout-print-pattern-tag {
+  font-weight: 700;
+}
+
+.fc-film-scout-print-tag-note,
+.fc-film-scout-print-tendency-note,
+.fc-film-scout-print-pattern-note {
+  margin: 0.02in 0 0;
+  color: #4b5563;
+}
+
+.fc-film-scout-print-coaching-item {
+  margin-bottom: 0.1in;
+  padding: 0.1in 0.12in;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.fc-film-scout-print-coaching-head {
+  display: flex;
+  align-items: center;
+  gap: 0.08in;
+  margin-bottom: 0.04in;
+}
+
+.fc-film-scout-print-coaching-item p {
+  margin: 0;
+}
+
+.fc-film-scout-print-coaching-meta {
+  margin: 0.06in 0 0;
+  padding-left: 1em;
+  color: #4b5563;
+  font-size: 10px;
+}
+
+.fc-film-scout-print-priority {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+}
+
+.fc-film-scout-print-priority-high {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.fc-film-scout-print-priority-medium {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.fc-film-scout-print-priority-low {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.fc-film-scout-print-footer {
+  margin-top: 0.3in;
+  padding-top: 0.12in;
+  border-top: 1px solid #d1d5db;
+  text-align: center;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.fc-film-scout-print-toolbar-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.fc-film-analysis-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.fc-film-analysis-history-export {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+}
+
+.fc-film-analysis-history-export:hover {
+  background: #f8fafc;
+}
+
+@media print {
+  html.fc-film-scout-print-active,
+  html.fc-film-scout-print-active body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html.fc-film-scout-print-active body > *:not(#film-scout-print-overlay) {
+    display: none !important;
+  }
+
+  html.fc-film-scout-print-active #film-scout-print-overlay,
+  html.fc-film-scout-print-active #film-scout-print-overlay * {
+    visibility: visible !important;
+  }
+
+  html.fc-film-scout-print-active #film-scout-print-overlay {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  html.fc-film-scout-print-active .fc-print-overlay-backdrop,
+  html.fc-film-scout-print-active .no-print {
+    display: none !important;
+  }
+
+  html.fc-film-scout-print-active .fc-print-overlay-panel-film-scout {
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  html.fc-film-scout-print-active #fc-film-scout-print-content {
+    overflow: visible !important;
+    padding: 0 !important;
+    max-height: none !important;
+  }
+
+  html.fc-film-scout-print-active .fc-film-scout-print-doc {
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

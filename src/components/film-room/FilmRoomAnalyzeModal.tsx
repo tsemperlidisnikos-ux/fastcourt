@@ -8,6 +8,7 @@ import { useClientMounted } from "@/hooks/useClientMounted";
 import { useDraggablePanel } from "@/hooks/useDraggablePanel";
 import { gamePlanCategoryLabel } from "@/lib/game-plan/constants";
 import { FilmRoomCoachingSections } from "@/components/film-room/FilmRoomCoachingSections";
+import { FilmScoutPrintOverlay } from "@/components/film-room/FilmScoutPrintOverlay";
 import {
   buildAiScoutGamePlanPatch,
   previewAiScoutDefensePlays,
@@ -30,13 +31,21 @@ import {
   type FilmAnalyzeContext,
 } from "@/lib/film-room/film-analyze-context";
 import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
+import { buildFilmScoutPrintModel } from "@/lib/film-room/film-scout-print-model";
+import {
+  resolvePdfCoverTeam,
+  resolvePdfFooterText,
+} from "@/lib/settings/pdf-brand-export";
 import { useOrganizerStore } from "@/stores/organizer-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { appNotice } from "@/stores/dialog-store";
+import type { FilmRoomVideoSource } from "@/types/film-room";
 
 interface Props {
   open: boolean;
   sessionId: string;
   sessionTitle: string;
+  sessionSource: FilmRoomVideoSource;
   currentTime: number;
   analysis: FilmClipAnalysisResult;
   analyzeContext?: FilmAnalyzeContext | null;
@@ -52,12 +61,14 @@ export function FilmRoomAnalyzeModal(props: Props) {
 function FilmRoomAnalyzeModalBody({
   sessionId,
   sessionTitle,
+  sessionSource,
   currentTime,
   analysis,
   analyzeContext,
   onClose,
 }: Omit<Props, "open">) {
   const router = useRouter();
+  const pdfBrand = useSettingsStore((s) => s.pdfBrand);
   const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const plays = useOrganizerStore((s) => s.plays);
   const metaHydrated = useOrganizerStore((s) => s.hydrated);
@@ -91,6 +102,9 @@ function FilmRoomAnalyzeModalBody({
     Set<string>
   >(() => new Set(allCoachingCueKeys(analysis.coaching)));
   const [busy, setBusy] = useState(false);
+  const [scoutPrintModel, setScoutPrintModel] = useState<
+    ReturnType<typeof buildFilmScoutPrintModel> | null
+  >(null);
 
   useEffect(() => {
     if (!plans.length) {
@@ -246,6 +260,7 @@ function FilmRoomAnalyzeModalBody({
         opponentBoard: patch.opponentBoard,
         ...(patch.scoutingNotes ? { scoutingNotes: patch.scoutingNotes } : {}),
         ...(patch.timeoutCues ? { timeoutCues: patch.timeoutCues } : {}),
+        ...(patch.filmRefs ? { filmRefs: patch.filmRefs } : {}),
       });
 
       if (patch.defensePlayIds.length) {
@@ -310,6 +325,34 @@ function FilmRoomAnalyzeModalBody({
 
   const canApply =
     metaHydrated && !!plans.length && !!selectedPlanId && selectedKinds.size > 0 && !busy;
+
+  function openScoutPdf() {
+    const coachTags =
+      analyzeContext?.coachTags.map((tag) => ({
+        kind: tag.kind,
+        time: tag.time,
+        note: tag.note,
+      })) ?? [];
+    setScoutPrintModel(
+      buildFilmScoutPrintModel({
+        session: {
+          id: sessionId,
+          title: sessionTitle,
+          source: sessionSource,
+        },
+        origin: window.location.origin,
+        teamName: resolvePdfCoverTeam(pdfBrand),
+        footerText: resolvePdfFooterText(pdfBrand),
+        clips: [
+          {
+            playheadTime: currentTime,
+            result: analysis,
+            coachTags,
+          },
+        ],
+      }),
+    );
+  }
 
   const { panelRef, panelStyle, headerProps, dragging } = useDraggablePanel(
     `${sessionId}-${currentTime}`,
@@ -537,6 +580,13 @@ function FilmRoomAnalyzeModalBody({
           <button type="button" className="fc-film-game-plan-cancel" onClick={onClose}>
             Cancel
           </button>
+          <button
+            type="button"
+            className="fc-film-analyze-pdf-btn"
+            onClick={openScoutPdf}
+          >
+            Scout PDF
+          </button>
           <div className="fc-film-analyze-apply-wrap">
             <button
               type="button"
@@ -557,6 +607,12 @@ function FilmRoomAnalyzeModalBody({
           </div>
         </footer>
       </div>
+      {scoutPrintModel ? (
+        <FilmScoutPrintOverlay
+          model={scoutPrintModel}
+          onClose={() => setScoutPrintModel(null)}
+        />
+      ) : null}
     </div>,
     document.body,
   );

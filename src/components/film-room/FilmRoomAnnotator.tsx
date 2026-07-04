@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar";
 import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
 import { FilmRoomFramePreviewStrip } from "@/components/film-room/FilmRoomFramePreviewStrip";
 import { FilmRoomEventTagBar } from "@/components/film-room/FilmRoomEventTagBar";
 import { FilmRoomFloatingShuttleWheel } from "@/components/film-room/FilmRoomFloatingShuttleWheel";
 import { FilmRoomAddToGamePlanModal } from "@/components/film-room/FilmRoomAddToGamePlanModal";
 import { FilmRoomAnalyzeModal } from "@/components/film-room/FilmRoomAnalyzeModal";
+import { FilmScoutPrintOverlay } from "@/components/film-room/FilmScoutPrintOverlay";
 import { FilmRoomToolbar } from "@/components/film-room/FilmRoomToolbar";
 import { FilmRoomVideoControlDock } from "@/components/film-room/FilmRoomVideoControlDock";
 import {
@@ -40,7 +42,14 @@ import {
   type FilmRoomMarkupPreset,
 } from "@/lib/film-room/markup-toolbar-presets";
 import { useAiAssistantStatus } from "@/hooks/useAiAssistantStatus";
+import { buildFilmScoutPrintModelFromSession } from "@/lib/film-room/film-scout-print-model";
+import { defaultFilmBookmarkLabel } from "@/lib/film-room/film-room-bookmarks";
+import {
+  resolvePdfCoverTeam,
+  resolvePdfFooterText,
+} from "@/lib/settings/pdf-brand-export";
 import { useFilmRoomStore } from "@/stores/film-room-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import type {
   FilmRoomSession,
   FilmRoomEventKind,
@@ -48,6 +57,7 @@ import type {
   VideoAnnotationStroke,
 } from "@/types/film-room";
 import type { FilmAnalyzeContext } from "@/lib/film-room/film-analyze-context";
+import type { FilmScoutPrintModel } from "@/lib/film-room/film-scout-print-model";
 
 interface Props {
   session: FilmRoomSession;
@@ -61,6 +71,9 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const updateFilmEvent = useFilmRoomStore((s) => s.updateFilmEvent);
   const undoLastFilmEvent = useFilmRoomStore((s) => s.undoLastFilmEvent);
   const removeFilmEvent = useFilmRoomStore((s) => s.removeFilmEvent);
+  const addFilmBookmark = useFilmRoomStore((s) => s.addFilmBookmark);
+  const updateFilmBookmark = useFilmRoomStore((s) => s.updateFilmBookmark);
+  const removeFilmBookmark = useFilmRoomStore((s) => s.removeFilmBookmark);
   const appendAnalysisRecord = useFilmRoomStore((s) => s.appendAnalysisRecord);
   const removeAnalysisRecord = useFilmRoomStore((s) => s.removeAnalysisRecord);
   const clearPenStrokes = useFilmRoomStore((s) => s.clearPenStrokes);
@@ -70,6 +83,9 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   );
   const events = useFilmRoomStore(
     (s) => s.sessions.find((row) => row.id === session.id)?.events ?? session.events ?? [],
+  );
+  const bookmarks = useFilmRoomStore(
+    (s) => s.sessions.find((row) => row.id === session.id)?.bookmarks ?? session.bookmarks ?? [],
   );
   const analyses = useFilmRoomStore(
     (s) => s.sessions.find((row) => row.id === session.id)?.analyses ?? session.analyses ?? [],
@@ -124,7 +140,9 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const [framePreviews, setFramePreviews] = useState<FilmFramePreview[]>([]);
   const [showFramePreviews, setShowFramePreviews] = useState(false);
   const [historyPlayheadTime, setHistoryPlayheadTime] = useState<number | null>(null);
+  const [scoutPrintModel, setScoutPrintModel] = useState<FilmScoutPrintModel | null>(null);
   const aiStatus = useAiAssistantStatus();
+  const pdfBrand = useSettingsStore((s) => s.pdfBrand);
   const nativeVideoRef = useRef<HTMLVideoElement | null>(null);
   const youtubePlayerRef = useRef<YouTubePlayerInstance | null>(null);
   const youtubeCaptureRootRef = useRef<HTMLElement | null>(null);
@@ -345,6 +363,10 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   ).sort((a, b) => a - b);
 
   const eventMarkerTimes = events.map((event) => ({ id: event.id, time: event.time }));
+  const bookmarkMarkerTimes = bookmarks.map((bookmark) => ({
+    id: bookmark.id,
+    time: bookmark.time,
+  }));
 
   const handleTagAtPlayhead = useCallback(
     (kind: FilmRoomEventKind, note?: string) => {
@@ -352,6 +374,14 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
       addFilmEvent(session.id, kind, currentTime, note);
     },
     [addFilmEvent, currentTime, duration, session.id],
+  );
+
+  const handleAddBookmark = useCallback(
+    (label: string, note?: string) => {
+      if (duration <= 0) return;
+      addFilmBookmark(session.id, currentTime, label, note);
+    },
+    [addFilmBookmark, currentTime, duration, session.id],
   );
 
   const openAnalysisRecord = useCallback((record: FilmRoomAnalysisRecord) => {
@@ -373,6 +403,21 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     );
     setAnalyzeModalOpen(true);
   }, []);
+
+  const exportSessionScoutPdf = useCallback(() => {
+    const model = buildFilmScoutPrintModelFromSession({
+      session: {
+        ...session,
+        events,
+        bookmarks,
+        analyses,
+      },
+      origin: window.location.origin,
+      teamName: resolvePdfCoverTeam(pdfBrand),
+      footerText: resolvePdfFooterText(pdfBrand),
+    });
+    if (model) setScoutPrintModel(model);
+  }, [analyses, bookmarks, events, pdfBrand, session]);
 
   const canAnalyzeClip = canCaptureFilmFrames(session.source);
 
@@ -541,6 +586,11 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
                 e.preventDefault();
                 handleTagAtPlayhead(kind, tagNoteDraft.trim() || undefined);
                 if (tagNoteDraft.trim()) setTagNoteDraft("");
+                return;
+              }
+              if (e.key === "b" || e.key === "B") {
+                e.preventDefault();
+                handleAddBookmark(defaultFilmBookmarkLabel(currentTime));
               }
             }
             return;
@@ -575,13 +625,29 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           onSeek={handleSliderSeek}
         />
 
+        <FilmRoomBookmarkBar
+          currentTime={currentTime}
+          bookmarks={bookmarks}
+          disabled={duration <= 0}
+          onAdd={handleAddBookmark}
+          onUpdate={(bookmarkId, patch) =>
+            updateFilmBookmark(session.id, bookmarkId, patch)
+          }
+          onRemove={(bookmarkId) => removeFilmBookmark(session.id, bookmarkId)}
+          onSeek={handleSliderSeek}
+        />
+
         <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />
 
         <FilmRoomAnalysisHistoryPanel
           analyses={analyses}
+          bookmarkCount={bookmarks.length}
           onOpen={openAnalysisRecord}
           onSeek={handleSliderSeek}
           onRemove={(recordId) => removeAnalysisRecord(session.id, recordId)}
+          onExportSession={
+            analyses.length || bookmarks.length ? exportSessionScoutPdf : undefined
+          }
         />
 
         <div className="fc-film-stage">
@@ -637,6 +703,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
               duration={duration}
               markerTimes={markerTimes}
               eventMarkerTimes={eventMarkerTimes}
+              bookmarkMarkerTimes={bookmarkMarkerTimes}
               fullscreen={fullscreen}
               autoClearOnScrub={autoClearOnScrub}
               onToggleAutoClear={() => setAutoClearOnScrub((value) => !value)}
@@ -666,6 +733,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
           open={analyzeModalOpen}
           sessionId={session.id}
           sessionTitle={session.title}
+          sessionSource={session.source}
           currentTime={historyPlayheadTime ?? currentTime}
           analysis={analysisResult}
           analyzeContext={analyzeContext}
@@ -675,6 +743,13 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
             setAnalyzeContext(null);
             setHistoryPlayheadTime(null);
           }}
+        />
+      ) : null}
+
+      {scoutPrintModel ? (
+        <FilmScoutPrintOverlay
+          model={scoutPrintModel}
+          onClose={() => setScoutPrintModel(null)}
         />
       ) : null}
     </div>

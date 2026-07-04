@@ -13,6 +13,7 @@ import {
   removeFilmAnalysisRecord as dropAnalysisRecord,
 } from "@/lib/film-room/film-analysis-history";
 import { findLastFilmEvent } from "@/lib/film-room/film-event-tags";
+import { createFilmBookmark } from "@/lib/film-room/film-room-bookmarks";
 import type {
   FilmRoomSession,
   FilmRoomVideoSource,
@@ -54,6 +55,18 @@ interface FilmRoomState {
   ) => void;
   undoLastFilmEvent: (id: string) => void;
   removeFilmEvent: (id: string, eventId: string) => void;
+  addFilmBookmark: (
+    id: string,
+    time: number,
+    label?: string,
+    note?: string,
+  ) => void;
+  updateFilmBookmark: (
+    id: string,
+    bookmarkId: string,
+    patch: { time?: number; label?: string; note?: string },
+  ) => void;
+  removeFilmBookmark: (id: string, bookmarkId: string) => void;
   appendAnalysisRecord: (id: string, record: FilmRoomAnalysisRecord) => void;
   removeAnalysisRecord: (id: string, recordId: string) => void;
   clearPenStrokes: (id: string) => void;
@@ -93,6 +106,7 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
       },
       strokes: [],
       events: [],
+      bookmarks: [],
       analyses: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -112,6 +126,7 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
       source,
       strokes: [],
       events: [],
+      bookmarks: [],
       analyses: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -225,6 +240,62 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
     if (!last) return;
     const events = (existing.events ?? []).filter((row) => row.id !== last.id);
     const next = { ...existing, events, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  addFilmBookmark(id, time, label, note) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const bookmark = createFilmBookmark(time, label, note);
+    const bookmarks = [...(existing.bookmarks ?? []), bookmark];
+    const next = { ...existing, bookmarks, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  updateFilmBookmark(id, bookmarkId, patch) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const bookmarks = (existing.bookmarks ?? []).map((row) => {
+      if (row.id !== bookmarkId) return row;
+      const label = patch.label !== undefined ? patch.label.trim() : row.label;
+      return {
+        ...row,
+        ...(typeof patch.time === "number" && Number.isFinite(patch.time)
+          ? { time: Math.max(0, patch.time) }
+          : {}),
+        ...(patch.label !== undefined ? { label: label.slice(0, 80) } : {}),
+        ...(patch.note !== undefined
+          ? { note: patch.note.trim() || undefined }
+          : {}),
+      };
+    });
+    const next = { ...existing, bookmarks, updatedAt: Date.now() };
+    set((s) => ({
+      sessions: s.sessions.map((row) => (row.id === id ? next : row)),
+    }));
+    void putFilmRoomSession(next).catch(() => {
+      /* UI already updated */
+    });
+  },
+
+  removeFilmBookmark(id, bookmarkId) {
+    const existing = get().sessions.find((s) => s.id === id);
+    if (!existing) return;
+    const bookmarks = (existing.bookmarks ?? []).filter(
+      (row) => row.id !== bookmarkId,
+    );
+    if (bookmarks.length === (existing.bookmarks ?? []).length) return;
+    const next = { ...existing, bookmarks, updatedAt: Date.now() };
     set((s) => ({
       sessions: s.sessions.map((row) => (row.id === id ? next : row)),
     }));

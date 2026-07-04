@@ -6,6 +6,7 @@ interface Props {
   duration: number;
   markerTimes: number[];
   eventMarkerTimes?: Array<{ id: string; time: number }>;
+  bookmarkMarkerTimes?: Array<{ id: string; time: number }>;
   fullscreen: boolean;
   autoClearOnScrub: boolean;
   onToggleAutoClear: () => void;
@@ -28,6 +29,7 @@ export function FilmRoomVideoControlDock({
   duration,
   markerTimes,
   eventMarkerTimes = [],
+  bookmarkMarkerTimes = [],
   fullscreen,
   autoClearOnScrub,
   onToggleAutoClear,
@@ -72,6 +74,16 @@ export function FilmRoomVideoControlDock({
           aria-label="Scrub video"
         />
         <div className="fc-film-video-controls-markers" aria-hidden="true">
+          {bookmarkMarkerTimes.map((marker) => {
+            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
+            return (
+              <span
+                key={marker.id}
+                className="fc-film-video-controls-marker is-bookmark"
+                style={{ left: `${pct}%` }}
+              />
+            );
+          })}
           {eventMarkerTimes.map((marker) => {
             const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
             return (

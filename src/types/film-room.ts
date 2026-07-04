@@ -50,6 +50,16 @@ export interface FilmRoomEvent {
   createdAt: number;
 }
 
+/** Possession / chapter markers for quick navigation. */
+export interface FilmRoomBookmark {
+  id: string;
+  /** Video timestamp (seconds). */
+  time: number;
+  label: string;
+  note?: string;
+  createdAt: number;
+}
+
 /** Saved AI scout read for a session playhead. */
 export interface FilmRoomAnalysisRecord {
   id: string;
@@ -71,6 +81,8 @@ export interface FilmRoomSession {
   strokes: VideoAnnotationStroke[];
   /** Coach-tagged actions on the timeline. */
   events: FilmRoomEvent[];
+  /** Chapter / possession bookmarks on the timeline. */
+  bookmarks: FilmRoomBookmark[];
   /** Past AI analyze results for this clip. */
   analyses: FilmRoomAnalysisRecord[];
   createdAt: number;

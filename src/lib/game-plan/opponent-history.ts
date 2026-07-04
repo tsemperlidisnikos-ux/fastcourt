@@ -9,6 +9,7 @@ import {
   mergeOpponentBoards,
   mergeScoutingNotes,
 } from "@/lib/game-plan/opponent-board";
+import { mergeFilmRefs } from "@/lib/film-room/film-game-plan-evidence";
 import type { GamePlan } from "@/types/library-meta";
 
 export function normalizeOpponentKey(opponent: string) {
@@ -56,13 +57,14 @@ export function importScoutFromPreviousPlan(
   target: GamePlan,
   source: GamePlan,
   gameDateLabel?: string,
-): Pick<GamePlan, "opponentBoard" | "scoutingNotes"> {
+): Pick<GamePlan, "opponentBoard" | "scoutingNotes" | "filmRefs"> {
   return {
     opponentBoard: mergeOpponentBoards(target.opponentBoard, source.opponentBoard),
     scoutingNotes: mergeScoutingNotes(
       target.scoutingNotes,
       scoutNotesFromPreviousPlan(source, gameDateLabel),
     ),
+    filmRefs: mergeFilmRefs(target.filmRefs, source.filmRefs ?? []),
   };
 }
 
@@ -79,6 +81,7 @@ export function createRematchGamePlan(source: GamePlan, gameDate: string): GameP
       id: newGamePlanEntryId(),
     })),
     opponentBoard: cloneOpponentBoard(source.opponentBoard),
+    filmRefs: source.filmRefs ? [...source.filmRefs] : undefined,
     scoutingNotes: mergeScoutingNotes(
       source.scoutingNotes,
       source.postGameNotes?.trim()

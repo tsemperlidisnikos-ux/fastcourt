@@ -25,8 +25,12 @@ import {
   mergeCoachingIntoScoutingNotes,
 } from "@/lib/film-room/film-coaching-format";
 import { mergeCoachTagsIntoScoutingNotes } from "@/lib/film-room/film-event-tags";
+import {
+  createAiScoutFilmRef,
+  mergeFilmRefs,
+} from "@/lib/film-room/film-game-plan-evidence";
 import type { FilmClipAnalysisResult } from "@/lib/film-room/film-clip-analyze-types";
-import type { GamePlan, GamePlanCategoryId, GamePlanTimeoutCue, OpponentTendency } from "@/types/library-meta";
+import type { GamePlan, GamePlanCategoryId, GamePlanFilmRef, GamePlanTimeoutCue, OpponentTendency } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
 import type { FilmRoomEvent } from "@/types/film-room";
 
@@ -63,6 +67,7 @@ export interface AiScoutGamePlanPatch {
   offenseEntries: AiScoutOffenseEntry[];
   scoutingNotes?: string;
   timeoutCues?: GamePlanTimeoutCue[];
+  filmRefs?: GamePlanFilmRef[];
   tendencyCount: number;
   patternTags: string[];
   coachingSuggestionCount: number;
@@ -272,12 +277,17 @@ export function buildAiScoutGamePlanPatch(
       ? mergeTimeoutCues(plan.timeoutCues, newTimeoutCues)
       : undefined;
 
+  const filmRefs = mergeFilmRefs(plan.filmRefs, [
+    createAiScoutFilmRef(sessionId, timestamp, analysis.summary),
+  ]);
+
   return {
     opponentBoard: board,
     defensePlayIds,
     offenseEntries,
     scoutingNotes,
     timeoutCues,
+    filmRefs,
     tendencyCount: createdTendencies.length,
     patternTags,
     coachingSuggestionCount: includeCoachingNotes

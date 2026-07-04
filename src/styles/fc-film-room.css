@@ -755,6 +755,16 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
+#screen-film-room .fc-film-video-controls-marker.is-bookmark,
+#screen-organizer .fc-film-video-controls-marker.is-bookmark {
+  top: -7px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: #22c55e;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
 #screen-film-room .fc-film-event-bar,
 #screen-organizer .fc-film-event-bar {
   display: flex;
@@ -981,6 +991,211 @@
   font-size: 12px;
 }
 
+#screen-film-room .fc-film-bookmark-bar,
+#screen-organizer .fc-film-bookmark-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+
+#screen-film-room .fc-film-bookmark-bar-head,
+#screen-organizer .fc-film-bookmark-bar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#screen-film-room .fc-film-bookmark-bar-label,
+#screen-organizer .fc-film-bookmark-bar-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #166534;
+}
+
+#screen-film-room .fc-film-bookmark-bar-quick,
+#screen-organizer .fc-film-bookmark-bar-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#screen-film-room .fc-film-bookmark-quick-btn,
+#screen-organizer .fc-film-bookmark-quick-btn {
+  padding: 2px 8px;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #15803d;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-bookmark-bar-form,
+#screen-organizer .fc-film-bookmark-bar-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+#screen-film-room .fc-film-bookmark-input,
+#screen-organizer .fc-film-bookmark-input,
+#screen-film-room .fc-film-bookmark-note-input,
+#screen-organizer .fc-film-bookmark-note-input {
+  min-width: 140px;
+  flex: 1 1 160px;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+#screen-film-room .fc-film-bookmark-add-btn,
+#screen-organizer .fc-film-bookmark-add-btn {
+  padding: 6px 10px;
+  border: 1px solid #16a34a;
+  border-radius: 6px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-bookmark-list,
+#screen-organizer .fc-film-bookmark-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#screen-film-room .fc-film-bookmark-row,
+#screen-organizer .fc-film-bookmark-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+#screen-film-room .fc-film-bookmark-open,
+#screen-organizer .fc-film-bookmark-open {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-bookmark-time,
+#screen-organizer .fc-film-bookmark-time {
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #15803d;
+}
+
+#screen-film-room .fc-film-bookmark-title,
+#screen-organizer .fc-film-bookmark-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+#screen-film-room .fc-film-bookmark-note,
+#screen-organizer .fc-film-bookmark-note {
+  font-size: 12px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-bookmark-actions,
+#screen-organizer .fc-film-bookmark-actions {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e2e8f0;
+}
+
+#screen-film-room .fc-film-bookmark-action-btn,
+#screen-organizer .fc-film-bookmark-action-btn {
+  flex: 1;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-bookmark-action-btn.danger,
+#screen-organizer .fc-film-bookmark-action-btn.danger {
+  color: #b91c1c;
+}
+
+#screen-film-room .fc-film-bookmark-edit,
+#screen-organizer .fc-film-bookmark-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+}
+
+#screen-film-room .fc-film-bookmark-save-btn,
+#screen-organizer .fc-film-bookmark-save-btn,
+#screen-film-room .fc-film-bookmark-cancel-btn,
+#screen-organizer .fc-film-bookmark-cancel-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-bookmark-save-btn,
+#screen-organizer .fc-film-bookmark-save-btn {
+  border: 1px solid #16a34a;
+  background: #16a34a;
+  color: #fff;
+}
+
+#screen-film-room .fc-film-bookmark-cancel-btn,
+#screen-organizer .fc-film-bookmark-cancel-btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+#screen-film-room .fc-film-bookmark-empty,
+#screen-organizer .fc-film-bookmark-empty {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-analysis-history-empty,
+#screen-organizer .fc-film-analysis-history-empty {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
 #screen-film-room .fc-film-frame-preview-strip,
 #screen-organizer .fc-film-frame-preview-strip {
   display: flex;
@@ -1043,7 +1258,7 @@
 
 #screen-film-room .fc-film-analysis-history-title,
 #screen-organizer .fc-film-analysis-history-title {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 12px;
   font-weight: 700;
   color: #334155;
@@ -1408,6 +1623,21 @@
 
 .fc-film-game-plan-cancel:hover {
   color: #0f172a;
+  background: #f8fafc;
+}
+
+.fc-film-analyze-pdf-btn {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-film-analyze-pdf-btn:hover {
   background: #f8fafc;
 }
 

@@ -117,6 +117,15 @@ export interface GamePlanTimeoutCue {
   createdAt: string;
 }
 
+export interface GamePlanFilmRef {
+  id: string;
+  sessionId: string;
+  timestamp?: number;
+  label: string;
+  detail?: string;
+  createdAt: string;
+}
+
 export interface GamePlan {
   id: string;
   title: string;
@@ -132,6 +141,8 @@ export interface GamePlan {
   opponentBoard?: OpponentTendency[];
   /** Counter calls from Film Room AI — shown in Game Day / timeout mode. */
   timeoutCues?: GamePlanTimeoutCue[];
+  /** Saved film clip references for scout evidence links. */
+  filmRefs?: GamePlanFilmRef[];
   status: GamePlanStatus;
   gameDay?: {
     activeCategoryId?: GamePlanCategoryId;

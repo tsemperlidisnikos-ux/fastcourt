@@ -10,6 +10,7 @@ import {
   OPPONENT_TENDENCY_PRESETS,
   opponentTendencyKindLabel,
 } from "@/lib/game-plan/opponent-board";
+import { createManualFilmRef, mergeFilmRefs } from "@/lib/film-room/film-game-plan-evidence";
 import { sortGamePlans } from "@/lib/game-plan/game-plan-items";
 import {
   buildGamePlanDeepLink,
@@ -91,7 +92,15 @@ function FilmRoomAddToGamePlanModalBody({
       }
 
       const opponentBoard = appendOpponentTendency(plan.opponentBoard, tendency);
-      await updateGamePlan(plan.id, { opponentBoard });
+      const filmRefs = mergeFilmRefs(plan.filmRefs, [
+        createManualFilmRef(
+          sessionId,
+          sessionTitle,
+          currentTime,
+          tendency.label,
+        ),
+      ]);
+      await updateGamePlan(plan.id, { opponentBoard, filmRefs });
       appNotice(
         "Game plan",
         `Added "${tendency.label}" to ${plan.title}${timeLabel ? ` @ ${timeLabel}` : ""}.`,
