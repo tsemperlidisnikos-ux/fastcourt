@@ -217,6 +217,53 @@
   font-weight: 700;
 }
 
+.fc-timeout-category-read {
+  background: #991b1b;
+}
+
+.fc-timeout-read-detail {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 640px;
+}
+
+.fc-timeout-read-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 0 20px 12px;
+}
+
+.fc-timeout-read-link {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fc-timeout-read-link.is-film {
+  border-color: #2563eb;
+  color: #93c5fd;
+}
+
+.fc-timeout-counter-film {
+  margin: 12px 0 0;
+}
+
+.fc-timeout-counter-film-link {
+  color: #93c5fd;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 @media (max-width: 720px) {
   .fc-timeout-header {
     flex-direction: column;

@@ -9,5 +9,7 @@ Library — Practice,Live Mode,PRC-10,P0,Live timer start/pause (Space),,Timer c
 Library — Practice,Live Mode,PRC-11,P1,Next/prev block (arrows),,Block highlight moves,,,,,
 Library — Practice,Live Mode,PRC-12,P1,Mark done & advance (Enter),,Advances to next block,,,,,
 Library — Practice,Live Mode,PRC-13,P1,Exit live (Esc),,Returns to planner,,,,,
+Library — Practice,Live Mode,PRC-14,P0,Disruption CALL banner,Add reads from Film Room,Large red CALL + read frame thumbnail,,,,,
+Library — Practice,Live Mode,PRC-15,P1,Share view live call sync,Practice share + live mode,Live call updates on share page,,,,,
 Library — Practice,Print & Share,PRC-20,P1,Session PDF print,,Blocks + durations in PDF,,,,,
 Library — Practice,Print & Share,PRC-21,P1,Share practice link,,Read-only in incognito,,,,,

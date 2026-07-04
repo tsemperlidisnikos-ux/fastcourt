@@ -12,6 +12,8 @@ Designer,Frames & Animation,DSG-13,P1,Frame notes rich text,,Notes save and prin
 Designer,Frames & Animation,DSG-14,P2,Import frame from library play,,Frame content copied,,,,,
 Designer,Frames & Animation,DSG-15,P2,Mirror frame (Ctrl+Shift+M),,Horizontal mirror,,,,,
 Designer,Frames & Animation,DSG-16,P2,Formations / FastBuild,,Preset layout applied,,,,,
+Designer,Frames & Animation,DSG-17,P0,Read branch frame (coverage read),Add read frame on frame,Read branch linked to parent frame,,,,,
+Designer,Frames & Animation,DSG-18,P0,Deep link ?item=&frame=N,,Designer opens at read frame,,,,,
 Designer,Court Settings,DSG-20,P1,Half vs full court,,Layout changes,,,,,
 Designer,Court Settings,DSG-21,P1,Court template (NCAA/NBA/FIBA/HS),,Lines match template,,,,,
 Designer,Court Settings,DSG-22,P2,Wood texture + line toggles,,Visual updates,,,,,

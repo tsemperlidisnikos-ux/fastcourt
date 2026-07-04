@@ -928,10 +928,26 @@
 
 #screen-film-room .fc-film-possession-playlist-count,
 #screen-organizer .fc-film-possession-playlist-count {
-  margin-left: auto;
   font-size: 11px;
   color: #64748b;
   font-weight: 600;
+}
+
+#screen-film-room .fc-film-possession-playlist-keys,
+#screen-organizer .fc-film-possession-playlist-keys {
+  margin-left: auto;
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-film-room .fc-film-possession-playlist-keys kbd,
+#screen-organizer .fc-film-possession-playlist-keys kbd {
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 10px;
+  font-family: inherit;
 }
 
 #screen-film-room .fc-film-possession-playlist-list,

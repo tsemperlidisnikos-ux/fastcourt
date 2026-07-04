@@ -1,18 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { PlayAnimationCourtView } from "@/components/library/PlayAnimationCourtView";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import { usePlayAnimationDriver } from "@/hooks/usePlayAnimationDriver";
+import { buildDesignerHref } from "@/lib/designer/designer-deep-link";
+import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { gamePlanCategoryLabel } from "@/lib/game-plan/constants";
 import { timeoutCueCoverageLabel } from "@/lib/game-plan/game-day-timeout-cues";
+import { buildFilmRoomDeepLink } from "@/lib/film-room/film-game-plan-link";
 import {
   DEFAULT_TIMEOUT_SECONDS,
+  type TimeoutReadSlide,
   type TimeoutSlide,
   type TimeoutViewSlide,
 } from "@/lib/game-plan/timeout-mode";
-import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import type { GamePlanTimeoutCue } from "@/types/library-meta";
 import "@/styles/fc-timeout-mode.css";
 
@@ -104,11 +108,26 @@ function CounterTimeoutView({
       </header>
 
       <div className="fc-timeout-counter-body">
-        {cue.weakPoint ? (
-          <p className="fc-timeout-counter-line">
-            <strong>They want</strong> {cue.weakPoint}
-          </p>
-        ) : null}
+          {cue.weakPoint ? (
+            <p className="fc-timeout-counter-line">
+              <strong>They want</strong> {cue.weakPoint}
+            </p>
+          ) : null}
+          {cue.sourceFilmSessionId ? (
+            <p className="fc-timeout-counter-film">
+              <Link
+                className="fc-timeout-counter-film-link"
+                href={buildFilmRoomDeepLink(
+                  cue.sourceFilmSessionId,
+                  cue.sourceFilmTimestamp,
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Watch scout clip ↗
+              </Link>
+            </p>
+          ) : null}
         {cue.trigger ? (
           <p className="fc-timeout-counter-line">
             <strong>Trigger</strong> {cue.trigger}
@@ -123,6 +142,138 @@ function CounterTimeoutView({
           <p className="fc-timeout-counter-line fc-timeout-counter-rule">
             <strong>Big</strong> {cue.screenerRule}
           </p>
+        ) : null}
+      </div>
+
+      <footer className="fc-timeout-footer">
+        <button type="button" className="fc-timeout-nav" disabled={!hasPrev} onClick={onPrev}>
+          ‹ Prev
+        </button>
+        <button type="button" className="fc-timeout-nav" disabled={!hasNext} onClick={onNext}>
+          Next ›
+        </button>
+      </footer>
+    </div>
+  );
+}
+
+function ReadTimeoutView({
+  read,
+  countdownSeconds,
+  onClose,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+  slideIndex,
+  slideCount,
+}: {
+  read: TimeoutReadSlide;
+  countdownSeconds: number;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+  slideIndex: number;
+  slideCount: number;
+}) {
+  const chainFrames = useMemo(
+    () => framesForDesignerThumbnails(read.play.frames),
+    [read.play.frames],
+  );
+  const displayFrame =
+    chainFrames[read.frameIndex] ?? chainFrames[0] ?? read.play.frames[read.frameIndex];
+  const [secondsLeft, setSecondsLeft] = useState(countdownSeconds);
+  const filmHref =
+    read.filmSessionId != null
+      ? buildFilmRoomDeepLink(read.filmSessionId, read.filmTimestamp)
+      : null;
+
+  useEffect(() => {
+    setSecondsLeft(countdownSeconds);
+  }, [countdownSeconds, read.play.id, read.frameIndex]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSecondsLeft((value) => Math.max(0, value - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [read.play.id, read.frameIndex]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && hasPrev) {
+        e.preventDefault();
+        onPrev();
+      }
+      if (e.key === "ArrowRight" && hasNext) {
+        e.preventDefault();
+        onNext();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hasNext, hasPrev, onClose, onNext, onPrev]);
+
+  if (!displayFrame) return null;
+
+  return (
+    <div className="fc-timeout-overlay fc-timeout-overlay-read" id="timeout-overlay">
+      <header className="fc-timeout-header">
+        <div className="fc-timeout-call-block">
+          <span className="fc-timeout-category fc-timeout-category-read">Offense read</span>
+          <h1 className="fc-timeout-call">{read.callLabel}</h1>
+          <p className="fc-timeout-play-title">{read.play.title}</p>
+          {read.detail ? (
+            <p className="fc-timeout-read-detail">{read.detail}</p>
+          ) : null}
+        </div>
+        <div className="fc-timeout-header-meta">
+          <span
+            className={`fc-timeout-clock${secondsLeft <= 8 ? " is-urgent" : ""}`}
+            aria-live="polite"
+          >
+            {secondsLeft}s
+          </span>
+          <span className="fc-timeout-slide-count">
+            {slideIndex + 1} / {slideCount}
+          </span>
+          <button type="button" className="fc-timeout-close" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+      </header>
+
+      <div className="fc-timeout-court">
+        <PlayAnimationCourtView
+          courtType={read.play.courtType}
+          frame={displayFrame}
+          runtime={null}
+          courtView={read.play.courtView}
+          presentation
+        />
+      </div>
+
+      <div className="fc-timeout-read-links">
+        <Link
+          className="fc-timeout-read-link"
+          href={buildDesignerHref(read.play.id, read.frameIndex)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Designer frame ↗
+        </Link>
+        {filmHref ? (
+          <Link
+            className="fc-timeout-read-link is-film"
+            href={filmHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Watch film ↗
+          </Link>
         ) : null}
       </div>
 
@@ -329,6 +480,12 @@ export function TimeoutOverlay({
       {title ? <span className="visually-hidden">{title}</span> : null}
       {slide.kind === "counter" ? (
         <CounterTimeoutView key={slide.cue.id + index} cue={slide.cue} {...common} />
+      ) : slide.kind === "read" ? (
+        <ReadTimeoutView
+          key={`${slide.read.play.id}-${slide.read.frameIndex}-${index}`}
+          read={slide.read}
+          {...common}
+        />
       ) : (
         <PlayTimeoutSlideView
           key={slide.slide.play.id + index}

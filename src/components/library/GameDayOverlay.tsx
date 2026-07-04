@@ -18,6 +18,7 @@ import {
 import { formatGamePlanDate, formatGamePlanHomeAway } from "@/lib/game-plan/game-plan-items";
 import type { TimeoutViewSlide } from "@/lib/game-plan/timeout-mode";
 import { GameDayCounterStrip } from "@/components/library/GameDayCounterStrip";
+import { GameDayOffenseReadStrip } from "@/components/library/GameDayOffenseReadStrip";
 import { TimeoutOverlay } from "@/components/library/TimeoutOverlay";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { GamePlan, GamePlanCategoryId } from "@/types/library-meta";
@@ -36,6 +37,8 @@ function GameDayBoard({
   meta,
   scoutingNotes,
   timeoutCues,
+  filmRefsPlan,
+  plays,
   categories,
   activeIndex,
   readOnly = false,
@@ -51,6 +54,8 @@ function GameDayBoard({
   meta: string;
   scoutingNotes?: string;
   timeoutCues?: GamePlan["timeoutCues"];
+  filmRefsPlan?: GamePlan;
+  plays?: StoredPlay[];
   categories: GameDayCategoryGroup[];
   activeIndex: number;
   readOnly?: boolean;
@@ -76,6 +81,9 @@ function GameDayBoard({
           </p>
         ) : null}
         <GameDayCounterStrip cues={timeoutCues} />
+        {filmRefsPlan && plays?.length ? (
+          <GameDayOffenseReadStrip plan={filmRefsPlan} plays={plays} />
+        ) : null}
         <button type="button" className="fc-game-day-close" onClick={onClose}>
           ✕ Close
         </button>
@@ -217,6 +225,8 @@ export function GameDayOverlay({
         meta={metaParts.join(" · ")}
         scoutingNotes={plan.scoutingNotes}
         timeoutCues={plan.timeoutCues}
+        filmRefsPlan={plan}
+        plays={plays}
         categories={categories}
         activeIndex={activeIndex}
         onSelectIndex={pushCategory}

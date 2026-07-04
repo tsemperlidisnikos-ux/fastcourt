@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   buildPossessionPlaylist,
   nextPossessionPlaylistIndex,
@@ -11,6 +17,12 @@ import {
 } from "@/lib/film-room/film-possession-playlist";
 import type { FilmRoomBookmark } from "@/types/film-room";
 
+export interface FilmRoomPossessionPlaylistHandle {
+  goNext: () => void;
+  goPrev: () => void;
+  startPlaylist: () => void;
+}
+
 interface Props {
   bookmarks: FilmRoomBookmark[];
   currentTime: number;
@@ -19,13 +31,13 @@ interface Props {
   onPlay?: () => void;
 }
 
-export function FilmRoomPossessionPlaylist({
-  bookmarks,
-  currentTime,
-  disabled = false,
-  onSeek,
-  onPlay,
-}: Props) {
+export const FilmRoomPossessionPlaylist = forwardRef<
+  FilmRoomPossessionPlaylistHandle,
+  Props
+>(function FilmRoomPossessionPlaylist(
+  { bookmarks, currentTime, disabled = false, onSeek, onPlay },
+  ref,
+) {
   const [filter, setFilter] = useState<PossessionPlaylistFilter>("all");
   const items = useMemo(
     () => buildPossessionPlaylist(bookmarks, filter),
@@ -63,6 +75,17 @@ export function FilmRoomPossessionPlaylist({
     if (!items[0]) return;
     seekToItem(items[0], 0);
   }
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      goNext,
+      goPrev,
+      startPlaylist,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seek fns depend on items/activeIndex
+    [items, activeIndex, onSeek, onPlay],
+  );
 
   if (!bookmarks.length) return null;
 
@@ -118,6 +141,9 @@ export function FilmRoomPossessionPlaylist({
         <span className="fc-film-possession-playlist-count">
           {items.length} clip{items.length === 1 ? "" : "s"}
         </span>
+        <span className="fc-film-possession-playlist-keys">
+          <kbd>[</kbd> <kbd>]</kbd> or <kbd>N</kbd>
+        </span>
       </div>
 
       {items.length ? (
@@ -154,4 +180,4 @@ export function FilmRoomPossessionPlaylist({
       )}
     </section>
   );
-}
+});

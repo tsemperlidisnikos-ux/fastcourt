@@ -157,8 +157,9 @@ export const QA_MODULES = [
           { id: "GP-10", priority: "P0", item: "Add opponent tendency preset", expected: "Chip on board" },
           { id: "GP-11", priority: "P1", item: "Suggested defense plays → Add", expected: "Play in Defense category" },
           { id: "GP-12", priority: "P0", item: "Film evidence panel links", steps: "After AI scout apply", expected: "Watch clip ↗ opens Film Room at timestamp" },
-          { id: "GP-13", priority: "P1", item: "Opponent history import", expected: "Prior scout merged" },
-          { id: "GP-14", priority: "P1", item: "Clip button on film-linked tendency", expected: "Correct session + time" },
+          { id: "GP-13", priority: "P0", item: "Film evidence Designer read frame link", steps: "Scout with disruption offense match", expected: "Reject frame ↗ opens Designer at read frame" },
+          { id: "GP-14", priority: "P1", item: "Opponent history import", expected: "Prior scout merged" },
+          { id: "GP-15", priority: "P1", item: "Clip button on film-linked tendency", expected: "Correct session + time" },
         ],
       },
       {
@@ -168,7 +169,9 @@ export const QA_MODULES = [
           { id: "GP-20", priority: "P0", item: "Game Day full-screen board", expected: "Categories navigable" },
           { id: "GP-21", priority: "P0", item: "Staff live view link sync", steps: "2 browsers, change category", expected: "Remote view updates" },
           { id: "GP-22", priority: "P1", item: "Timeout mode slides", expected: "Counter cues from AI scout" },
-          { id: "GP-23", priority: "P1", item: "Bench card PDF print", expected: "One-page call sheet" },
+          { id: "GP-23", priority: "P0", item: "Timeout offense read slides", steps: "Game plan with film refs + playId", expected: "Read frame diagram, Designer + film links" },
+          { id: "GP-24", priority: "P0", item: "Game Day offense read strip", expected: "Read cards with thumbnail on board header" },
+          { id: "GP-25", priority: "P1", item: "Bench card PDF print", expected: "One-page call sheet" },
         ],
       },
       {
@@ -223,6 +226,8 @@ export const QA_MODULES = [
           { id: "PRC-11", priority: "P1", item: "Next/prev block (arrows)", expected: "Block highlight moves" },
           { id: "PRC-12", priority: "P1", item: "Mark done & advance (Enter)", expected: "Advances to next block" },
           { id: "PRC-13", priority: "P1", item: "Exit live (Esc)", expected: "Returns to planner" },
+          { id: "PRC-14", priority: "P0", item: "Disruption CALL banner", steps: "Add reads from Film Room", expected: "Large red CALL + read frame thumbnail" },
+          { id: "PRC-15", priority: "P1", item: "Share view live call sync", steps: "Practice share + live mode", expected: "Live call updates on share page" },
         ],
       },
       {
@@ -278,6 +283,8 @@ export const QA_MODULES = [
           { id: "DSG-14", priority: "P2", item: "Import frame from library play", expected: "Frame content copied" },
           { id: "DSG-15", priority: "P2", item: "Mirror frame (Ctrl+Shift+M)", expected: "Horizontal mirror" },
           { id: "DSG-16", priority: "P2", item: "Formations / FastBuild", expected: "Preset layout applied" },
+          { id: "DSG-17", priority: "P0", item: "Read branch frame (coverage read)", steps: "Add read frame on frame", expected: "Read branch linked to parent frame" },
+          { id: "DSG-18", priority: "P0", item: "Deep link ?item=&frame=N", expected: "Designer opens at read frame" },
         ],
       },
       {
@@ -337,6 +344,20 @@ export const QA_MODULES = [
           { id: "FIL-22", priority: "P0", item: "Add chapter bookmark (B key)", expected: "Green marker, list entry" },
           { id: "FIL-23", priority: "P1", item: "Quick chapter labels (ATO, Horns…)", expected: "Chapter at current time" },
           { id: "FIL-24", priority: "P1", item: "Chapter list seek + edit + delete", expected: "Jump to timestamp" },
+          { id: "FIL-25", priority: "P0", item: "Disruption tags H/W/I/T/D/K/P/C/O", expected: "Red markers, disruption panel" },
+          { id: "FIL-26", priority: "P0", item: "Plan broke here bookmark (Shift+B)", expected: "Disruption bookmark on timeline" },
+        ],
+      },
+      {
+        id: "film-disruption",
+        title: "Disruption & Possession Playlist",
+        items: [
+          { id: "FIL-50", priority: "P0", item: "AI disruption read panel", steps: "Analyze clip with ICE/switch tags", expected: "Headline, reads, library variations, ideal gap" },
+          { id: "FIL-51", priority: "P0", item: "Possession playlist Start / Next", expected: "Seeks to bookmark, plays video" },
+          { id: "FIL-52", priority: "P1", item: "Playlist filter Disruptions only", expected: "Only disruption bookmarks listed" },
+          { id: "FIL-53", priority: "P1", item: "Playlist keyboard [ ] N", expected: "Prev/next possession without mouse" },
+          { id: "FIL-54", priority: "P1", item: "Add reads to practice", expected: "Practice blocks with liveCall + notes" },
+          { id: "FIL-55", priority: "P1", item: "Auto bookmark after AI disruption", expected: "Plan broke here bookmark created" },
         ],
       },
       {

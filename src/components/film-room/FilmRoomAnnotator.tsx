@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar";
-import { FilmRoomPossessionPlaylist } from "@/components/film-room/FilmRoomPossessionPlaylist";
+import { FilmRoomPossessionPlaylist, type FilmRoomPossessionPlaylistHandle } from "@/components/film-room/FilmRoomPossessionPlaylist";
 import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
 import { FilmRoomFramePreviewStrip } from "@/components/film-room/FilmRoomFramePreviewStrip";
 import { FilmRoomEventTagBar } from "@/components/film-room/FilmRoomEventTagBar";
@@ -134,6 +134,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   }, [session.id]);
   const playerShellRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<VideoPlaybackController | null>(null);
+  const playlistRef = useRef<FilmRoomPossessionPlaylistHandle>(null);
 
   const [uploadSrc, setUploadSrc] = useState<string | null>(null);
   const [overlaySize, setOverlaySize] = useState({ width: 0, height: 0 });
@@ -215,13 +216,29 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
         return;
       }
 
-      if (e.key !== "f" && e.key !== "F") return;
+      if (e.key !== "f" && e.key !== "F") {
+        if (e.key === "n" || e.key === "N" || e.key === "]") {
+          if (bookmarks.length > 0) {
+            e.preventDefault();
+            playlistRef.current?.goNext();
+          }
+          return;
+        }
+        if (e.key === "[") {
+          if (bookmarks.length > 0) {
+            e.preventDefault();
+            playlistRef.current?.goPrev();
+          }
+          return;
+        }
+        return;
+      }
       e.preventDefault();
       void toggleFullscreen();
     }
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [isFilmFullscreen, toggleFullscreen, togglePlay]);
+  }, [bookmarks.length, isFilmFullscreen, toggleFullscreen, togglePlay]);
 
   useEffect(() => {
     if (session.source.kind !== "upload") {
@@ -736,6 +753,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
         />
 
         <FilmRoomPossessionPlaylist
+          ref={playlistRef}
           bookmarks={bookmarks}
           currentTime={currentTime}
           disabled={duration <= 0}

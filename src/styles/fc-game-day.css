@@ -153,6 +153,94 @@
   margin-right: 4px;
 }
 
+.fc-game-day-reads {
+  max-width: 980px;
+  margin: 14px auto 0;
+  padding: 0 20px;
+  text-align: left;
+}
+
+.fc-game-day-reads-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fca5a5;
+}
+
+.fc-game-day-read-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.fc-game-day-read-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.22);
+}
+
+.fc-game-day-read-thumb {
+  flex-shrink: 0;
+  width: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-game-day-read-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fc-game-day-read-call {
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.fc-game-day-read-play {
+  font-size: 12px;
+  color: #fecaca;
+}
+
+.fc-game-day-read-detail {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #cbd5e1;
+}
+
+.fc-game-day-read-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fc-game-day-read-link {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fecaca;
+  text-decoration: none;
+}
+
+.fc-game-day-read-link.is-film {
+  color: #93c5fd;
+}
+
 .fc-game-day-close {
   margin-top: 14px;
   padding: 8px 12px;
