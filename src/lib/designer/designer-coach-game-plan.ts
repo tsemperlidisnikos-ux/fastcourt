@@ -258,7 +258,7 @@ export function gamePlanDefenseLinkedPlays(
   if (!plan) return [];
 
   const byId = new Map(library.map((play) => [play.id, play]));
-  const linked: DesignerCoachLinkedPlay[] = [];
+  const linked: DesignerCoachLinkedPlayRef[] = [];
   const seen = new Set<string>();
 
   for (const entry of plan.entries) {

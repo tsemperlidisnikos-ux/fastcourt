@@ -77,7 +77,9 @@ export function buildSamePlayFrameAlternatives(
 
   const playId = play.id ?? "current-play";
   const playTitle = play.title?.trim() || "This play";
-  const ranked: DesignerCoachAlternative[] = [];
+  const ranked: Array<
+    Extract<DesignerCoachAlternative, { kind: "same-play" }>
+  > = [];
 
   for (let frameIndex = 0; frameIndex < play.frames.length; frameIndex += 1) {
     if (frameIndex === currentFrameIndex) continue;
