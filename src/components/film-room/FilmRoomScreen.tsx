@@ -13,7 +13,15 @@ import { useFilmRoomStore } from "@/stores/film-room-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import { appConfirm } from "@/stores/dialog-store";
 
-export function FilmRoomScreen() {
+import type { LibraryNavModuleId } from "@/types/library-nav-modules";
+
+const FILM_NAV_MODULES = new Set<LibraryNavModuleId>(["film-room", "scouting"]);
+
+export function FilmRoomScreen({
+  navModuleId = "film-room",
+}: {
+  navModuleId?: Extract<LibraryNavModuleId, "film-room" | "scouting">;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const deepLink = useMemo(
@@ -39,10 +47,11 @@ export function FilmRoomScreen() {
   }, [metaHydrated, loadMeta]);
 
   useEffect(() => {
-    if (!isLibraryNavModuleEnabled(navModules, "film-room")) {
+    if (!FILM_NAV_MODULES.has(navModuleId)) return;
+    if (!isLibraryNavModuleEnabled(navModules, navModuleId)) {
       router.replace("/library");
     }
-  }, [navModules, router]);
+  }, [navModuleId, navModules, router]);
 
   useEffect(() => {
     if (!hydrated || !deepLink.sessionId) return;
@@ -70,7 +79,7 @@ export function FilmRoomScreen() {
       className="fd-ui screen-root active library-film-room-mode"
       id="screen-organizer"
     >
-      <FdAppHeader />
+      <FdAppHeader activeTab={navModuleId} />
       <div className="org-body">
         <div id="screen-film-room" className="fc-film-room-screen">
           <aside className="fc-film-sidebar" aria-label="Film sessions">
@@ -135,6 +144,7 @@ export function FilmRoomScreen() {
               <FilmRoomAnnotator
                 key={activeSession.id}
                 session={activeSession}
+                scoutTools={navModuleId === "scouting"}
                 initialSeekTime={
                   deepLink.sessionId === activeSession.id
                     ? deepLink.timestamp

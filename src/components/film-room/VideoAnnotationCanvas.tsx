@@ -24,6 +24,17 @@ function drawStroke(
   ctx.stroke();
 }
 
+function normalizeErasedStrokes(strokes: VideoAnnotationStroke[]): VideoAnnotationStroke[] {
+  const seen = new Set<string>();
+  return strokes.map((stroke) => {
+    if (!seen.has(stroke.id)) {
+      seen.add(stroke.id);
+      return stroke;
+    }
+    return { ...stroke, id: `stroke_${crypto.randomUUID()}` };
+  });
+}
+
 function toNorm(
   x: number,
   y: number,
@@ -150,12 +161,14 @@ export function VideoAnnotationCanvas({
       }));
       const erased = eraseStrokesAt(pixelStrokes, point.x, point.y, 16);
       onStrokesChange(
-        erased.map((stroke) => ({
-          ...stroke,
-          points: stroke.points.flatMap((v, i) =>
-            i % 2 === 0 ? [v / width] : [v / height],
-          ),
-        })),
+        normalizeErasedStrokes(
+          erased.map((stroke) => ({
+            ...stroke,
+            points: stroke.points.flatMap((v, i) =>
+              i % 2 === 0 ? [v / width] : [v / height],
+            ),
+          })),
+        ),
       );
       return;
     }
@@ -180,12 +193,14 @@ export function VideoAnnotationCanvas({
       }));
       const erased = eraseStrokesAt(pixelStrokes, point.x, point.y, 16);
       onStrokesChange(
-        erased.map((stroke) => ({
-          ...stroke,
-          points: stroke.points.flatMap((v, i) =>
-            i % 2 === 0 ? [v / width] : [v / height],
-          ),
-        })),
+        normalizeErasedStrokes(
+          erased.map((stroke) => ({
+            ...stroke,
+            points: stroke.points.flatMap((v, i) =>
+              i % 2 === 0 ? [v / width] : [v / height],
+            ),
+          })),
+        ),
       );
       return;
     }

@@ -3,6 +3,11 @@ import {
   resolveGamePlanEntryLabel,
 } from "@/lib/game-plan/game-plan-items";
 import {
+  countPrepReadBlocks,
+  createPrepReadPracticeItems,
+  type PrepReadRecommendation,
+} from "@/lib/game-plan/read-recommendations";
+import {
   defaultPracticeItemDuration,
   newPracticeItemId,
   normalizePracticeSession,
@@ -46,10 +51,27 @@ export function computePrepPracticeDate(gameDate: string, today = new Date()) {
   return formatLocalIsoDate(prep);
 }
 
+function buildPrepSessionNotes(
+  plan: GamePlan,
+  readRecommendations: PrepReadRecommendation[],
+): string {
+  const base =
+    plan.scoutingNotes?.trim() ||
+    `Walk-through plays before ${plan.gameDate || "game day"}.`;
+  if (!readRecommendations.length) return base;
+  const blockCount = countPrepReadBlocks(readRecommendations);
+  const callCount = readRecommendations.length;
+  return `${base}\n\nRead drills: ${callCount} call${callCount === 1 ? "" : "s"} · ${blockCount} block${blockCount === 1 ? "" : "s"} auto-added from weak reads.`;
+}
+
 export function buildPracticeSessionFromGamePlan(
   plan: GamePlan,
   plays: StoredPlay[],
-  options: { sessionId?: string; now?: string } = {},
+  options: {
+    sessionId?: string;
+    now?: string;
+    readRecommendations?: PrepReadRecommendation[];
+  } = {},
 ): PracticeSession {
   const now = options.now || new Date().toISOString();
   const playById = new Map(plays.map((play) => [play.id, play]));
@@ -71,15 +93,16 @@ export function buildPracticeSessionFromGamePlan(
     }),
   );
 
+  const readRecommendations = options.readRecommendations ?? [];
+  const readItems = readRecommendations.flatMap(createPrepReadPracticeItems);
+
   return normalizePracticeSession({
     id: options.sessionId || `prac_${crypto.randomUUID()}`,
     date: computePrepPracticeDate(plan.gameDate),
     title: `Prep: vs ${plan.opponent || plan.title}`,
     team: plan.team,
-    notes:
-      plan.scoutingNotes?.trim() ||
-      `Walk-through plays before ${plan.gameDate || "game day"}.`,
-    items,
+    notes: buildPrepSessionNotes(plan, readRecommendations),
+    items: [...items, ...readItems],
     createdAt: now,
     updatedAt: now,
   });

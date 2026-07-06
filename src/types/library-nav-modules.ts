@@ -4,10 +4,17 @@ export const LIBRARY_NAV_MODULE_IDS = [
   "gameplan",
   "fields",
   "practice",
+  "coach",
   "players",
   "film-room",
+  "scouting",
 ] as const;
 
 export type LibraryNavModuleId = (typeof LIBRARY_NAV_MODULE_IDS)[number];
 
-export type LibraryNavModulesConfig = Record<LibraryNavModuleId, boolean>;
+export type LibraryNavModulesEnabled = Record<LibraryNavModuleId, boolean>;
+
+export interface LibraryNavModulesConfig {
+  enabled: LibraryNavModulesEnabled;
+  order: LibraryNavModuleId[];
+}

@@ -1317,10 +1317,40 @@
   border-left: 1px solid var(--fd-editor-sidebar-border);
   width: var(--fd-editor-frame-strip-width);
   min-width: var(--fd-editor-frame-strip-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 #screen-designer .ds-sidebar-tabs {
-  display: none !important;
+  display: flex !important;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--fd-editor-sidebar-border);
+  background: #e8eaee;
+}
+
+#screen-designer .ds-sidebar-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+#screen-designer .ds-sidebar-tab:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+#screen-designer .ds-sidebar-tab.active {
+  color: #0f172a;
+  background: var(--fd-editor-frame-strip);
+  box-shadow: inset 0 -3px 0 #2563eb;
 }
 
 #screen-designer .ds-sidebar-tab-pane {

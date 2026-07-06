@@ -1,0 +1,393 @@
+#screen-designer .ds-coach-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+#screen-designer .ds-coach-intro {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #475569;
+}
+
+#screen-designer .ds-coach-intro strong {
+  color: #0f172a;
+}
+
+#screen-designer .ds-coach-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#screen-designer .ds-coach-game-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#screen-designer .ds-coach-game-plan-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+#screen-designer .ds-coach-game-plan-select {
+  width: 100%;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+
+#screen-designer .ds-coach-game-plan-chip,
+#screen-designer .ds-coach-game-plan-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+#screen-designer .ds-coach-game-plan-chip {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+}
+
+#screen-designer .ds-coach-btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#screen-designer .ds-coach-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+#screen-designer .ds-coach-btn.is-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+#screen-designer .ds-coach-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+#screen-designer .ds-coach-patterns,
+#screen-designer .ds-coach-empty,
+#screen-designer .ds-coach-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#screen-designer .ds-coach-patterns {
+  color: #64748b;
+}
+
+#screen-designer .ds-coach-empty {
+  color: #64748b;
+}
+
+#screen-designer .ds-coach-error {
+  color: #fca5a5;
+}
+
+#screen-designer .ds-coach-bulk-actions {
+  display: flex;
+  gap: 6px;
+}
+
+#screen-designer .ds-coach-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#screen-designer .ds-coach-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#screen-designer .ds-coach-section-head h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #334155;
+}
+
+#screen-designer .ds-coach-section-add {
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+#screen-designer .ds-coach-section-add:hover {
+  text-decoration: underline;
+}
+
+#screen-designer .ds-coach-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#screen-designer .ds-coach-card {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+}
+
+#screen-designer .ds-coach-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+#screen-designer .ds-coach-card-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+#screen-designer .ds-coach-card-detail {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #475569;
+}
+
+#screen-designer .ds-coach-priority {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+#screen-designer .ds-coach-priority-high {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+#screen-designer .ds-coach-priority-medium {
+  background: rgba(245, 158, 11, 0.35);
+}
+
+#screen-designer .ds-coach-counter-badge,
+#screen-designer .ds-coach-pattern {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+#screen-designer .ds-coach-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#screen-designer .ds-coach-card-action {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#screen-designer .ds-coach-card-action:hover {
+  background: #e2e8f0;
+}
+
+#screen-designer .ds-coach-card-action.is-apply {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+#screen-designer .ds-coach-card-action.is-apply:hover {
+  background: #dbeafe;
+}
+
+#screen-designer .ds-coach-card-action.is-active {
+  border-color: #0ea5e9;
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+#screen-designer .ds-coach-card-alternative {
+  border-color: #ddd6fe;
+  background: #faf5ff;
+}
+
+.ds-coach-counter-load-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.ds-coach-counter-load-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.ds-coach-counter-load-option:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.ds-coach-counter-load-option span {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+#screen-designer .ds-coach-prep-reads-section {
+  margin-top: 2px;
+}
+
+#screen-designer .ds-coach-card-prep-read {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+#screen-designer .ds-coach-prep-read-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#screen-designer .ds-coach-prep-read-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+#screen-designer .ds-coach-prep-read-badge.is-current {
+  background: #dcfce7;
+  color: #166534;
+}
+
+#screen-designer .ds-coach-prep-read-stats {
+  font-size: 11px;
+  color: #64748b;
+}
+
+#screen-designer .ds-coach-preview-banner {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #0e7490;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#screen-designer .ds-coach-preview-clear {
+  border: none;
+  background: none;
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+#screen-designer .ds-coach-links {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+#screen-designer .ds-coach-link-play {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+#screen-designer .ds-coach-link-play:hover {
+  text-decoration: underline;
+}
+
+#screen-designer .ds-coach-link-play.is-muted {
+  color: #64748b;
+  font-weight: 600;
+  cursor: default;
+}
+
+#screen-designer .ds-coach-card-alternative.is-same-play {
+  border-color: #bfdbfe;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+#screen-designer .ds-coach-card-film {
+  border-color: #ddd6fe;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+}
+
+#screen-designer .ds-coach-alt-empty {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+#screen-designer .ds-coach-alt-link {
+  padding-left: 4px;
+}
+
+#screen-designer .ds-sidebar-tab-pane#sidebar-tab-coach {
+  padding: 12px 10px 16px;
+}

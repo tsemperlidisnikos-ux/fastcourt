@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar";
 import { FilmRoomPossessionPlaylist, type FilmRoomPossessionPlaylistHandle } from "@/components/film-room/FilmRoomPossessionPlaylist";
 import { FilmRoomEvaluationStrip } from "@/components/film-room/FilmRoomEvaluationStrip";
@@ -19,6 +20,7 @@ import {
   type VideoPlaybackController,
 } from "@/components/film-room/FilmRoomVideoSurface";
 import { VideoAnnotationCanvas } from "@/components/film-room/VideoAnnotationCanvas";
+import { useCountersDemo } from "@/hooks/useCountersDemo";
 import { filmRoomSourceLabel } from "@/lib/film-room/film-room-source";
 import {
   canCaptureFilmFrames,
@@ -80,9 +82,16 @@ import type { FilmScoutPrintModel } from "@/lib/film-room/film-scout-print-model
 interface Props {
   session: FilmRoomSession;
   initialSeekTime?: number | null;
+  /** Full scout toolkit (tags, AI, game plan) — Scouting tab only. */
+  scoutTools?: boolean;
 }
 
-export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
+export function FilmRoomAnnotator({
+  session,
+  initialSeekTime = null,
+  scoutTools = false,
+}: Props) {
+  const { openDemo: openCountersDemo } = useCountersDemo();
   const setStrokes = useFilmRoomStore((s) => s.setStrokes);
   const appendStroke = useFilmRoomStore((s) => s.appendStroke);
   const addFilmEvent = useFilmRoomStore((s) => s.addFilmEvent);
@@ -127,7 +136,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const [redoStack, setRedoStack] = useState<VideoAnnotationStroke[][]>([]);
 
   const markup = filmRoomMarkupPreset(activePreset);
-  const tool = markup.tool;
+  const tool = scoutTools ? "pointer" : markup.tool;
   const inkColor = markup.color;
   const inkWidth = markup.width;
 
@@ -194,6 +203,7 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   }, []);
 
   const toggleFullscreen = useCallback(async () => {
+    if (scoutTools) return;
     const shell = playerShellRef.current;
     if (!shell) return;
     try {
@@ -206,7 +216,15 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     } catch {
       /* browser blocked or unsupported */
     }
-  }, []);
+  }, [scoutTools]);
+
+  useEffect(() => {
+    if (!scoutTools) return;
+    const shell = playerShellRef.current;
+    if (shell && document.fullscreenElement === shell) {
+      void document.exitFullscreen();
+    }
+  }, [scoutTools]);
 
   const isFilmFullscreen = useCallback(() => {
     const shell = playerShellRef.current;
@@ -251,12 +269,13 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
         }
         return;
       }
+      if (scoutTools) return;
       e.preventDefault();
       void toggleFullscreen();
     }
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [bookmarks.length, isFilmFullscreen, toggleFullscreen, togglePlay]);
+  }, [bookmarks.length, isFilmFullscreen, scoutTools, toggleFullscreen, togglePlay]);
 
   useEffect(() => {
     if (session.source.kind !== "upload") {
@@ -410,9 +429,10 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
     recordUndo();
   }, [recordUndo]);
 
-  const markerTimes = Array.from(
-    new Set(strokes.map((stroke) => stroke.time)),
-  ).sort((a, b) => a - b);
+  const inkMarkerTimes = strokes.map((stroke) => ({
+    id: stroke.id,
+    time: stroke.time,
+  }));
 
   const eventMarkerTimes = events.map((event) => ({ id: event.id, time: event.time }));
   const disruptionMarkerTimes = disruptions.map((row) => ({
@@ -754,284 +774,329 @@ export function FilmRoomAnnotator({ session, initialSeekTime = null }: Props) {
   const centerFilmPreviewUrl =
     framePreviews[Math.floor(framePreviews.length / 2)]?.dataUrl ?? undefined;
 
-  return (
-    <div className="fc-film-annotator">
-      <header className="fc-film-annotator-head">
-        <div>
-          <h2 className="fc-film-annotator-title">{session.title}</h2>
-          <p className="fc-film-annotator-meta">
-            {filmRoomSourceLabel(session.source)} · {strokes.length} annotation
-            {strokes.length === 1 ? "" : "s"}
-            {events.length > 0 ? (
-              <>
-                {" "}
-                · {events.length} event tag{events.length === 1 ? "" : "s"}
-              </>
-            ) : null}
-            {disruptions.length > 0 ? (
-              <>
-                {" "}
-                · {disruptions.length} disruption{disruptions.length === 1 ? "" : "s"}
-              </>
-            ) : null}
-            {analyses.length > 0 ? (
-              <>
-                {" "}
-                · {analyses.length} analysis{analyses.length === 1 ? "" : "es"}
-              </>
-            ) : null}
-            {aiStatus.loading ? null : aiStatus.configured ? (
-              <> · AI ready</>
-            ) : (
-              <> · AI off</>
-            )}
-          </p>
-          {!aiStatus.loading && !aiStatus.configured ? (
-            <p className="fc-film-ai-setup-hint">
-              Set <code>OPENAI_API_KEY</code> to enable Analyze clip.
-            </p>
-          ) : null}
-          {session.source.kind === "youtube" ? (
-            <p className="fc-film-ai-setup-hint">
-              YouTube analyze uses visible-player capture — upload MP4 if frames look blank.
-            </p>
-          ) : null}
-        </div>
-        <div className="fc-film-annotator-actions">
-          <button
-            type="button"
-            className="fc-film-analyze-btn"
-            disabled={!canAnalyzeClip || analyzeBusy || aiStatus.configured === false}
-            title={
-              !canAnalyzeClip
-                ? "Video source not supported for AI analyze"
-                : aiStatus.configured === false
-                  ? "Add OPENAI_API_KEY to enable AI Assistant"
-                  : `AI Coaching Assistant — ${FILM_CLIP_ANALYZE_FRAME_COUNT} frames + nearby coach tags`
-            }
-            onClick={() => void handleAnalyzeClip()}
-          >
-            {analyzePhase === "capturing"
-              ? `Capturing ${captureProgress.current}/${captureProgress.total}…`
-              : analyzePhase === "analyzing"
-                ? "Analyzing…"
-                : "Analyze clip"}
-          </button>
-          <button
-            type="button"
-            className="fc-film-game-plan-btn"
-            onClick={() => setGamePlanModalOpen(true)}
-          >
-            Add to game plan
-          </button>
-        </div>
-      </header>
-
-      <div
-        ref={playerShellRef}
-        className="fc-film-player-shell"
-        tabIndex={-1}
-        onKeyDown={(e) => {
-          if (e.code !== "Space" && e.key !== " ") {
-            const target = e.target as HTMLElement;
-            if (
-              target.tagName !== "INPUT" &&
-              target.tagName !== "TEXTAREA" &&
-              !e.metaKey &&
-              !e.ctrlKey &&
-              !e.altKey
-            ) {
-              const kind = FILM_EVENT_KEYBOARD_MAP[e.key];
-              if (kind) {
-                e.preventDefault();
-                handleTagAtPlayhead(kind, tagNoteDraft.trim() || undefined);
-                if (tagNoteDraft.trim()) setTagNoteDraft("");
-                return;
-              }
-              const disruptionKind = FILM_DISRUPTION_KEYBOARD_MAP[e.key.toLowerCase()];
-              if (disruptionKind) {
-                e.preventDefault();
-                handleDisruptionAtPlayhead(
-                  disruptionKind,
-                  tagNoteDraft.trim() || undefined,
-                );
-                if (tagNoteDraft.trim()) setTagNoteDraft("");
-                return;
-              }
-              if (e.key === "b" || e.key === "B") {
-                e.preventDefault();
-                if (e.shiftKey) {
-                  handleAddBookmark("Plan broke here", undefined, "disruption");
-                } else {
-                  handleAddBookmark(defaultFilmBookmarkLabel(currentTime));
-                }
-              }
-            }
+  const handlePlayerShellKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (e.code !== "Space" && e.key !== " ") {
+        const target = e.target as HTMLElement;
+        if (
+          scoutTools &&
+          target.tagName !== "INPUT" &&
+          target.tagName !== "TEXTAREA" &&
+          !e.metaKey &&
+          !e.ctrlKey &&
+          !e.altKey
+        ) {
+          const kind = FILM_EVENT_KEYBOARD_MAP[e.key];
+          if (kind) {
+            e.preventDefault();
+            handleTagAtPlayhead(kind, tagNoteDraft.trim() || undefined);
+            if (tagNoteDraft.trim()) setTagNoteDraft("");
             return;
           }
-          if (!isFilmFullscreen()) return;
-          e.preventDefault();
-          e.stopPropagation();
-          togglePlay();
-        }}
-      >
-        <FilmRoomToolbar
-          activePreset={activePreset}
-          onPresetChange={setActivePreset}
-          canUndo={undoStack.length > 0}
-          canRedo={redoStack.length > 0}
-          onUndo={undo}
-          onRedo={redo}
-          onClear={clearPenDrawings}
-        />
-
-        <FilmRoomEventTagBar
-          currentTime={currentTime}
-          events={events}
-          noteDraft={tagNoteDraft}
-          disabled={duration <= 0}
-          canUndo={events.length > 0}
-          onNoteChange={setTagNoteDraft}
-          onTag={handleTagAtPlayhead}
-          onUndoLast={() => undoLastFilmEvent(session.id)}
-          onUpdate={(eventId, patch) => updateFilmEvent(session.id, eventId, patch)}
-          onRemove={(eventId) => removeFilmEvent(session.id, eventId)}
-          onSeek={handleSliderSeek}
-        />
-
-        <FilmRoomDisruptionTagBar
-          currentTime={currentTime}
-          disruptions={disruptions}
-          noteDraft={tagNoteDraft}
-          disabled={duration <= 0}
-          canUndo={disruptions.length > 0}
-          onNoteChange={setTagNoteDraft}
-          onTag={handleDisruptionAtPlayhead}
-          onUndoLast={() => undoLastFilmDisruption(session.id)}
-          onUpdate={(disruptionId, patch) =>
-            updateFilmDisruption(session.id, disruptionId, patch)
+          const disruptionKind = FILM_DISRUPTION_KEYBOARD_MAP[e.key.toLowerCase()];
+          if (disruptionKind) {
+            e.preventDefault();
+            handleDisruptionAtPlayhead(
+              disruptionKind,
+              tagNoteDraft.trim() || undefined,
+            );
+            if (tagNoteDraft.trim()) setTagNoteDraft("");
+            return;
           }
-          onRemove={(disruptionId) => removeFilmDisruption(session.id, disruptionId)}
-          onSeek={handleSliderSeek}
-        />
-
-        <FilmRoomBookmarkBar
-          currentTime={currentTime}
-          bookmarks={bookmarks}
-          disabled={duration <= 0}
-          onAdd={handleAddBookmark}
-          onUpdate={(bookmarkId, patch) =>
-            updateFilmBookmark(session.id, bookmarkId, patch)
+          if (e.key === "b" || e.key === "B") {
+            e.preventDefault();
+            if (e.shiftKey) {
+              handleAddBookmark("Plan broke here", undefined, "disruption");
+            } else {
+              handleAddBookmark(defaultFilmBookmarkLabel(currentTime));
+            }
           }
-          onRemove={(bookmarkId) => removeFilmBookmark(session.id, bookmarkId)}
-          onSeek={handleSliderSeek}
-        />
+        }
+        return;
+      }
+      if (!isFilmFullscreen()) return;
+      e.preventDefault();
+      e.stopPropagation();
+      togglePlay();
+    },
+    [
+      currentTime,
+      handleAddBookmark,
+      handleDisruptionAtPlayhead,
+      handleTagAtPlayhead,
+      isFilmFullscreen,
+      scoutTools,
+      tagNoteDraft,
+      togglePlay,
+    ],
+  );
 
-        <FilmRoomPossessionPlaylist
-          ref={playlistRef}
-          sessionId={session.id}
-          sessionTitle={session.title}
-          source={session.source}
-          bookmarks={bookmarks}
-          currentTime={currentTime}
-          videoDuration={duration}
-          disabled={duration <= 0}
-          reelActive={reelActive}
-          reelIndex={reelIndex}
-          onSeek={handleSliderSeek}
-          onPlay={() => controllerRef.current?.play()}
-          onStartReel={handleStartReel}
-          onStopReel={handleStopReel}
-          getUploadBlob={getUploadBlob}
-        />
-
-        <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />
-
-        <FilmRoomAnalysisHistoryPanel
-          analyses={analyses}
-          bookmarkCount={bookmarks.length}
-          onOpen={openAnalysisRecord}
-          onSeek={handleSliderSeek}
-          onRemove={(recordId) => removeAnalysisRecord(session.id, recordId)}
-          onExportSession={
-            analyses.length || bookmarks.length ? exportSessionScoutPdf : undefined
-          }
-          onBatchAnalyze={canAnalyzeClip ? handleBatchAnalyze : undefined}
-          batchBusy={batchBusy}
-          batchProgress={batchProgress}
-        />
-
-        <FilmRoomEvaluationStrip analyses={analyses} />
-
-        <div className="fc-film-stage">
-          <div ref={overlayRef} className="fc-film-video-stack">
-            <FilmRoomVideoSurface
-              source={session.source}
-              uploadSrc={uploadSrc}
-              onNativeVideo={(video) => {
-                nativeVideoRef.current = video;
-              }}
-              onYouTubePlayer={(player) => {
-                youtubePlayerRef.current = player;
-              }}
-              onYouTubeCaptureRoot={(element) => {
-                youtubeCaptureRootRef.current = element;
-              }}
-              onController={handleController}
-              onTimeUpdate={setCurrentTime}
-              onDuration={setDuration}
-              onPlayingChange={setPlaying}
-            />
-            {overlaySize.width > 0 && overlaySize.height > 0 ? (
-              <VideoAnnotationCanvas
-                key={`${session.id}-${canvasEpoch}`}
-                width={overlaySize.width}
-                height={overlaySize.height}
-                strokes={strokes}
-                currentTime={currentTime}
-                tool={tool}
-                inkColor={inkColor}
-                inkWidth={inkWidth}
-                onStrokeStart={() => controllerRef.current?.pause()}
-                onStrokeComplete={handleStrokeComplete}
-                onStrokesChange={handleStrokesChange}
-                onEraserGestureStart={handleEraserGestureStart}
+  return (
+    <div className="fc-film-annotator">
+      <div className="fc-film-annotator-body">
+        <div
+          ref={playerShellRef}
+          className="fc-film-annotator-video-col fc-film-player-shell"
+          tabIndex={-1}
+          onKeyDown={handlePlayerShellKeyDown}
+        >
+          <div className="fc-film-stage">
+            <div ref={overlayRef} className="fc-film-video-stack">
+              <FilmRoomVideoSurface
+                source={session.source}
+                uploadSrc={uploadSrc}
+                onNativeVideo={(video) => {
+                  nativeVideoRef.current = video;
+                }}
+                onYouTubePlayer={(player) => {
+                  youtubePlayerRef.current = player;
+                }}
+                onYouTubeCaptureRoot={(element) => {
+                  youtubeCaptureRootRef.current = element;
+                }}
+                onController={handleController}
+                onTimeUpdate={setCurrentTime}
+                onDuration={setDuration}
+                onPlayingChange={setPlaying}
               />
-            ) : null}
-            <FilmRoomFloatingShuttleWheel
-              key={`${session.id}-${shuttlePositionKey}`}
-              boundsRef={overlayRef}
-              boundsWidth={overlaySize.width}
-              boundsHeight={overlaySize.height}
-              disabled={duration <= 0}
-              playing={playing}
-              onTogglePlay={togglePlay}
-              onJogStart={handleJogStart}
-              onJog={handleJog}
-              onJogEnd={() => undefined}
-            />
-            <FilmRoomVideoControlDock
-              playing={playing}
-              currentTime={currentTime}
-              duration={duration}
-              markerTimes={markerTimes}
-              eventMarkerTimes={eventMarkerTimes}
-              disruptionMarkerTimes={disruptionMarkerTimes}
-              bookmarkMarkerTimes={bookmarkMarkerTimes}
-              fullscreen={fullscreen}
-              autoClearOnScrub={autoClearOnScrub}
-              onToggleAutoClear={() => setAutoClearOnScrub((value) => !value)}
-              onTogglePlay={togglePlay}
-              onSeek={handleSliderSeek}
-              onToggleFullscreen={() => void toggleFullscreen()}
-            />
+              {overlaySize.width > 0 && overlaySize.height > 0 ? (
+                <VideoAnnotationCanvas
+                  key={`canvas-${session.id}-${canvasEpoch}`}
+                  width={overlaySize.width}
+                  height={overlaySize.height}
+                  strokes={strokes}
+                  currentTime={currentTime}
+                  tool={tool}
+                  inkColor={inkColor}
+                  inkWidth={inkWidth}
+                  onStrokeStart={() => controllerRef.current?.pause()}
+                  onStrokeComplete={handleStrokeComplete}
+                  onStrokesChange={handleStrokesChange}
+                  onEraserGestureStart={handleEraserGestureStart}
+                />
+              ) : null}
+              <FilmRoomFloatingShuttleWheel
+                key={`shuttle-${session.id}-${shuttlePositionKey}`}
+                boundsRef={overlayRef}
+                boundsWidth={overlaySize.width}
+                boundsHeight={overlaySize.height}
+                disabled={duration <= 0}
+                playing={playing}
+                onTogglePlay={togglePlay}
+                onJogStart={handleJogStart}
+                onJog={handleJog}
+                onJogEnd={() => undefined}
+              />
+              <FilmRoomVideoControlDock
+                playing={playing}
+                currentTime={currentTime}
+                duration={duration}
+                markerTimes={scoutTools ? inkMarkerTimes : []}
+                eventMarkerTimes={scoutTools ? eventMarkerTimes : []}
+                disruptionMarkerTimes={scoutTools ? disruptionMarkerTimes : []}
+                bookmarkMarkerTimes={scoutTools ? bookmarkMarkerTimes : []}
+                fullscreen={fullscreen}
+                allowFullscreen={!scoutTools}
+                autoClearOnScrub={autoClearOnScrub}
+                onToggleAutoClear={() => setAutoClearOnScrub((value) => !value)}
+                onTogglePlay={togglePlay}
+                onSeek={handleSliderSeek}
+                onToggleFullscreen={() => void toggleFullscreen()}
+              />
+            </div>
           </div>
         </div>
+
+        <aside className="fc-film-annotator-tools-col" aria-label="Film tools">
+          <header className="fc-film-annotator-head">
+            <div>
+              <h2 className="fc-film-annotator-title">{session.title}</h2>
+              <p className="fc-film-annotator-meta">
+                {filmRoomSourceLabel(session.source)} · {strokes.length} annotation
+                {strokes.length === 1 ? "" : "s"}
+                {scoutTools && events.length > 0 ? (
+                  <>
+                    {" "}
+                    · {events.length} event tag{events.length === 1 ? "" : "s"}
+                  </>
+                ) : null}
+                {scoutTools && disruptions.length > 0 ? (
+                  <>
+                    {" "}
+                    · {disruptions.length} disruption{disruptions.length === 1 ? "" : "s"}
+                  </>
+                ) : null}
+                {scoutTools && analyses.length > 0 ? (
+                  <>
+                    {" "}
+                    · {analyses.length} analysis{analyses.length === 1 ? "" : "es"}
+                  </>
+                ) : null}
+                {scoutTools && !aiStatus.loading && aiStatus.configured ? (
+                  <> · AI ready</>
+                ) : scoutTools && !aiStatus.loading && !aiStatus.configured ? (
+                  <> · AI off</>
+                ) : null}
+              </p>
+              {scoutTools && !aiStatus.loading && !aiStatus.configured ? (
+                <p className="fc-film-ai-setup-hint">
+                  Set <code>OPENAI_API_KEY</code> to enable Analyze clip.
+                </p>
+              ) : null}
+              {scoutTools && session.source.kind === "youtube" ? (
+                <p className="fc-film-ai-setup-hint">
+                  YouTube analyze uses visible-player capture — upload MP4 if frames look blank.
+                </p>
+              ) : null}
+            </div>
+            {scoutTools ? (
+              <div className="fc-film-annotator-actions">
+                <button
+                  type="button"
+                  className="fc-film-counters-demo-btn"
+                  onClick={openCountersDemo}
+                  title="Counters walkthrough with fictional scout data"
+                >
+                  Counters demo
+                </button>
+                <button
+                  type="button"
+                  className="fc-film-analyze-btn"
+                  disabled={!canAnalyzeClip || analyzeBusy || aiStatus.configured === false}
+                  title={
+                    !canAnalyzeClip
+                      ? "Video source not supported for AI analyze"
+                      : aiStatus.configured === false
+                        ? "Add OPENAI_API_KEY to enable AI Assistant"
+                        : `AI Coaching Assistant — ${FILM_CLIP_ANALYZE_FRAME_COUNT} frames + nearby coach tags`
+                  }
+                  onClick={() => void handleAnalyzeClip()}
+                >
+                  {analyzePhase === "capturing"
+                    ? `Capturing ${captureProgress.current}/${captureProgress.total}…`
+                    : analyzePhase === "analyzing"
+                      ? "Analyzing…"
+                      : "Analyze clip"}
+                </button>
+                <button
+                  type="button"
+                  className="fc-film-game-plan-btn"
+                  onClick={() => setGamePlanModalOpen(true)}
+                >
+                  Add to game plan
+                </button>
+              </div>
+            ) : null}
+          </header>
+
+          {!scoutTools ? (
+            <FilmRoomToolbar
+              activePreset={activePreset}
+              onPresetChange={setActivePreset}
+              canUndo={undoStack.length > 0}
+              canRedo={redoStack.length > 0}
+              onUndo={undo}
+              onRedo={redo}
+              onClear={clearPenDrawings}
+            />
+          ) : null}
+
+          {scoutTools ? (
+            <>
+              <FilmRoomEventTagBar
+                currentTime={currentTime}
+                events={events}
+                noteDraft={tagNoteDraft}
+                disabled={duration <= 0}
+                canUndo={events.length > 0}
+                onNoteChange={setTagNoteDraft}
+                onTag={handleTagAtPlayhead}
+                onUndoLast={() => undoLastFilmEvent(session.id)}
+                onUpdate={(eventId, patch) => updateFilmEvent(session.id, eventId, patch)}
+                onRemove={(eventId) => removeFilmEvent(session.id, eventId)}
+                onSeek={handleSliderSeek}
+              />
+
+              <FilmRoomDisruptionTagBar
+                currentTime={currentTime}
+                disruptions={disruptions}
+                noteDraft={tagNoteDraft}
+                disabled={duration <= 0}
+                canUndo={disruptions.length > 0}
+                onNoteChange={setTagNoteDraft}
+                onTag={handleDisruptionAtPlayhead}
+                onUndoLast={() => undoLastFilmDisruption(session.id)}
+                onUpdate={(disruptionId, patch) =>
+                  updateFilmDisruption(session.id, disruptionId, patch)
+                }
+                onRemove={(disruptionId) => removeFilmDisruption(session.id, disruptionId)}
+                onSeek={handleSliderSeek}
+              />
+
+              <FilmRoomBookmarkBar
+                currentTime={currentTime}
+                bookmarks={bookmarks}
+                disabled={duration <= 0}
+                onAdd={handleAddBookmark}
+                onUpdate={(bookmarkId, patch) =>
+                  updateFilmBookmark(session.id, bookmarkId, patch)
+                }
+                onRemove={(bookmarkId) => removeFilmBookmark(session.id, bookmarkId)}
+                onSeek={handleSliderSeek}
+              />
+            </>
+          ) : null}
+
+          <FilmRoomPossessionPlaylist
+            ref={playlistRef}
+            sessionId={session.id}
+            sessionTitle={session.title}
+            source={session.source}
+            bookmarks={bookmarks}
+            currentTime={currentTime}
+            videoDuration={duration}
+            disabled={duration <= 0}
+            reelActive={reelActive}
+            reelIndex={reelIndex}
+            onSeek={handleSliderSeek}
+            onPlay={() => controllerRef.current?.play()}
+            onStartReel={handleStartReel}
+            onStopReel={handleStopReel}
+            getUploadBlob={getUploadBlob}
+          />
+
+          <FilmRoomFramePreviewStrip previews={framePreviews} open={showFramePreviews} />
+
+          {scoutTools ? (
+            <>
+              <FilmRoomAnalysisHistoryPanel
+                analyses={analyses}
+                bookmarkCount={bookmarks.length}
+                onOpen={openAnalysisRecord}
+                onSeek={handleSliderSeek}
+                onRemove={(recordId) => removeAnalysisRecord(session.id, recordId)}
+                onExportSession={
+                  analyses.length || bookmarks.length ? exportSessionScoutPdf : undefined
+                }
+                onBatchAnalyze={canAnalyzeClip ? handleBatchAnalyze : undefined}
+                batchBusy={batchBusy}
+                batchProgress={batchProgress}
+              />
+
+              <FilmRoomEvaluationStrip analyses={analyses} />
+            </>
+          ) : null}
+        </aside>
       </div>
 
       <p className="fc-film-hint">
-        Hold the wheel to move it; rotate to jog. Use the timeline for quick jumps. Press <kbd>F</kbd>{" "}
-        or ⛶ for fullscreen; <kbd>Space</kbd> play/pause in fullscreen.
+        Hold the wheel to move it; rotate to jog. Use the timeline for quick jumps.
+        {scoutTools ? null : (
+          <>
+            {" "}
+            Press <kbd>F</kbd> or ⛶ for fullscreen; <kbd>Space</kbd> play/pause in fullscreen.
+          </>
+        )}
       </p>
 
       <FilmRoomAddToGamePlanModal

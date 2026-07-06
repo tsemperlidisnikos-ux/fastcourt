@@ -37,11 +37,15 @@ interface Props {
   ballRingStrokeWidth?: number;
   /** Court editor vs thumbnail ball ring styling. */
   ballRingMode?: "editor" | "thumbnail";
+  /** Thinner guard lines in frame thumbnails. */
+  guardStrokeVariant?: "court" | "frame";
   listening?: boolean;
   draggable?: boolean;
   onPointerUp?: (e: { cancelBubble: boolean }) => void;
   onDragEnd?: (x: number, y: number) => void;
   selected?: boolean;
+  /** Dashed coach preview overlay before Apply. */
+  ghost?: boolean;
 }
 
 export function PlayerMarker({
@@ -56,11 +60,13 @@ export function PlayerMarker({
   ballRingExtra,
   ballRingStrokeWidth,
   ballRingMode,
+  guardStrokeVariant = "court",
   listening = false,
   draggable = false,
   onPointerUp,
   onDragEnd,
   selected = false,
+  ghost = false,
 }: Props) {
   const draggedRef = useRef(false);
   const playerDisplay = useSettingsStore((s) => s.appearance.playerDisplay);
@@ -180,6 +186,9 @@ export function PlayerMarker({
   const ballStroke =
     ballRingStrokeWidth ?? (resolvedBallMode === "editor" ? 2.75 : 1);
   const ballStrokeColor = "#000000";
+  const ghostStroke = "#0ea5e9";
+  const ghostOpacity = ghost ? 0.72 : 1;
+  const markerDash = ghost ? [7, 5] : undefined;
 
   function handleDragStart(e: Konva.KonvaEventObject<DragEvent>) {
     e.cancelBubble = true;
@@ -205,7 +214,8 @@ export function PlayerMarker({
     <Group
       x={x}
       y={y}
-      draggable={draggable}
+      opacity={ghostOpacity}
+      draggable={draggable && !ghost}
       onDragStart={draggable ? handleDragStart : undefined}
       onDragMove={draggable ? handleDragMove : undefined}
       onDragEnd={draggable ? handleDragEnd : undefined}
@@ -226,25 +236,24 @@ export function PlayerMarker({
         listening={hitListening}
       />
       {isGuardDefense ? (
-        <Group rotation={guardRotation} listening={false}>
-          <GuardMarkerGlyph
-            mode="konva"
-            circleRadius={ringRadius}
-            label={jerseyText}
-            labelFontSize={displayFontSize}
-            labelBoxWidth={jerseyBoxWidth}
-            labelBoxHeight={jerseyBoxHeight}
-            compact={compact}
-            compactStrokeWidth={compactStrokeWidth}
-          />
-        </Group>
+        <GuardMarkerGlyph
+          mode="konva"
+          circleRadius={ringRadius}
+          label={jerseyText}
+          labelFontSize={displayFontSize}
+          labelBoxWidth={jerseyBoxWidth}
+          labelBoxHeight={jerseyBoxHeight}
+          arcRotationDeg={guardRotation}
+          strokeVariant={guardStrokeVariant}
+        />
       ) : null}
       {isDefense && defenseCircle ? (
         <Circle
           radius={ringRadius}
           fill="transparent"
-          stroke={OBJECT_COLORS.defense}
+          stroke={ghost ? ghostStroke : OBJECT_COLORS.defense}
           strokeWidth={markerStroke}
+          dash={markerDash}
           strokeScaleEnabled={false}
           listening={false}
         />
@@ -253,8 +262,9 @@ export function PlayerMarker({
         <Circle
           radius={ringRadius}
           fill="transparent"
-          stroke={offenseRingStroke}
+          stroke={ghost ? ghostStroke : offenseRingStroke}
           strokeWidth={markerStroke}
+          dash={markerDash}
           strokeScaleEnabled={false}
           listening={false}
         />
@@ -263,7 +273,7 @@ export function PlayerMarker({
         <Text
           text={jerseyText}
           fontSize={displayFontSize}
-          fill={isDefense ? OBJECT_COLORS.defense : "#111111"}
+          fill={ghost ? ghostStroke : isDefense ? OBJECT_COLORS.defense : "#111111"}
           fontStyle={jerseyFontStyle}
           fontFamily={DEFAULT_APP_FONT_KONVA}
           align="center"

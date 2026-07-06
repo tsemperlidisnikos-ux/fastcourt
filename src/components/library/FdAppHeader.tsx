@@ -8,7 +8,7 @@ import { APP_BUILD } from "@/lib/config";
 import { useAppLogoSrc } from "@/hooks/useAppLogoSrc";
 import { useLibraryNavModules } from "@/hooks/useLibraryNavModules";
 import {
-  isLibraryNavModuleEnabled,
+  orderedLibraryNavTabs,
 } from "@/lib/settings/library-nav-modules";
 import {
   LIBRARY_NAV_TABS,
@@ -27,6 +27,7 @@ function isNavTabActive(
   activeTab: LibraryNavTabId,
 ) {
   if (tab.id === "film-room") return pathname.startsWith("/film-room");
+  if (tab.id === "scouting") return pathname.startsWith("/scouting");
   return pathname.startsWith("/library") && activeTab === tab.id;
 }
 
@@ -38,19 +39,7 @@ export function FdAppHeader({ activeTab = "draw" }: { activeTab?: LibraryNavTabI
   const navModules = useLibraryNavModules();
 
   const visibleTabs = useMemo(
-    () =>
-      LIBRARY_NAV_TABS.filter((tab) => {
-        if (tab.id === "coach") {
-          return (
-            isLibraryNavModuleEnabled(navModules, "practice") ||
-            isLibraryNavModuleEnabled(navModules, "film-room")
-          );
-        }
-        if (tab.id === "film-room") {
-          return isLibraryNavModuleEnabled(navModules, "film-room");
-        }
-        return isLibraryNavModuleEnabled(navModules, tab.id);
-      }),
+    () => orderedLibraryNavTabs(navModules),
     [navModules],
   );
 

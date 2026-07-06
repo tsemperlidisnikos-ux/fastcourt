@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useCountersDemo } from "@/hooks/useCountersDemo";
 import {
   buildCoachDashboardModel,
   COACH_SEASON_TREND_SESSIONS,
   coachTrendBarHeight,
+  findRecentPracticeSessionForDrill,
+  practiceSessionLibraryHref,
 } from "@/lib/coach/coach-dashboard";
 import { getAllRosterPlayers } from "@/lib/players/player-roster";
 import { createDrillPracticeItems } from "@/lib/practice/drill-suggestions";
@@ -14,6 +18,8 @@ import { useOrganizerStore } from "@/stores/organizer-store";
 import { appNotice } from "@/stores/dialog-store";
 
 export function CoachDashboardView() {
+  const router = useRouter();
+  const { openDemo: openCountersDemo } = useCountersDemo();
   const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
   const plays = useOrganizerStore((s) => s.plays);
   const teams = useOrganizerStore((s) => s.teams);
@@ -66,6 +72,13 @@ export function CoachDashboardView() {
     (row) => row.landedCount + row.missedCount > 0,
   );
 
+  const filteredPracticeSessions = useMemo(() => {
+    const team = teamFilter.trim();
+    return team
+      ? practiceSessions.filter((row) => row.team === team)
+      : practiceSessions;
+  }, [practiceSessions, teamFilter]);
+
   async function applyDrillSuggestion(suggestionId: string) {
     const suggestion = model.drillSuggestions.find((row) => row.id === suggestionId);
     if (!suggestion) return;
@@ -82,6 +95,7 @@ export function CoachDashboardView() {
         "Drill blocks added",
         `Added ${added} block${added === 1 ? "" : "s"} to new practice session.`,
       );
+      router.push(practiceSessionLibraryHref(session.id));
     } finally {
       setBusyId(null);
     }
@@ -112,6 +126,14 @@ export function CoachDashboardView() {
             </select>
           </label>
         ) : null}
+        <button
+          type="button"
+          className="fc-counters-demo-open-btn"
+          onClick={openCountersDemo}
+          title="Full counters walkthrough with demo data"
+        >
+          Counters demo
+        </button>
       </header>
 
       <div className="coach-dashboard-grid">
@@ -145,6 +167,13 @@ export function CoachDashboardView() {
                   <span className="coach-dashboard-trend-label">
                     {(row.title || row.date).slice(0, 8)}
                   </span>
+                  <Link
+                    href={practiceSessionLibraryHref(row.sessionId)}
+                    className="coach-dashboard-open-link"
+                    title={`Open ${row.title || row.date} in Practice`}
+                  >
+                    Practice
+                  </Link>
                 </div>
               ))}
             </div>
@@ -173,6 +202,13 @@ export function CoachDashboardView() {
                     <span className="coach-dashboard-trend-label">
                       {row.date.slice(5)}
                     </span>
+                    <Link
+                      href={practiceSessionLibraryHref(row.sessionId)}
+                      className="coach-dashboard-open-link"
+                      title={`Open ${row.title || row.date} in Practice`}
+                    >
+                      Practice
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -254,7 +290,13 @@ export function CoachDashboardView() {
           <h3>Drill suggestions</h3>
           {model.drillSuggestions.length ? (
             <ul className="coach-dashboard-drill-list">
-              {model.drillSuggestions.map((row) => (
+              {model.drillSuggestions.map((row) => {
+                const sourceSession = findRecentPracticeSessionForDrill(
+                  filteredPracticeSessions,
+                  row.call,
+                  row.playId,
+                );
+                return (
                 <li key={row.id} className="coach-dashboard-drill-row">
                   <div className="coach-dashboard-drill-main">
                     <strong>{row.call}</strong>
@@ -263,18 +305,30 @@ export function CoachDashboardView() {
                     ) : null}
                     <p>{row.reason}</p>
                   </div>
-                  <button
-                    type="button"
-                    className="coach-dashboard-drill-btn"
-                    disabled={busyId === row.id}
-                    onClick={() => void applyDrillSuggestion(row.id)}
-                  >
-                    {busyId === row.id
-                      ? "Adding…"
-                      : `Add ${row.suggestedBlocks} block${row.suggestedBlocks === 1 ? "" : "s"}`}
-                  </button>
+                  <div className="coach-dashboard-drill-actions">
+                    <button
+                      type="button"
+                      className="coach-dashboard-drill-btn"
+                      disabled={busyId === row.id}
+                      onClick={() => void applyDrillSuggestion(row.id)}
+                    >
+                      {busyId === row.id
+                        ? "Adding…"
+                        : `Add ${row.suggestedBlocks} block${row.suggestedBlocks === 1 ? "" : "s"}`}
+                    </button>
+                    {sourceSession ? (
+                      <Link
+                        href={practiceSessionLibraryHref(sourceSession.id)}
+                        className="coach-dashboard-open-link"
+                        title={`Open source session: ${sourceSession.title}`}
+                      >
+                        Open in Practice
+                      </Link>
+                    ) : null}
+                  </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           ) : (
             <p className="coach-dashboard-empty">

@@ -124,6 +124,27 @@
   text-align: center;
 }
 
+.coach-dashboard-open-link {
+  font-size: 9px;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.coach-dashboard-open-link:hover {
+  text-decoration: underline;
+}
+
+.coach-dashboard-drill-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .coach-dashboard-film-list,
 .coach-dashboard-drill-list {
   margin: 0;

@@ -22,7 +22,7 @@ const CHOICES: Array<{
   {
     style: "guard",
     title: "Guard (rotatable)",
-    icon: <GuardMarkerGlyph mode="svg" size={32} label="1" />,
+    icon: <GuardMarkerGlyph mode="svg" size={30} label="1" />,
   },
 ];
 

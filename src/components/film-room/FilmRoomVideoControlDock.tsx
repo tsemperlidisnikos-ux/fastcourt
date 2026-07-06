@@ -4,11 +4,12 @@ interface Props {
   playing: boolean;
   currentTime: number;
   duration: number;
-  markerTimes: number[];
+  markerTimes: Array<{ id: string; time: number }>;
   eventMarkerTimes?: Array<{ id: string; time: number }>;
   disruptionMarkerTimes?: Array<{ id: string; time: number }>;
   bookmarkMarkerTimes?: Array<{ id: string; time: number; kind?: string }>;
   fullscreen: boolean;
+  allowFullscreen?: boolean;
   autoClearOnScrub: boolean;
   onToggleAutoClear: () => void;
   onTogglePlay: () => void;
@@ -33,6 +34,7 @@ export function FilmRoomVideoControlDock({
   disruptionMarkerTimes = [],
   bookmarkMarkerTimes = [],
   fullscreen,
+  allowFullscreen = true,
   autoClearOnScrub,
   onToggleAutoClear,
   onTogglePlay,
@@ -107,11 +109,11 @@ export function FilmRoomVideoControlDock({
               />
             );
           })}
-          {markerTimes.map((time) => {
-            const pct = duration > 0 ? (time / duration) * 100 : 0;
+          {markerTimes.map((marker) => {
+            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
             return (
               <span
-                key={`ink-${time}`}
+                key={marker.id}
                 className="fc-film-video-controls-marker"
                 style={{ left: `${pct}%` }}
               />
@@ -120,19 +122,21 @@ export function FilmRoomVideoControlDock({
         </div>
       </div>
       <span className="fc-film-video-controls-time">{formatClock(duration)}</span>
-      <button
-        type="button"
-        className="fc-film-video-controls-fullscreen"
-        onClick={(e) => {
-          onToggleFullscreen();
-          (e.currentTarget as HTMLButtonElement).blur();
-        }}
-        title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-        aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        aria-pressed={fullscreen}
-      >
-        {fullscreen ? "⤢" : "⛶"}
-      </button>
+      {allowFullscreen ? (
+        <button
+          type="button"
+          className="fc-film-video-controls-fullscreen"
+          onClick={(e) => {
+            onToggleFullscreen();
+            (e.currentTarget as HTMLButtonElement).blur();
+          }}
+          title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          aria-pressed={fullscreen}
+        >
+          {fullscreen ? "⤢" : "⛶"}
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -36,6 +36,7 @@ import {
 } from "@/lib/game-plan/player-homework-ack";
 import type { HomeworkAckType } from "@/lib/game-plan/player-homework-ack";
 import { buildPracticeSessionFromGamePlan } from "@/lib/game-plan/prep-practice";
+import { buildPrepReadRecommendations } from "@/lib/game-plan/read-recommendations";
 import type { DisruptionPracticeEntry } from "@/lib/film-room/film-practice-disruption";
 import {
   buildDisruptionHomeworkFromPlan,
@@ -56,6 +57,7 @@ import {
 } from "@/lib/library/tag-colors";
 import { isProtectedDefaultField } from "@/lib/settings/default-fields";
 import { listStoredPlays, putStoredPlays } from "@/lib/library/idb";
+import { removeStarterDemoPlays } from "@/lib/library/starter-plays/remove-starter-demo-plays";
 import { recordLibraryDeletion } from "@/lib/library/tombstones";
 import {
   defaultPracticeItemDuration,
@@ -139,7 +141,10 @@ interface OrganizerState {
     entryId: string,
     direction: "up" | "down",
   ) => Promise<void>;
-  createPracticeSessionFromGamePlan: (planId: string) => Promise<PracticeSession | null>;
+  createPracticeSessionFromGamePlan: (
+    planId: string,
+    options?: { includeReadDrills?: boolean },
+  ) => Promise<PracticeSession | null>;
   createPlayerHomeworkFromGamePlan: (
     planId: string,
     dueDate?: string,
@@ -234,6 +239,8 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     const { ensureLibraryScopeReady } = await import("@/lib/library/library-scope");
     const ready = await ensureLibraryScopeReady();
     if (!ready) return;
+
+    await removeStarterDemoPlays();
 
     const [seasons, teams, series, fieldTags, fieldTagColors, playbooks, practice, gamePlans, playerHomework, plays] =
       await Promise.all([
@@ -719,11 +726,21 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
     await get().updateGamePlan(planId, { entries: nextEntries });
   },
 
-  createPracticeSessionFromGamePlan: async (planId) => {
+  createPracticeSessionFromGamePlan: async (planId, options) => {
     const plan = get().gamePlans.find((row) => row.id === planId);
     if (!plan) return null;
+    const includeReadDrills = options?.includeReadDrills !== false;
+    const readRecommendations = includeReadDrills
+      ? buildPrepReadRecommendations(
+          plan,
+          get().practiceSessions,
+          get().plays,
+          get().gamePlans,
+        )
+      : [];
     const session = buildPracticeSessionFromGamePlan(plan, get().plays, {
       sessionId: newId("prac"),
+      readRecommendations,
     });
     if (!session.items.length) return null;
     const sessions = [session, ...get().practiceSessions];

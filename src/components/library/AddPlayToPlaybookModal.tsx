@@ -123,7 +123,7 @@ function AddPlayToPlaybookModalBody({
 
   return createPortal(
     <div
-      className="modal-overlay active fc-add-play-modal-overlay"
+      className="modal-overlay active fc-add-play-modal-overlay fc-add-play-to-playbook-fullscreen"
       role="presentation"
       onClick={onClose}
     >

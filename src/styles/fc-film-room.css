@@ -9,6 +9,7 @@
 #screen-organizer .fc-film-room-screen,
 #screen-film-room.fc-film-room-screen {
   --fc-film-sidebar-w: 300px;
+  --fc-film-tools-w: min(400px, 36vw);
   display: flex;
   background: #f1f5f9;
   color: #0f172a;
@@ -198,15 +199,17 @@
 #screen-film-room .fc-film-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  overflow: auto;
+  padding: 0;
+  overflow: hidden;
 }
 
 #screen-film-room .fc-film-main-empty {
   margin: auto;
   max-width: 480px;
+  padding: 24px;
   text-align: center;
   color: #475569;
 }
@@ -219,9 +222,85 @@
 #screen-film-room .fc-film-annotator {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   min-height: 0;
   flex: 1;
+  height: 100%;
+}
+
+#screen-film-room .fc-film-annotator-body,
+#screen-organizer .fc-film-annotator-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--fc-film-tools-w);
+  align-items: stretch;
+}
+
+#screen-film-room .fc-film-annotator-video-col,
+#screen-organizer .fc-film-annotator-video-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  background: #0f172a;
+}
+
+#screen-film-room .fc-film-annotator-video-col .fc-film-stage,
+#screen-organizer .fc-film-annotator-video-col .fc-film-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+}
+
+#screen-film-room .fc-film-annotator-video-col .fc-film-video-stack,
+#screen-organizer .fc-film-annotator-video-col .fc-film-video-stack {
+  max-height: 100%;
+  margin: auto 0;
+}
+
+#screen-film-room .fc-film-annotator-tools-col,
+#screen-organizer .fc-film-annotator-tools-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow: auto;
+  border-left: 1px solid #dbe3ef;
+  background: #fff;
+}
+
+#screen-film-room .fc-film-annotator-tools-col .fc-film-annotator-head,
+#screen-organizer .fc-film-annotator-tools-col .fc-film-annotator-head {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#screen-film-room .fc-film-annotator-tools-col .fc-film-annotator-actions,
+#screen-organizer .fc-film-annotator-tools-col .fc-film-annotator-actions {
+  justify-content: stretch;
+}
+
+#screen-film-room .fc-film-annotator-tools-col .fc-film-analyze-btn,
+#screen-film-room .fc-film-annotator-tools-col .fc-film-game-plan-btn,
+#screen-organizer .fc-film-annotator-tools-col .fc-film-analyze-btn,
+#screen-organizer .fc-film-annotator-tools-col .fc-film-game-plan-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+#screen-film-room .fc-film-hint,
+#screen-organizer .fc-film-hint {
+  margin: 0;
+  padding: 8px 16px 12px;
+  font-size: 12px;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
 }
 
 #screen-film-room .fc-film-annotator-title {
@@ -1814,11 +1893,11 @@
   cursor: pointer;
 }
 
-#screen-film-room .fc-film-hint,
-#screen-organizer .fc-film-hint {
-  margin: 0;
-  font-size: 12px;
-  color: #64748b;
+@media (max-width: 1100px) {
+  #screen-film-room.fc-film-room-screen,
+  #screen-organizer .fc-film-room-screen {
+    --fc-film-tools-w: min(360px, 42vw);
+  }
 }
 
 @media (max-width: 900px) {
@@ -1831,6 +1910,19 @@
     max-height: 42vh;
     border-right: 0;
     border-bottom: 1px solid #dbe3ef;
+  }
+
+  #screen-film-room .fc-film-annotator-body,
+  #screen-organizer .fc-film-annotator-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(240px, 52vh) auto;
+  }
+
+  #screen-film-room .fc-film-annotator-tools-col,
+  #screen-organizer .fc-film-annotator-tools-col {
+    border-left: 0;
+    border-top: 1px solid #dbe3ef;
+    max-height: 48vh;
   }
 
   #screen-film-room .fc-film-markup-toolbar,

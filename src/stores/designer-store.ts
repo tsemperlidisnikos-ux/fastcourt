@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { createBlankPlay } from "@/lib/designer/play-factory";
 import { createActionsSlice } from "./designer/slices/actions-slice";
+import { createCoachPreviewSlice } from "./designer/slices/coach-preview-slice";
 import { createFormationZoomMirrorSlice } from "./designer/slices/formation-zoom-mirror-slice";
 import { createFramesSlice } from "./designer/slices/frames-slice";
 import { createLineDraftSlice } from "./designer/slices/line-draft-slice";
@@ -44,6 +45,7 @@ export const useDesignerStore = create<DesignerState>((set, get) =>
   redoStack: [],
   courtZoom: 90,
   courtSnapWidthPx: 0,
+  coachPreviewFixes: null,
 
   ...createPlayDocumentSlice(set, get),
   ...createFramesSlice(set, get),
@@ -53,5 +55,6 @@ export const useDesignerStore = create<DesignerState>((set, get) =>
   ...createLineDraftSlice(set, get),
   ...createActionsSlice(set, get),
   ...createFormationZoomMirrorSlice(set, get),
+  ...createCoachPreviewSlice(set, get),
   }) as DesignerState,
 );

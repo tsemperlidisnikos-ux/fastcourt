@@ -7,6 +7,7 @@ import { AddPlayToPlaybookModal } from "@/components/library/AddPlayToPlaybookMo
 import { GamePlanHomeworkPanel } from "@/components/library/GamePlanHomeworkPanel";
 import { OpponentBoardPanel } from "@/components/library/OpponentBoardPanel";
 import { GamePlanReadRollupPanel } from "@/components/library/GamePlanReadRollupPanel";
+import { GamePlanReadRecommendationsPanel } from "@/components/library/GamePlanReadRecommendationsPanel";
 import { GamePlanFilmEvidencePanel } from "@/components/library/GamePlanFilmEvidencePanel";
 import { GameDayOverlay } from "@/components/library/GameDayOverlay";
 import { GamePlanBenchPrintOverlay } from "@/components/library/GamePlanBenchPrintOverlay";
@@ -16,6 +17,12 @@ import { PresentationOverlay } from "@/components/library/PresentationOverlay";
 import { TimeoutOverlay } from "@/components/library/TimeoutOverlay";
 import { GAME_PLAN_CATEGORIES } from "@/lib/game-plan/constants";
 import { computePrepPracticeDate } from "@/lib/game-plan/prep-practice";
+import {
+  buildPostGameReadOutcomeNotes,
+  buildPrepReadRecommendations,
+  countPrepReadBlocks,
+  mergePostGameNotes,
+} from "@/lib/game-plan/read-recommendations";
 import {
   formatGamePlanDate,
   formatGamePlanHomeAway,
@@ -51,6 +58,7 @@ import {
 import { buildTimeoutViewSlides } from "@/lib/game-plan/timeout-mode";
 import { opponentScopedSessionsForReadLookup } from "@/lib/game-plan/opponent-read-rollup";
 import { buildReadSuccessLookup } from "@/lib/practice/read-success-by-call";
+import { useCountersDemo } from "@/hooks/useCountersDemo";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import {
   appConfirm,
@@ -92,6 +100,7 @@ function formatUpdated(iso: string) {
 export function GamePlanView() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { openDemo: openCountersDemo } = useCountersDemo();
   const planParam = searchParams.get("plan")?.trim() || null;
   const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const playerHomework = useOrganizerStore((s) => s.playerHomework);
@@ -398,10 +407,16 @@ export function GamePlanView() {
   async function handleStatusChange(status: GamePlanStatus) {
     if (!selected) return;
     if (status === "archived") {
+      const readAuto = buildPostGameReadOutcomeNotes(
+        selected,
+        practiceSessions,
+        gamePlans,
+      );
       const notes = await appPrompt({
         title: "Archive game plan",
         label: "Post-game notes (optional)",
-        initialValue: selected.postGameNotes || "",
+        initialValue:
+          mergePostGameNotes(selected.postGameNotes || "", readAuto) || "",
         submitLabel: "Archive",
         multiline: true,
         allowEmpty: true,
@@ -490,9 +505,19 @@ export function GamePlanView() {
   async function handlePrepPractice() {
     if (!selected || !canPrintBench) return;
     const prepDate = computePrepPracticeDate(selected.gameDate);
+    const readRecs = buildPrepReadRecommendations(
+      selected,
+      practiceSessions,
+      plays,
+      gamePlans,
+    );
+    const readBlockCount = countPrepReadBlocks(readRecs);
+    const drillPart = readRecs.length
+      ? ` plus ${readBlockCount} read drill block${readBlockCount === 1 ? "" : "s"} (${readRecs.map((row) => row.call).join(", ")})`
+      : "";
     const ok = await appConfirm({
       title: "Prep practice",
-      message: `Create a practice session for ${prepDate} with all ${gamePlanEntryCount(selected)} plays from this game plan?`,
+      message: `Create a practice session for ${prepDate} with all ${gamePlanEntryCount(selected)} plays from this game plan${drillPart}?`,
       confirmLabel: "Create session",
     });
     if (!ok) return;
@@ -628,6 +653,14 @@ export function GamePlanView() {
                   </p>
                 </div>
                 <div className="fc-game-plan-main-actions">
+                  <button
+                    type="button"
+                    className="fc-counters-demo-open-btn"
+                    onClick={openCountersDemo}
+                    title="Walkthrough with fictional Panathinaikos scout data"
+                  >
+                    Counters demo
+                  </button>
                   <button
                     type="button"
                     className="fc-game-plan-action-btn"
@@ -774,6 +807,8 @@ export function GamePlanView() {
               <GamePlanFilmEvidencePanel plan={selected} />
 
               <GamePlanReadRollupPanel plan={selected} />
+
+              <GamePlanReadRecommendationsPanel plan={selected} />
 
               {selected.postGameNotes?.trim() ? (
                 <div className="fc-game-plan-postgame-notes">

@@ -20,6 +20,7 @@ export const createUndoSlice: DesignerSliceCreator = (set, get) => ({
         lineDraft: null,
         freehandDraft: null,
         selectedActionId: null,
+        coachPreviewFixes: null,
       };
     }),
 
@@ -37,6 +38,7 @@ export const createUndoSlice: DesignerSliceCreator = (set, get) => ({
         lineDraft: null,
         freehandDraft: null,
         selectedActionId: null,
+        coachPreviewFixes: null,
       };
     }),
 });

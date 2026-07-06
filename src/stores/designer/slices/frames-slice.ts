@@ -5,6 +5,11 @@ import {
   MAX_FRAME_ANIM_DURATION_SEC,
   MIN_FRAME_ANIM_DURATION_SEC,
 } from "@/lib/designer/animation-timing";
+import {
+  applyFixesToFrame,
+  type DesignerCoachFix,
+} from "@/lib/designer/designer-coach-apply";
+import { rosterModeFromLibraryType } from "@/lib/designer/player-limits";
 import type { DesignerFrame, FrameReadBranch } from "@/types/designer";
 import {
   cloneAction,
@@ -199,6 +204,20 @@ export const createFramesSlice: DesignerSliceCreator = (set, get) => ({
       })),
     ),
 
+  applyCoachFixes: (fixes) =>
+    set((state) =>
+      !fixes.length
+        ? state
+        : updateCurrentFrame(
+            state,
+            (frame) =>
+              applyFixesToFrame(frame, fixes, {
+                rosterMode: rosterModeFromLibraryType(state.libraryItemType),
+              }),
+            { recordUndo: true },
+          ),
+    ),
+
   replaceCurrentFrame: (frame) =>
     set((state) =>
       updateCurrentFrame(state, () => frame, { recordUndo: true }),
@@ -230,6 +249,31 @@ export const createFramesSlice: DesignerSliceCreator = (set, get) => ({
       const frame = applyActionResultsToFrame(source, draft, {
         clearActions: true,
       });
+      return {
+        ...pushUndoSnapshot(state),
+        play: { ...state.play, frames: [...state.play.frames, frame] },
+        currentFrameIndex: state.play.frames.length,
+        lineDraft: null,
+        freehandDraft: null,
+        selectedActionId: null,
+        frameActionsDirty: false,
+      };
+    }),
+
+  appendImportedReadFrame: (importedFrame, coverage, label) =>
+    set((state) => {
+      const parent = state.play.frames[state.currentFrameIndex];
+      if (!parent) return state;
+      const branch = defaultReadBranchForCoverage(
+        coverage,
+        parent.id,
+        label || `If ${coverage.toUpperCase()}`,
+      );
+      const frame: DesignerFrame = {
+        ...importedFrame,
+        name: branch.label,
+        readBranch: branch,
+      };
       return {
         ...pushUndoSnapshot(state),
         play: { ...state.play, frames: [...state.play.frames, frame] },

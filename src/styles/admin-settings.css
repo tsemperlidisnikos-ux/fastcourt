@@ -241,12 +241,49 @@
 .fc-admin-settings .admin-library-nav-module-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 12px;
+  gap: 0 12px;
   align-items: center;
   padding: 10px 12px;
   border: 1px solid var(--od-border, #e2e8f0);
   border-radius: 10px;
   background: #fff;
+}
+
+.fc-admin-settings .admin-library-nav-module-row.is-dragging {
+  opacity: 0.55;
+}
+
+.fc-admin-settings .admin-library-nav-module-row.is-drop-target {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.fc-admin-settings .admin-library-nav-module-drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--od-border, #e2e8f0);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1;
+  cursor: grab;
+}
+
+.fc-admin-settings .admin-library-nav-module-drag:active {
+  cursor: grabbing;
+}
+
+.fc-admin-settings .admin-library-nav-module-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  align-items: center;
   cursor: pointer;
 }
 

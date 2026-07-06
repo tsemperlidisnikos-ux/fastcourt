@@ -1,4 +1,5 @@
 import type { FormationKey } from "@/lib/designer/formations";
+import type { DesignerCoachFix } from "@/lib/designer/designer-coach-apply";
 import type { DefenseMarkerStyle } from "@/lib/designer/defense-marker-style";
 import type { ShadowType } from "@/lib/designer/shadow-geometry";
 import type { ZoneType } from "@/lib/designer/zone-geometry";
@@ -144,8 +145,17 @@ export interface DesignerState {
   setFrameNotes: (notes: string) => void;
   setFrameReadBranch: (branch: FrameReadBranch | undefined) => void;
   addReadFrame: (coverage: string, label: string) => void;
+  appendImportedReadFrame: (
+    frame: DesignerFrame,
+    coverage: string,
+    label: string,
+  ) => void;
   setFrameShowTitleInAnimation: (show: boolean) => void;
   setFrameAnimDurationSec: (seconds: number) => void;
+  applyCoachFixes: (fixes: DesignerCoachFix[]) => void;
+  coachPreviewFixes: DesignerCoachFix[] | null;
+  setCoachPreviewFixes: (fixes: DesignerCoachFix[] | null) => void;
+  clearCoachPreviewFixes: () => void;
   mirrorCurrentFrame: () => void;
   mirrorEntirePlay: () => void;
   replaceCurrentFrame: (frame: DesignerFrame) => void;

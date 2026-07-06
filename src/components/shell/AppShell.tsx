@@ -1,8 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useSyncExternalStore } from "react";
+import { Suspense, useLayoutEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { TrialExpiredGate } from "@/components/billing/TrialExpiredGate";
+import { CountersDemoHost } from "@/components/demo/CountersDemoHost";
 import { AppNav } from "@/components/shell/AppNav";
 import { AuthProvider, useAuthBooted } from "@/components/auth/AuthProvider";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
@@ -71,6 +72,7 @@ function AppGate({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/library") ||
     pathname.startsWith("/designer") ||
     pathname.startsWith("/film-room") ||
+    pathname.startsWith("/scouting") ||
     pathname.startsWith("/settings");
 
   if (!authBooted || (!cloud && !hydrated)) {
@@ -88,6 +90,9 @@ function AppGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TrialExpiredGate />
+      <Suspense fallback={null}>
+        <CountersDemoHost />
+      </Suspense>
       <AppContent fullBleed={fullBleed}>{children}</AppContent>
     </>
   );

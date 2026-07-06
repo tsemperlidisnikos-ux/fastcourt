@@ -51,6 +51,7 @@ import { ShadowMarker } from "@/components/designer/ShadowMarker";
 import { ZoneMarker } from "@/components/designer/ZoneMarker";
 import { shadowPlacementFromNormDrag } from "@/lib/designer/shadow-geometry";
 import { zonePlacementFromNormDrag } from "@/lib/designer/zone-geometry";
+import { buildCoachPreviewGhosts } from "@/lib/designer/designer-coach-preview";
 import { tapMoveThreshold } from "@/lib/viewport/touch-targets";
 import type {
   ActionType,
@@ -308,11 +309,16 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
 
   const animRuntime = useDesignerStore((s) => s.animRuntime);
   const simulateGuardRotation = useDesignerStore((s) => s.simulateGuardRotation);
+  const coachPreviewFixes = useDesignerStore((s) => s.coachPreviewFixes);
   const frame = play.frames[currentFrameIndex];
   const displayObjects = useMemo(() => {
     const objects = animRuntime?.objects ?? frame?.objects ?? [];
     return simulateGuardRotation ? simulateGuardRotations(objects) : objects;
   }, [animRuntime?.objects, frame?.objects, simulateGuardRotation]);
+  const coachPreviewGhosts = useMemo(() => {
+    if (!frame || !coachPreviewFixes?.length || animRuntime?.active) return [];
+    return buildCoachPreviewGhosts(frame, coachPreviewFixes);
+  }, [animRuntime?.active, coachPreviewFixes, frame]);
   const selectedAction = frame?.actions.find((a) => a.id === selectedActionId);
   const selectedObject = frame?.objects.find((o) => o.id === selectedObjectId);
   const whiteboardActive = tool === "whiteboard";
@@ -1004,6 +1010,55 @@ const CourtCanvas = forwardRef<CourtCanvasHandle>(function CourtCanvas(_props, r
               selected={selectedObjectId === object.id}
             />
           ))}
+        </Layer>
+        <Layer listening={false}>
+          {coachPreviewGhosts.map((ghost) => {
+            const toPos = placementNormToStage(
+              viewLayout,
+              play.courtType,
+              ghost.object.x,
+              ghost.object.y,
+              courtCoords,
+            );
+            const radius = Math.max(12, viewLayout.court.width * 0.028);
+            const connector =
+              ghost.fromX != null && ghost.fromY != null
+                ? (() => {
+                    const fromPos = placementNormToStage(
+                      viewLayout,
+                      play.courtType,
+                      ghost.fromX!,
+                      ghost.fromY!,
+                      courtCoords,
+                    );
+                    return (
+                      <Line
+                        key={`${ghost.id}-line`}
+                        points={[fromPos.x, fromPos.y, toPos.x, toPos.y]}
+                        stroke="#0ea5e9"
+                        strokeWidth={2}
+                        dash={[6, 4]}
+                        opacity={0.85}
+                        listening={false}
+                      />
+                    );
+                  })()
+                : null;
+            return (
+              <Group key={ghost.id}>
+                {connector}
+                <PlayerMarker
+                  object={ghost.object}
+                  x={toPos.x}
+                  y={toPos.y}
+                  radius={radius}
+                  court={viewLayout.court}
+                  ghost
+                  listening={false}
+                />
+              </Group>
+            );
+          })}
         </Layer>
         <Layer listening={false}>
           {(frame?.whiteboardStrokes ?? []).map((stroke, i) => {

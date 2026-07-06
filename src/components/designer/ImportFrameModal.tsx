@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useClientMounted } from "@/hooks/useClientMounted";
 import type { LibraryItem } from "@/types/library";
 import type { StoredPlay } from "@/types/library";
@@ -12,6 +12,9 @@ interface Props {
   getPlayDocument: (id: string) => Promise<StoredPlay | undefined>;
   onClose: () => void;
   onImport: (frame: StoredPlay["frames"][number]) => void;
+  /** Skip play search — open directly on this play's frames. */
+  initialPlayId?: string | null;
+  title?: string;
 }
 
 export function ImportFrameModal(props: Props) {
@@ -25,14 +28,18 @@ function ImportFrameModalBody({
   getPlayDocument,
   onClose,
   onImport,
+  initialPlayId = null,
+  title = "Import frame from library",
 }: Props) {
-  const [query, setQuery] = useState("");  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [frameIndex, setFrameIndex] = useState(0);
   const [frameCount, setFrameCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const filtered = useMemo(() => {    const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return items.filter(
       (item) =>
         item.type !== "playbook" &&
@@ -40,7 +47,8 @@ function ImportFrameModalBody({
     );
   }, [items, query]);
 
-  async function pickPlay(id: string) {    setSelectedId(id);
+  async function pickPlay(id: string) {
+    setSelectedId(id);
     setError("");
     setLoading(true);
     try {
@@ -56,6 +64,11 @@ function ImportFrameModalBody({
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!initialPlayId) return;
+    void pickPlay(initialPlayId);
+  }, [initialPlayId]);
 
   async function handleImport() {
     if (!selectedId) return;
@@ -89,7 +102,7 @@ function ImportFrameModalBody({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-title" id="import-frame-modal-title">
-          Import frame from library
+          {title}
         </div>
         <p className="modal-subtitle">
           Pick a play, then choose which frame to copy into the current frame.

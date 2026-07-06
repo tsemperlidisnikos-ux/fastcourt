@@ -20,6 +20,7 @@ import { parseDesignerFrameParam } from "@/lib/designer/designer-deep-link";
 import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { blockNativeContextMenu } from "@/lib/ui/context-menu-policy";
 import { ActionTimeline } from "@/components/designer/ActionTimeline";
+import { DesignerCoachPanel } from "@/components/designer/DesignerCoachPanel";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { CourtWhiteboardToolbar } from "@/components/designer/CourtWhiteboardToolbar";
 import { NotesFormatToolbar } from "@/components/designer/NotesFormatToolbar";
@@ -145,6 +146,7 @@ export function DesignerScreen() {
   const session = useAuthStore((s) => s.session);
   const loadMeta = useOrganizerStore((s) => s.loadMeta);
   const metaHydrated = useOrganizerStore((s) => s.hydrated);
+  const libraryPlays = useOrganizerStore((s) => s.plays);
   const loadPlay = useDesignerStore((s) => s.loadPlay);
   const play = useDesignerStore((s) => s.play);
   const libraryItemType = useDesignerStore((s) => s.libraryItemType);
@@ -224,6 +226,7 @@ export function DesignerScreen() {
   const [exportingAnim, setExportingAnim] = useState(false);
   const [exportAnimProgress, setExportAnimProgress] = useState(0);
   const [openToolGroups, setOpenToolGroups] = useState<Set<string>>(defaultOpenToolGroups);
+  const [sidebarTab, setSidebarTab] = useState<"frames" | "coach">("frames");
 
   useEffect(() => {
     if (storedMeta?.type) {
@@ -1230,11 +1233,36 @@ export function DesignerScreen() {
           </div>
         </aside>
 
-        <aside className="ds-sidebar-panel" aria-label="Frames">
+        <aside className="ds-sidebar-panel" aria-label="Frames and coach">
+          <div className="ds-sidebar-tabs" role="tablist" aria-label="Right sidebar">
+            <button
+              type="button"
+              role="tab"
+              id="sidebar-tab-btn-frames"
+              className={`ds-sidebar-tab${sidebarTab === "frames" ? " active" : ""}`}
+              aria-selected={sidebarTab === "frames"}
+              aria-controls="sidebar-tab-frames"
+              onClick={() => setSidebarTab("frames")}
+            >
+              Frames
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="sidebar-tab-btn-coach"
+              className={`ds-sidebar-tab${sidebarTab === "coach" ? " active" : ""}`}
+              aria-selected={sidebarTab === "coach"}
+              aria-controls="sidebar-tab-coach"
+              onClick={() => setSidebarTab("coach")}
+            >
+              Coach
+            </button>
+          </div>
           <div
-            className="ds-sidebar-tab-pane is-active"
+            className={`ds-sidebar-tab-pane${sidebarTab === "frames" ? " is-active" : ""}`}
             id="sidebar-tab-frames"
             role="tabpanel"
+            aria-labelledby="sidebar-tab-btn-frames"
           >
             <div className="ds-thumb-list-vertical" id="frames-container">
               {thumbnailFrames.map((frame, index) => {
@@ -1274,6 +1302,25 @@ export function DesignerScreen() {
                 );
               })}
             </div>
+          </div>
+          <div
+            className={`ds-sidebar-tab-pane${sidebarTab === "coach" ? " is-active" : ""}`}
+            id="sidebar-tab-coach"
+            role="tabpanel"
+            aria-labelledby="sidebar-tab-btn-coach"
+          >
+            <DesignerCoachPanel
+              play={{
+                ...play,
+                type: storedMeta?.type,
+                season: storedMeta?.season,
+                team: storedMeta?.team,
+                series: storedMeta?.series,
+                tags: storedMeta?.tags,
+                playNotes: storedMeta?.playNotes,
+              }}
+              libraryPlays={libraryPlays}
+            />
           </div>
         </aside>
       </div>

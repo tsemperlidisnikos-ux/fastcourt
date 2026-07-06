@@ -10,7 +10,7 @@ export default function FilmRoomPage() {
         </div>
       }
     >
-      <FilmRoomScreen />
+      <FilmRoomScreen navModuleId="film-room" />
     </Suspense>
   );
 }

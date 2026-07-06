@@ -30,11 +30,16 @@ export const LIBRARY_NAV_TABS = [
     label: "FILM ROOM",
     href: "/film-room",
   },
+  {
+    id: "scouting" as const,
+    label: "SCOUTING",
+    href: "/scouting",
+  },
 ] as const;
 
 export type LibraryNavTabId = (typeof LIBRARY_NAV_TABS)[number]["id"];
 
-export type LibraryScreenTab = Exclude<LibraryNavTabId, "film-room">;
+export type LibraryScreenTab = Exclude<LibraryNavTabId, "film-room" | "scouting">;
 
 export const LIBRARY_NAV_MODULE_LABELS: Record<LibraryNavModuleId, string> = {
   draw: "Library",
@@ -42,6 +47,8 @@ export const LIBRARY_NAV_MODULE_LABELS: Record<LibraryNavModuleId, string> = {
   gameplan: "Game plan",
   fields: "Fields",
   practice: "Practice",
+  coach: "Coach dashboard",
   players: "Players",
   "film-room": "Film room",
+  scouting: "Scouting",
 };

@@ -1,5 +1,9 @@
 import { buildDrillSuggestions, type DrillSuggestion } from "@/lib/practice/drill-suggestions";
 import {
+  isReadTrackableItem,
+  readItemLabel,
+} from "@/lib/practice/read-success-scorecard";
+import {
   buildReadPlayerAttribution,
   type ReadPlayerAttribution,
 } from "@/lib/practice/read-player-attribution";
@@ -26,6 +30,40 @@ export interface CoachFilmSessionSummary {
 }
 
 export const COACH_SEASON_TREND_SESSIONS = 10;
+
+export function practiceSessionLibraryHref(sessionId: string): string {
+  return `/library?tab=practice&session=${encodeURIComponent(sessionId)}`;
+}
+
+/** Most recent practice session that marked this call (for drill drill-down). */
+export function findRecentPracticeSessionForDrill(
+  sessions: PracticeSession[],
+  call: string,
+  playId?: string,
+): PracticeSession | null {
+  const sorted = [...sessions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+  for (const session of sorted) {
+    for (const item of session.items) {
+      if (!isReadTrackableItem(item)) continue;
+      if (readItemLabel(item) !== call) continue;
+      if (playId && item.playId !== playId) continue;
+      if (item.readOutcome === "missed" || item.readOutcome === "landed") {
+        return session;
+      }
+    }
+  }
+  for (const session of sorted) {
+    for (const item of session.items) {
+      if (!isReadTrackableItem(item)) continue;
+      if (readItemLabel(item) !== call) continue;
+      if (playId && item.playId !== playId) continue;
+      return session;
+    }
+  }
+  return null;
+}
 
 export interface CoachDashboardModel {
   overallReadRatePct: number | null;

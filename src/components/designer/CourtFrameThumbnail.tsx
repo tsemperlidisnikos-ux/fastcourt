@@ -593,8 +593,9 @@ export function CourtFrameThumbnail({
                 compact
                 ballRingMode="thumbnail"
                 compactFontSize={compactFontSize}
-                compactStrokeWidth={1}
-                ballRingStrokeWidth={1}
+                compactStrokeWidth={isLarge ? undefined : 1}
+                ballRingStrokeWidth={isLarge ? undefined : 1}
+                guardStrokeVariant="frame"
               />
             );
           })}
