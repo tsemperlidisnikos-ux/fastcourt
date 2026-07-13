@@ -329,6 +329,72 @@
   min-height: 58px;
 }
 
+#screen-film-room .fc-film-markup-toolbar-dock,
+#screen-organizer .fc-film-markup-toolbar-dock {
+  position: absolute;
+  z-index: 6;
+  display: inline-flex;
+  align-items: stretch;
+  max-width: calc(100% - 24px);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#screen-film-room .fc-film-markup-toolbar-dock.is-measuring,
+#screen-organizer .fc-film-markup-toolbar-dock.is-measuring {
+  left: 12px;
+  right: 12px;
+  bottom: 68px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#screen-film-room .fc-film-markup-toolbar-dock.is-moving,
+#screen-organizer .fc-film-markup-toolbar-dock.is-moving {
+  cursor: grabbing;
+}
+
+#screen-film-room .fc-film-markup-toolbar-dock.is-moving .fc-film-markup-toolbar,
+#screen-organizer .fc-film-markup-toolbar-dock.is-moving .fc-film-markup-toolbar {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 16px 36px rgba(15, 23, 42, 0.42);
+}
+
+#screen-film-room .fc-film-markup-drag-handle,
+#screen-organizer .fc-film-markup-drag-handle {
+  flex-shrink: 0;
+  width: 28px;
+  border: 0;
+  border-radius: 14px 0 0 14px;
+  background: #2f2f31;
+  color: rgba(242, 242, 247, 0.72);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+#screen-film-room .fc-film-markup-drag-handle:hover,
+#screen-organizer .fc-film-markup-drag-handle:hover {
+  color: #fff;
+  background: #48484a;
+}
+
+#screen-film-room .fc-film-markup-drag-handle:active,
+#screen-organizer .fc-film-markup-drag-handle:active,
+#screen-film-room .fc-film-markup-toolbar-dock.is-moving .fc-film-markup-drag-handle,
+#screen-organizer .fc-film-markup-toolbar-dock.is-moving .fc-film-markup-drag-handle {
+  cursor: grabbing;
+}
+
+#screen-film-room .fc-film-markup-toolbar-dock .fc-film-markup-toolbar,
+#screen-organizer .fc-film-markup-toolbar-dock .fc-film-markup-toolbar {
+  border-radius: 0 14px 14px 0;
+  max-width: min(680px, calc(100vw - 120px));
+}
+
 #screen-film-room .fc-film-markup-history,
 #screen-organizer .fc-film-markup-history {
   display: flex;
@@ -476,9 +542,9 @@
   border-radius: 8px;
 }
 
-#screen-film-room .fc-film-player-shell:fullscreen .fc-film-markup-toolbar,
-#screen-organizer .fc-film-player-shell:fullscreen .fc-film-markup-toolbar {
-  flex-shrink: 0;
+#screen-film-room .fc-film-player-shell:fullscreen .fc-film-markup-toolbar-dock .fc-film-markup-toolbar,
+#screen-organizer .fc-film-player-shell:fullscreen .fc-film-markup-toolbar-dock .fc-film-markup-toolbar {
+  max-width: min(820px, calc(100vw - 120px));
 }
 
 #screen-film-room .fc-film-video-stack,
@@ -1923,6 +1989,18 @@
     border-left: 0;
     border-top: 1px solid #dbe3ef;
     max-height: 48vh;
+  }
+
+  #screen-film-room .fc-film-markup-toolbar-dock.is-measuring,
+  #screen-organizer .fc-film-markup-toolbar-dock.is-measuring {
+    left: 8px;
+    right: 8px;
+    bottom: 60px;
+  }
+
+  #screen-film-room .fc-film-markup-toolbar-dock .fc-film-markup-toolbar,
+  #screen-organizer .fc-film-markup-toolbar-dock .fc-film-markup-toolbar {
+    max-width: calc(100vw - 96px);
   }
 
   #screen-film-room .fc-film-markup-toolbar,

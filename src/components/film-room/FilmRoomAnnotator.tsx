@@ -14,6 +14,7 @@ import { FilmRoomAddToGamePlanModal } from "@/components/film-room/FilmRoomAddTo
 import { FilmRoomAnalyzeModal } from "@/components/film-room/FilmRoomAnalyzeModal";
 import { FilmScoutPrintOverlay } from "@/components/film-room/FilmScoutPrintOverlay";
 import { FilmRoomToolbar } from "@/components/film-room/FilmRoomToolbar";
+import { FilmRoomFloatingMarkupToolbar } from "@/components/film-room/FilmRoomFloatingMarkupToolbar";
 import { FilmRoomVideoControlDock } from "@/components/film-room/FilmRoomVideoControlDock";
 import {
   FilmRoomVideoSurface,
@@ -887,6 +888,23 @@ export function FilmRoomAnnotator({
                 onJog={handleJog}
                 onJogEnd={() => undefined}
               />
+              {!scoutTools ? (
+                <FilmRoomFloatingMarkupToolbar
+                  boundsRef={overlayRef}
+                  boundsWidth={overlaySize.width}
+                  boundsHeight={overlaySize.height}
+                >
+                  <FilmRoomToolbar
+                    activePreset={activePreset}
+                    onPresetChange={setActivePreset}
+                    canUndo={undoStack.length > 0}
+                    canRedo={redoStack.length > 0}
+                    onUndo={undo}
+                    onRedo={redo}
+                    onClear={clearPenDrawings}
+                  />
+                </FilmRoomFloatingMarkupToolbar>
+              ) : null}
               <FilmRoomVideoControlDock
                 playing={playing}
                 currentTime={currentTime}
@@ -988,18 +1006,6 @@ export function FilmRoomAnnotator({
               </div>
             ) : null}
           </header>
-
-          {!scoutTools ? (
-            <FilmRoomToolbar
-              activePreset={activePreset}
-              onPresetChange={setActivePreset}
-              canUndo={undoStack.length > 0}
-              canRedo={redoStack.length > 0}
-              onUndo={undo}
-              onRedo={redo}
-              onClear={clearPenDrawings}
-            />
-          ) : null}
 
           {scoutTools ? (
             <>

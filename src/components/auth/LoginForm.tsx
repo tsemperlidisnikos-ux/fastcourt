@@ -112,14 +112,50 @@ function decodeUrlErrorParam(raw: string): string {
   }
 }
 
-export function LoginForm() {
+interface LoginFormProps {
+  /** Resolved on the server from ?signup=1 so SSR matches the first client render. */
+  initialSignup?: boolean;
+  /** Resolved on the server from ?recovery=1 so SSR matches the first client render. */
+  initialRecovery?: boolean;
+}
+
+function resolveAuthMode(
+  signupParam: string | null,
+  initialSignup: boolean,
+): AuthMode {
+  if (signupParam != null) {
+    return signupParam === "1" ? "signup" : "login";
+  }
+  return initialSignup ? "signup" : "login";
+}
+
+function resolveRecoveryMode(
+  recoveryParam: string | null,
+  initialRecovery: boolean,
+): boolean {
+  if (recoveryParam != null) {
+    return isPasswordRecoveryLogin("/login", recoveryParam);
+  }
+  return initialRecovery;
+}
+
+export function LoginForm({
+  initialSignup = false,
+  initialRecovery = false,
+}: LoginFormProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
   const signOut = useAuthStore((s) => s.signOut);
   const appLogoSrc = useAppLogoSrc();
 
-  const [mode, setMode] = useState<AuthMode>("login");
+  const signupParam = searchParams.get("signup");
+  const recoveryParam = searchParams.get("recovery");
+  const recoveryMode = resolveRecoveryMode(recoveryParam, initialRecovery);
+
+  const [mode, setMode] = useState<AuthMode>(() =>
+    resolveAuthMode(signupParam, initialSignup),
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -127,7 +163,6 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const recoveryMode = isPasswordRecoveryLogin("/login", searchParams.get("recovery"));
   const [recoveryVerified, setRecoveryVerified] = useState<boolean | null>(() =>
     recoveryMode ? null : false,
   );
@@ -160,11 +195,12 @@ export function LoginForm() {
 
   useEffect(() => {
     if (recoveryMode) return;
-    if (searchParams.get("signup") === "1") {
-      setMode("signup");
+    const nextMode = resolveAuthMode(searchParams.get("signup"), initialSignup);
+    setMode(nextMode);
+    if (nextMode === "login") {
       setSignupEmailSent(null);
     }
-  }, [recoveryMode, searchParams]);
+  }, [initialSignup, recoveryMode, searchParams]);
 
   useEffect(() => {
     if (!recoveryMode || !cloud) {
@@ -653,6 +689,7 @@ export function LoginForm() {
                         </label>
                         <input
                           id="auth-email"
+                          name="email"
                           type="email"
                           className="welcome-input"
                           autoComplete="email"
@@ -681,6 +718,7 @@ export function LoginForm() {
                           </label>
                           <PasswordField
                             id="auth-password"
+                            name="password"
                             value={password}
                             onChange={setPassword}
                             placeholder="New password"
@@ -695,6 +733,7 @@ export function LoginForm() {
                           </label>
                           <PasswordField
                             id="auth-confirm-password"
+                            name="confirm-password"
                             value={confirmPassword}
                             onChange={setConfirmPassword}
                             placeholder="Confirm new password"
