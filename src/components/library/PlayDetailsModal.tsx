@@ -20,8 +20,17 @@ import {
 } from "@/lib/library/tag-colors";
 import { contrastingTextOnBackground } from "@/lib/settings/color-contrast";
 import { useOrganizerStore } from "@/stores/organizer-store";
+import {
+  COUNTER_COVERAGE_LABELS,
+  COUNTER_LIBRARY_COVERAGE_OPTIONS,
+  COUNTER_LIBRARY_VS_PATTERNS,
+} from "@/lib/film-room/film-counter-playbook";
 import type { CourtType, CourtViewSettings } from "@/types/designer";
-import type { LibraryItemType, PlayDetailsValues } from "@/types/library";
+import type {
+  DefenseCounterMeta,
+  LibraryItemType,
+  PlayDetailsValues,
+} from "@/types/library";
 
 export type { PlayDetailsValues };
 
@@ -71,6 +80,12 @@ function buildFormState(
     season: initial?.season ?? seasons[0] ?? "Default",
     playNotes: initial?.playNotes ?? "",
     videoUrl: initial?.videoUrl ?? "",
+    defenseCounter: {
+      enabled: Boolean(initial?.defenseCounter?.enabled),
+      coverages: initial?.defenseCounter?.coverages ?? [],
+      vsPatterns: initial?.defenseCounter?.vsPatterns ?? [],
+      notes: initial?.defenseCounter?.notes ?? "",
+    } satisfies DefenseCounterMeta,
   };
 }
 
@@ -125,6 +140,18 @@ function PlayDetailsModalBody({
   const [season, setSeason] = useState(defaults.season);
   const [playNotes, setPlayNotes] = useState(defaults.playNotes);
   const [videoUrl, setVideoUrl] = useState(defaults.videoUrl);
+  const [counterEnabled, setCounterEnabled] = useState(
+    defaults.defenseCounter.enabled,
+  );
+  const [counterCoverages, setCounterCoverages] = useState<string[]>(
+    defaults.defenseCounter.coverages,
+  );
+  const [counterVsPatterns, setCounterVsPatterns] = useState<string[]>(
+    defaults.defenseCounter.vsPatterns,
+  );
+  const [counterNotes, setCounterNotes] = useState(
+    defaults.defenseCounter.notes ?? "",
+  );
 
   const isDrill = type === "drill";
   const modalTitle = isDrill ? "Drill Details" : "Play Details";
@@ -155,6 +182,15 @@ function PlayDetailsModalBody({
 
     setSubmitting(true);
     try {
+      const defenseCounter: DefenseCounterMeta | undefined =
+        !isDrill && counterEnabled
+          ? {
+              enabled: true,
+              coverages: counterCoverages,
+              vsPatterns: counterVsPatterns,
+              notes: counterNotes.trim() || undefined,
+            }
+          : undefined;
       await onSubmit({
         type,
         title: trimmedTitle,
@@ -166,10 +202,24 @@ function PlayDetailsModalBody({
         season: season || seasons[0] || "Default",
         playNotes: playNotes.trim(),
         videoUrl: videoUrl.trim(),
+        defenseCounter,
       });
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function toggleListValue(
+    list: string[],
+    value: string,
+    setter: (next: string[]) => void,
+  ) {
+    const key = value.toLowerCase();
+    if (list.some((item) => item.toLowerCase() === key)) {
+      setter(list.filter((item) => item.toLowerCase() !== key));
+      return;
+    }
+    setter([...list, value]);
   }
 
   async function addTagsToSelection(candidates: string[], color?: string) {
@@ -490,6 +540,106 @@ function PlayDetailsModalBody({
               />
             </div>
           </div>
+
+          {!isDrill ? (
+            <section
+              className="play-details-counter-library"
+              aria-labelledby="play-details-counter-heading"
+            >
+              <div className="play-details-counter-library-head">
+                <h3 id="play-details-counter-heading">Counter Library</h3>
+                <label className="play-details-counter-toggle">
+                  <input
+                    type="checkbox"
+                    checked={counterEnabled}
+                    onChange={(e) => setCounterEnabled(e.target.checked)}
+                  />
+                  <span>This play is a defensive counter</span>
+                </label>
+              </div>
+              <p className="play-details-hint">
+                Coach and Film Room will match this diagram when suggesting counters
+                for the coverages and looks you pick below.
+              </p>
+              {counterEnabled ? (
+                <>
+                  <div className="play-details-field play-details-field-wide">
+                    <span className="play-details-field-label">Coverage</span>
+                    <div
+                      className="play-details-counter-chips"
+                      role="group"
+                      aria-label="Defensive coverages"
+                    >
+                      {COUNTER_LIBRARY_COVERAGE_OPTIONS.map((id) => {
+                        const active = counterCoverages.some(
+                          (c) => c.toLowerCase() === id,
+                        );
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className={`play-details-counter-chip${active ? " is-active" : ""}`}
+                            aria-pressed={active}
+                            onClick={() =>
+                              toggleListValue(
+                                counterCoverages,
+                                id,
+                                setCounterCoverages,
+                              )
+                            }
+                          >
+                            {COUNTER_COVERAGE_LABELS[id]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="play-details-field play-details-field-wide">
+                    <span className="play-details-field-label">Vs look</span>
+                    <div
+                      className="play-details-counter-chips"
+                      role="group"
+                      aria-label="Offensive looks this counters"
+                    >
+                      {COUNTER_LIBRARY_VS_PATTERNS.map((pattern) => {
+                        const active = counterVsPatterns.some(
+                          (p) => p.toLowerCase() === pattern.toLowerCase(),
+                        );
+                        return (
+                          <button
+                            key={pattern}
+                            type="button"
+                            className={`play-details-counter-chip${active ? " is-active" : ""}`}
+                            aria-pressed={active}
+                            onClick={() =>
+                              toggleListValue(
+                                counterVsPatterns,
+                                pattern,
+                                setCounterVsPatterns,
+                              )
+                            }
+                          >
+                            {pattern}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="play-details-field play-details-field-wide">
+                    <label htmlFor="new-play-counter-notes">Counter notes</label>
+                    <input
+                      type="text"
+                      id="new-play-counter-notes"
+                      placeholder="e.g. Prefer vs lefty BH / late game"
+                      autoComplete="off"
+                      value={counterNotes}
+                      onChange={(e) => setCounterNotes(e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : null}
+            </section>
+          ) : null}
 
           <div className="play-details-court-section">
             <div className="play-details-court-settings fc-court-settings">

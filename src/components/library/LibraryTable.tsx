@@ -5,6 +5,11 @@ import { FC_CONTEXT_MENU_TRIGGER_ATTR } from "@/lib/ui/context-menu-policy";
 import { contrastingTextOnBackground } from "@/lib/settings/color-contrast";
 import { resolveTagColor } from "@/lib/library/tag-colors";
 import {
+  formatCounterLibraryBadgeLabel,
+  formatCounterLibraryBadgeTitle,
+  isCounterLibraryItem,
+} from "@/lib/library/counter-library-badge";
+import {
   resolvePlayCreatorLabel,
 } from "@/lib/library/play-creator-label";
 import { useOrganizerStore } from "@/stores/organizer-store";
@@ -169,6 +174,14 @@ export function LibraryTable({
                     {item.favorite ? (
                       <span className="fd-pin-indicator" aria-hidden="true">
                         ★
+                      </span>
+                    ) : null}
+                    {isCounterLibraryItem(item) && item.defenseCounter ? (
+                      <span
+                        className="fd-counter-badge"
+                        title={formatCounterLibraryBadgeTitle(item.defenseCounter)}
+                      >
+                        {formatCounterLibraryBadgeLabel(item.defenseCounter)}
                       </span>
                     ) : null}
                   </td>

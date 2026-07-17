@@ -367,6 +367,59 @@
   cursor: default;
 }
 
+#screen-designer .ds-coach-card-counter {
+  border-left: 3px solid #f59e0b;
+}
+
+#screen-designer .ds-coach-counter-meta {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+#screen-designer .ds-coach-counter-meta > div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+#screen-designer .ds-coach-counter-meta dt {
+  margin: 0;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
+#screen-designer .ds-coach-counter-meta dd {
+  margin: 0;
+  color: #0f172a;
+}
+
+#screen-designer .ds-coach-counter-no-match {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+#screen-designer .ds-coach-link-reason {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+#screen-designer a.ds-coach-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
 #screen-designer .ds-coach-card-alternative.is-same-play {
   border-color: #bfdbfe;
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);

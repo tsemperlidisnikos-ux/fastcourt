@@ -166,6 +166,14 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       tags: details.tags,
       playNotes: details.playNotes || undefined,
       videoUrl: details.videoUrl || undefined,
+      defenseCounter: details.defenseCounter?.enabled
+        ? {
+            enabled: true,
+            coverages: details.defenseCounter.coverages ?? [],
+            vsPatterns: details.defenseCounter.vsPatterns ?? [],
+            notes: details.defenseCounter.notes?.trim() || undefined,
+          }
+        : undefined,
       createdAt: now,
       updatedAt: now,
     });

@@ -33,6 +33,15 @@ import {
   prepReadPracticeSessionTitle,
 } from "@/lib/designer/designer-coach-prep-reads";
 import { createPrepReadPracticeItems } from "@/lib/game-plan/read-recommendations";
+import {
+  counterPracticeSessionTitle,
+  createCounterPracticeItems,
+  findCounterPracticeSession,
+} from "@/lib/practice/counter-practice";
+import {
+  counterToTimeoutCue,
+  mergeTimeoutCues,
+} from "@/lib/game-plan/game-day-timeout-cues";
 import { formatGamePlanDate } from "@/lib/game-plan/game-plan-items";
 import { cloneFrameForImport } from "@/lib/designer/designer-coach-import-frame";
 import {
@@ -64,6 +73,7 @@ import {
   COACHING_CATEGORY_LABELS,
   COACHING_CATEGORY_ORDER,
   coachingHasSuggestions,
+  coachingSuggestionCount,
 } from "@/lib/film-room/film-coaching-format";
 import {
   COUNTER_COVERAGE_LABELS,
@@ -84,6 +94,11 @@ import type { StoredPlay } from "@/types/library";
 interface Props {
   play: DesignerCoachPlayContext;
   libraryPlays: StoredPlay[];
+  /** Increment to force a local analyze (e.g. from overflow menu). */
+  analyzeRequestId?: number;
+  /** True while the Coach sidebar tab is visible. */
+  panelActive?: boolean;
+  onSuggestionCountChange?: (count: number) => void;
 }
 
 function mergeCoaching(
@@ -458,13 +473,25 @@ function CounterCard({
   matchedPlays,
   onAddNotes,
   onLoadOnCourt,
+  onSaveToGamePlan,
+  onAddToPractice,
   canLoadOnCourt,
+  canSaveToGamePlan,
+  canAddToPractice,
+  savingToGamePlan,
+  practiceBusy,
 }: {
   counter: FilmClipCounterSuggestion;
   matchedPlays: DesignerCoachLinkedPlay[];
   onAddNotes: () => void;
   onLoadOnCourt: () => void;
+  onSaveToGamePlan: () => void;
+  onAddToPractice: () => void;
   canLoadOnCourt: boolean;
+  canSaveToGamePlan: boolean;
+  canAddToPractice: boolean;
+  savingToGamePlan?: boolean;
+  practiceBusy?: boolean;
 }) {
   return (
     <article className="ds-coach-card ds-coach-card-counter">
@@ -475,11 +502,42 @@ function CounterCard({
         {counter.targetsPattern ? (
           <span className="ds-coach-pattern">vs {counter.targetsPattern}</span>
         ) : null}
+        {counter.priority ? (
+          <span className={`ds-coach-priority ds-coach-priority-${counter.priority}`}>
+            {counter.priority}
+          </span>
+        ) : null}
       </div>
       <h4 className="ds-coach-card-title">{counter.title}</h4>
       <p className="ds-coach-card-detail">{counter.detail}</p>
+      <dl className="ds-coach-counter-meta">
+        {counter.trigger ? (
+          <div>
+            <dt>Trigger</dt>
+            <dd>{counter.trigger}</dd>
+          </div>
+        ) : null}
+        {counter.ballHandlerRule ? (
+          <div>
+            <dt>BH</dt>
+            <dd>{counter.ballHandlerRule}</dd>
+          </div>
+        ) : null}
+        {counter.screenerRule ? (
+          <div>
+            <dt>Big</dt>
+            <dd>{counter.screenerRule}</dd>
+          </div>
+        ) : null}
+        {counter.weakPoint ? (
+          <div>
+            <dt>They want</dt>
+            <dd>{counter.weakPoint}</dd>
+          </div>
+        ) : null}
+      </dl>
       {matchedPlays.length ? (
-        <ul className="ds-coach-links">
+        <ul className="ds-coach-links" aria-label="Defense plays in library">
           {matchedPlays.map((play) => (
             <li key={play.playId}>
               <Link
@@ -490,10 +548,18 @@ function CounterCard({
               >
                 {play.title}
               </Link>
+              {play.reason ? (
+                <span className="ds-coach-link-reason">{play.reason}</span>
+              ) : null}
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : (
+        <p className="ds-coach-counter-no-match">
+          No Counter Library match — Edit Details on a defense play and mark it as a
+          counter (coverage + vs look).
+        </p>
+      )}
       <div className="ds-coach-card-actions">
         {canLoadOnCourt ? (
           <button
@@ -504,6 +570,42 @@ function CounterCard({
             Load on court
           </button>
         ) : null}
+        {matchedPlays[0] ? (
+          <Link
+            href={`/designer?item=${encodeURIComponent(matchedPlays[0].playId)}`}
+            className="ds-coach-card-action"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Find defense play
+          </Link>
+        ) : null}
+        <button
+          type="button"
+          className="ds-coach-card-action"
+          disabled={!canSaveToGamePlan || savingToGamePlan}
+          title={
+            canSaveToGamePlan
+              ? "Save as timeout counter on the selected game plan"
+              : "Select a game plan above first"
+          }
+          onClick={onSaveToGamePlan}
+        >
+          {savingToGamePlan ? "Saving…" : "Save to Game Plan"}
+        </button>
+        <button
+          type="button"
+          className="ds-coach-card-action"
+          disabled={!canAddToPractice || practiceBusy}
+          title={
+            canAddToPractice
+              ? "Add counter drill blocks to practice (Landed / Missed in Live)"
+              : "Select a game plan above first"
+          }
+          onClick={onAddToPractice}
+        >
+          {practiceBusy ? "Adding…" : "Add to practice"}
+        </button>
         <button type="button" className="ds-coach-card-action" onClick={onAddNotes}>
           Add to notes
         </button>
@@ -512,7 +614,13 @@ function CounterCard({
   );
 }
 
-export function DesignerCoachPanel({ play, libraryPlays }: Props) {
+export function DesignerCoachPanel({
+  play,
+  libraryPlays,
+  analyzeRequestId = 0,
+  panelActive = true,
+  onSuggestionCountChange,
+}: Props) {
   const currentFrameIndex = useDesignerStore((s) => s.currentFrameIndex);
   const setFrameNotes = useDesignerStore((s) => s.setFrameNotes);
   const applyCoachFixes = useDesignerStore((s) => s.applyCoachFixes);
@@ -524,6 +632,7 @@ export function DesignerCoachPanel({ play, libraryPlays }: Props) {
   const replaceCurrentFrame = useDesignerStore((s) => s.replaceCurrentFrame);
   const appendImportedReadFrame = useDesignerStore((s) => s.appendImportedReadFrame);
   const gamePlans = useOrganizerStore((s) => s.gamePlans);
+  const updateGamePlan = useOrganizerStore((s) => s.updateGamePlan);
   const playbooks = useOrganizerStore((s) => s.playbooks);
   const libraryItems = useLibraryStore((s) => s.items);
   const getPlayDocument = useLibraryStore((s) => s.getPlayDocument);
@@ -654,6 +763,7 @@ export function DesignerCoachPanel({ play, libraryPlays }: Props) {
     playId: string;
     playTitle: string;
   } | null>(null);
+  const [savingCounterKey, setSavingCounterKey] = useState<string | null>(null);
   const analysisModeRef = useRef<"none" | "local" | "ai">("none");
   const autoAnalyzeKeyRef = useRef<string | null>(null);
   const isDrill = isDrillCoachContext(play.type);
@@ -872,6 +982,24 @@ export function DesignerCoachPanel({ play, libraryPlays }: Props) {
     selectedGamePlanId,
   ]);
 
+  useEffect(() => {
+    if (!analyzeRequestId) return;
+    runLocalAnalyze();
+  }, [analyzeRequestId, runLocalAnalyze]);
+
+  useEffect(() => {
+    if (!panelActive) return;
+    if (analysisModeRef.current !== "none") return;
+    runLocalAnalyze();
+  }, [panelActive, runLocalAnalyze]);
+
+  useEffect(() => {
+    if (!onSuggestionCountChange) return;
+    onSuggestionCountChange(
+      coaching ? coachingSuggestionCount(coaching) : 0,
+    );
+  }, [coaching, onSuggestionCountChange]);
+
   const runAiAnalyze = useCallback(async () => {
     if (!frame) return;
     analysisModeRef.current = "ai";
@@ -1057,6 +1185,99 @@ export function DesignerCoachPanel({ play, libraryPlays }: Props) {
       setImportFrameOpen(true);
     },
     [counterLoadPending],
+  );
+
+  const saveCounterToGamePlan = useCallback(
+    async (
+      counter: FilmClipCounterSuggestion,
+      matchedPlays: DesignerCoachLinkedPlay[],
+    ) => {
+      if (!selectedGamePlan) {
+        appNotice(
+          "Coach",
+          "Select a game plan above to save this counter as a timeout cue.",
+        );
+        return;
+      }
+      const key = `${counter.title}::${counter.coverage}`;
+      setSavingCounterKey(key);
+      try {
+        const cue = counterToTimeoutCue(
+          counter,
+          undefined,
+          matchedPlays[0]?.playId,
+        );
+        const timeoutCues = mergeTimeoutCues(selectedGamePlan.timeoutCues, [cue]);
+        await updateGamePlan(selectedGamePlan.id, { timeoutCues });
+        appNotice(
+          "Coach",
+          `Saved “${counter.title}” to ${selectedGamePlan.title} timeout counters.`,
+        );
+      } finally {
+        setSavingCounterKey(null);
+      }
+    },
+    [selectedGamePlan, updateGamePlan],
+  );
+
+  const addCounterToPractice = useCallback(
+    async (
+      counter: FilmClipCounterSuggestion,
+      matchedPlays: DesignerCoachLinkedPlay[],
+    ) => {
+      if (!selectedGamePlan) {
+        appNotice(
+          "Practice",
+          "Select a game plan above to add this counter drill.",
+        );
+        return;
+      }
+      const busyKey = `counter::${counter.title}::${counter.coverage}`;
+      setPracticeBusyId(busyKey);
+      try {
+        const items = createCounterPracticeItems(counter, {
+          playId: matchedPlays[0]?.playId,
+        });
+        let session = findCounterPracticeSession(
+          selectedGamePlan,
+          practiceSessions,
+        );
+        if (!session) {
+          const created = await createPracticeSession();
+          if (!created) {
+            appNotice("Practice", "Could not create a practice session.");
+            return;
+          }
+          await updatePracticeSession(created.id, {
+            title: counterPracticeSessionTitle(selectedGamePlan),
+            team: selectedGamePlan.team,
+            notes: `Counter drills vs ${selectedGamePlan.opponent}.`,
+          });
+          session =
+            useOrganizerStore
+              .getState()
+              .practiceSessions.find((row) => row.id === created.id) ?? created;
+        }
+        const added = await appendPracticeItems(session.id, items);
+        if (!added) {
+          appNotice("Practice", "Could not add counter drill blocks.");
+          return;
+        }
+        appNotice(
+          "Practice",
+          `Added ${items.length}× ${counter.title} to "${session.title}". Mark Landed / Missed in Practice Live.`,
+        );
+      } finally {
+        setPracticeBusyId(null);
+      }
+    },
+    [
+      appendPracticeItems,
+      createPracticeSession,
+      practiceSessions,
+      selectedGamePlan,
+      updatePracticeSession,
+    ],
   );
 
   const handleImportFrame = useCallback(
@@ -1383,8 +1604,30 @@ export function DesignerCoachPanel({ play, libraryPlays }: Props) {
                           counter={counter}
                           matchedPlays={counterMatches[index] ?? []}
                           canLoadOnCourt
+                          canSaveToGamePlan={Boolean(selectedGamePlan)}
+                          canAddToPractice={Boolean(selectedGamePlan)}
+                          savingToGamePlan={
+                            savingCounterKey ===
+                            `${counter.title}::${counter.coverage}`
+                          }
+                          practiceBusy={
+                            practiceBusyId ===
+                            `counter::${counter.title}::${counter.coverage}`
+                          }
                           onLoadOnCourt={() =>
                             openCounterLoad(
+                              counter,
+                              counterMatches[index] ?? [],
+                            )
+                          }
+                          onSaveToGamePlan={() =>
+                            void saveCounterToGamePlan(
+                              counter,
+                              counterMatches[index] ?? [],
+                            )
+                          }
+                          onAddToPractice={() =>
+                            void addCounterToPractice(
                               counter,
                               counterMatches[index] ?? [],
                             )

@@ -33,6 +33,23 @@ export const COUNTER_COVERAGE_LABELS: Record<CounterCoverageId, string> = {
   other: "Custom counter",
 };
 
+/** Coverage chips for Counter Library UI (skip vague "other"). */
+export const COUNTER_LIBRARY_COVERAGE_OPTIONS: CounterCoverageId[] = [
+  "ice",
+  "switch",
+  "drop",
+  "blitz",
+  "hedge",
+  "show",
+  "hard_show",
+  "peel",
+  "cross",
+  "zone_bump",
+  "trap",
+  "switch_cross",
+];
+
+
 const VALID_COVERAGES = new Set<string>(Object.keys(COUNTER_COVERAGE_LABELS));
 
 const COVERAGE_ALIASES: Record<string, CounterCoverageId> = {
@@ -95,6 +112,234 @@ export const PATTERN_COUNTER_GUIDE: Record<string, string> = {
   Zone: "Zone bump on overload; find shooter in gaps.",
   Press: "Trap sideline, no middle, sprint to matchups after break.",
 };
+
+/** Offensive looks coaches can tag a defense play against. */
+export const COUNTER_LIBRARY_VS_PATTERNS = Object.keys(PATTERN_COUNTER_GUIDE);
+
+/** Rich local (no-AI) counter templates — coach-ready assignments. */
+export const LOCAL_COUNTER_TEMPLATES: FilmClipCounterSuggestion[] = [
+  {
+    title: "ICE side PNR",
+    detail: "Force baseline — deny middle reject and keep the roller tagged late.",
+    coverage: "ice",
+    targetsPattern: "PNR",
+    priority: "high",
+    trigger: "Ball screen set on the wing / slot",
+    ballHandlerRule: "Top foot over — no middle; push baseline",
+    screenerRule: "Drop to nail / short roll lane; tag late if BH rejects",
+    weakPoint: "Middle reject + slip when ICE is late",
+  },
+  {
+    title: "Drop vs weak handle",
+    detail: "Big drops to paint; on-ball stays attached without fouling the pull-up.",
+    coverage: "drop",
+    targetsPattern: "PNR",
+    priority: "medium",
+    trigger: "Guard without elite pull-up vs deep drop",
+    ballHandlerRule: "Crowd the dribble; contest without leaving feet early",
+    screenerRule: "Drop to rim line; dig on roller if BH turns corner",
+    weakPoint: "Pull-up three / floater if drop is too soft",
+  },
+  {
+    title: "Switch cross on Horns",
+    detail: "Cross-switch the first gap action; deny middle cut after dual elbows.",
+    coverage: "switch_cross",
+    targetsPattern: "Horns",
+    priority: "high",
+    trigger: "Horns entry into first screen / gap",
+    ballHandlerRule: "Switch early — stay square, no trail",
+    screenerRule: "Show briefly then recover; communicate cross",
+    weakPoint: "Backdoor / short roll if switch is late",
+  },
+  {
+    title: "Show first Horns screen",
+    detail: "Hard show on first elbow screen; nail help stays home on weak shooters.",
+    coverage: "show",
+    targetsPattern: "Horns",
+    priority: "medium",
+    trigger: "First screen at elbow from Horns",
+    ballHandlerRule: "Fight over or under based on shooter grade",
+    screenerRule: "Hard show, then sprint recover to roller",
+    weakPoint: "Spain / second action if recover is slow",
+  },
+  {
+    title: "Switch Spain",
+    detail: "Switch the back-screen; tag the roller and protect the weak corner.",
+    coverage: "switch",
+    targetsPattern: "Spain",
+    priority: "high",
+    trigger: "Back-screen after PNR (Spain action)",
+    ballHandlerRule: "Stay attached through switch; no free reject",
+    screenerRule: "Tag roller then find shooter — no open corner",
+    weakPoint: "Corner three if tag overhelps",
+  },
+  {
+    title: "Nail help on flare",
+    detail: "Fight over or switch flare; nail dig on catch; closeout baseline.",
+    coverage: "switch",
+    targetsPattern: "Flare",
+    priority: "high",
+    trigger: "Flare screen for weak-side shooter",
+    ballHandlerRule: "Chase or switch — high hand on catch",
+    screenerRule: "Bump cutter; no free curl to middle",
+    weakPoint: "Catch-and-shoot if closeout is soft",
+  },
+  {
+    title: "Switch DHO",
+    detail: "Switch the handoff or ICE the weak side; deny top-side escape.",
+    coverage: "switch",
+    targetsPattern: "DHO",
+    priority: "high",
+    trigger: "Dribble handoff initiated",
+    ballHandlerRule: "Top-side deny; force baseline or switch clean",
+    screenerRule: "Contact on handoff; no free snake to middle",
+    weakPoint: "Reject / snake middle if top side is soft",
+  },
+  {
+    title: "Switch BLOB screens",
+    detail: "Switch all screens under the basket; box out weak-side rebound.",
+    coverage: "switch",
+    targetsPattern: "BLOB",
+    priority: "high",
+    trigger: "Baseline out-of-bounds inbound",
+    ballHandlerRule: "Deny first cut; switch early on screens",
+    screenerRule: "Zone bump / switch stack; protect rim",
+    weakPoint: "Lobs and corner threes on late switches",
+  },
+  {
+    title: "Trap first SLOB",
+    detail: "Trap or switch the first action; no open corner three.",
+    coverage: "trap",
+    targetsPattern: "SLOB",
+    priority: "medium",
+    trigger: "Sideline out-of-bounds first screen",
+    ballHandlerRule: "Force sideline; no middle",
+    screenerRule: "Trap / switch then rotate to corner",
+    weakPoint: "Skip to opposite corner",
+  },
+  {
+    title: "Force ISO left",
+    detail: "Shade left / no middle; nail help without leaving the corner.",
+    coverage: "other",
+    targetsPattern: "ISO",
+    priority: "medium",
+    trigger: "Clear-out isolation",
+    ballHandlerRule: "Body up — force weak hand / baseline",
+    screenerRule: "Nail dig only; sprint back to corner",
+    weakPoint: "Middle drive if shade is soft",
+  },
+  {
+    title: "Front the post",
+    detail: "3/4 front or full front; dig on bounce-out without leaving shooters.",
+    coverage: "other",
+    targetsPattern: "Post",
+    priority: "medium",
+    trigger: "Entry pass toward post",
+    ballHandlerRule: "Deny high-low; dig late if needed",
+    screenerRule: "Front / 3/4 deny; wall off drop step",
+    weakPoint: "Lob over top or kick-out three",
+  },
+  {
+    title: "Zone bump overload",
+    detail: "Bump cutters on overload; find the shooter in the gap early.",
+    coverage: "zone_bump",
+    targetsPattern: "Zone",
+    priority: "high",
+    trigger: "Zone offense overload / skip",
+    ballHandlerRule: "Close gaps on skip; high hand",
+    screenerRule: "Bump cutters; no free flash to middle",
+    weakPoint: "Gap threes between zones",
+  },
+  {
+    title: "Press sideline trap",
+    detail: "Trap sideline, deny middle, sprint to matchups after the break.",
+    coverage: "trap",
+    targetsPattern: "Press",
+    priority: "high",
+    trigger: "Full-court press / inbound",
+    ballHandlerRule: "Force sideline; no middle split",
+    screenerRule: "Second trapper arrives on bounce; rotate back",
+    weakPoint: "Long outlet / middle split",
+  },
+];
+
+/**
+ * Build coach-ready local counters for detected patterns (no AI required).
+ * Returns up to 2 counters per matched pattern, max 6 total.
+ */
+export function buildLocalCountersForPatterns(
+  patterns: string[],
+): FilmClipCounterSuggestion[] {
+  const normalized = patterns
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!normalized.length) return [];
+
+  const out: FilmClipCounterSuggestion[] = [];
+  const seen = new Set<string>();
+
+  for (const pattern of normalized.slice(0, 4)) {
+    const key = pattern.toLowerCase();
+    let addedForPattern = 0;
+    for (const template of LOCAL_COUNTER_TEMPLATES) {
+      const target = (template.targetsPattern ?? "").toLowerCase();
+      if (!target || (target !== key && !key.includes(target) && !target.includes(key))) {
+        continue;
+      }
+      const id = `${template.title}::${template.coverage}::${template.targetsPattern}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        ...template,
+        targetsPattern: template.targetsPattern ?? pattern,
+      });
+      addedForPattern += 1;
+      if (addedForPattern >= 2) break;
+    }
+
+    // Fallback: thin counter from PATTERN_COUNTER_GUIDE if no template hit.
+    if (addedForPattern === 0) {
+      const guideKey = Object.keys(PATTERN_COUNTER_GUIDE).find(
+        (k) => k.toLowerCase() === key || key.includes(k.toLowerCase()),
+      );
+      if (!guideKey) continue;
+      const guide = PATTERN_COUNTER_GUIDE[guideKey]!;
+      const coverage = inferCoverageFromGuideText(guide);
+      const id = `vs-${guideKey}::${coverage}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        title: `Vs ${guideKey}`,
+        detail: guide,
+        coverage,
+        targetsPattern: guideKey,
+        priority: "medium",
+        trigger: `${guideKey} action starts`,
+        ballHandlerRule: "Stay attached — force preferred side",
+        screenerRule: "Communicate early; protect rim / corner",
+        weakPoint: "Second action if first coverage is late",
+      });
+    }
+  }
+
+  return out.slice(0, 6);
+}
+
+function inferCoverageFromGuideText(guide: string): CounterCoverageId {
+  const lower = guide.toLowerCase();
+  if (lower.includes("ice")) return "ice";
+  if (lower.includes("switch cross") || lower.includes("cross switch")) {
+    return "switch_cross";
+  }
+  if (lower.includes("switch")) return "switch";
+  if (lower.includes("drop")) return "drop";
+  if (lower.includes("blitz") || lower.includes("trap")) return "blitz";
+  if (lower.includes("hedge")) return "hedge";
+  if (lower.includes("hard show")) return "hard_show";
+  if (lower.includes("show")) return "show";
+  if (lower.includes("zone bump") || lower.includes("bump")) return "zone_bump";
+  return "other";
+}
 
 export interface CounterPlayMatch {
   play: StoredPlay;
@@ -195,21 +440,33 @@ function haystackForPlay(play: StoredPlay) {
     play.series,
     ...(play.tags || []),
     play.playNotes,
+    play.defenseCounter?.notes,
+    ...(play.defenseCounter?.coverages ?? []),
+    ...(play.defenseCounter?.vsPatterns ?? []),
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 }
 
-/** Match library defensive plays to an AI counter suggestion. */
+function patternTokensMatch(a: string, b: string): boolean {
+  const left = a.trim().toLowerCase();
+  const right = b.trim().toLowerCase();
+  if (!left || !right) return false;
+  return left === right || left.includes(right) || right.includes(left);
+}
+
+/** Match library defensive plays to an AI / local counter suggestion. */
 export function suggestDefensePlaysForCounter(
   plays: StoredPlay[],
   counter: FilmClipCounterSuggestion,
   excludedPlayIds: ReadonlySet<string>,
   limit = 3,
 ): CounterPlayMatch[] {
+  const coverageId = counter.coverage;
+  const coverageLabel = COUNTER_COVERAGE_LABELS[coverageId].toLowerCase();
   const hints = [
-    ...COVERAGE_SEARCH_HINTS[counter.coverage],
+    ...COVERAGE_SEARCH_HINTS[coverageId],
     counter.title.toLowerCase(),
     counter.targetsPattern?.toLowerCase() ?? "",
   ].filter((token) => token.length > 2);
@@ -226,34 +483,74 @@ export function suggestDefensePlaysForCounter(
 
   for (const play of plays) {
     if (excludedPlayIds.has(play.id)) continue;
+
+    const meta = play.defenseCounter;
+    const isCounterLibrary = Boolean(meta?.enabled);
     const haystack = haystackForPlay(play);
-    const isDefense =
+    const isDefenseHeuristic =
       haystack.includes("defense") ||
       haystack.includes("def ") ||
       play.tags?.some((tag) => /def|zone|press|switch|ice|blitz/i.test(tag));
-    if (!isDefense && !haystack.includes(counter.coverage.replace(/_/g, " "))) {
+
+    // Structured Counter Library plays always eligible; heuristics need defense signal.
+    if (
+      !isCounterLibrary &&
+      !isDefenseHeuristic &&
+      !haystack.includes(coverageId.replace(/_/g, " "))
+    ) {
       continue;
     }
 
     const reasons: string[] = [];
-    let score = isDefense ? 4 : 0;
+    let score = 0;
+
+    if (isCounterLibrary) {
+      score += 40;
+      reasons.push("Counter Library");
+
+      const coverages = (meta?.coverages ?? []).map((c) =>
+        normalizeCounterCoverage(c),
+      );
+      if (coverages.includes(coverageId)) {
+        score += 50;
+        reasons.push(`coverage: ${coverageLabel}`);
+      } else if (coverages.length === 0) {
+        // Tagged as counter but no coverage chips — still useful.
+        score += 8;
+      }
+
+      const vsPatterns = meta?.vsPatterns ?? [];
+      if (counter.targetsPattern) {
+        const hit = vsPatterns.some((pattern) =>
+          patternTokensMatch(pattern, counter.targetsPattern!),
+        );
+        if (hit) {
+          score += 45;
+          reasons.push(`vs ${counter.targetsPattern}`);
+        } else if (vsPatterns.length === 0) {
+          score += 6;
+        }
+      }
+    } else if (isDefenseHeuristic) {
+      score += 4;
+    }
 
     for (const hint of hints) {
       if (hint.length < 3) continue;
       if (haystack.includes(hint)) {
-        score += 10;
+        score += isCounterLibrary ? 4 : 10;
         reasons.push(`coverage: ${hint}`);
       }
     }
 
     for (const hint of patternHints) {
       if (haystack.includes(hint)) {
-        score += 6;
+        score += isCounterLibrary ? 3 : 6;
         reasons.push(`pattern: ${hint.slice(0, 40)}`);
       }
     }
 
-    if (counter.targetsPattern) {
+    if (counter.targetsPattern && !isCounterLibrary) {
       const patternToken = counter.targetsPattern.toLowerCase();
       if (haystack.includes(patternToken)) {
         score += 8;

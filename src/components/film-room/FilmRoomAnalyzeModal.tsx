@@ -397,8 +397,9 @@ function FilmRoomAnalyzeModalBody({
             <p className="fc-film-analyze-tags-line">Coach tags: {analyzeTagsLine}</p>
           ) : null}
           <p className="fc-film-analyze-step-hint">
-            Scout read + coaching cues below. Tap <strong>Apply full scout</strong> to
-            push tags, plays, and notes to your game plan.
+            Scout read + coaching cues below. Checked <strong>counters</strong> become
+            Game Day timeout cues. Tap <strong>Apply full scout</strong> to push tags,
+            plays, and notes to your game plan.
           </p>
         </header>
 
@@ -417,7 +418,8 @@ function FilmRoomAnalyzeModalBody({
 
           <h3 className="fc-film-game-plan-section-title">Coaching suggestions</h3>
           <p className="fc-film-analyze-coaching-hint">
-            Check the cues you want in scouting notes.
+            Check the cues you want in scouting notes. Selected counters also save as
+            timeout counters on the game plan.
           </p>
           <FilmRoomCoachingSections
             coaching={analysis.coaching}

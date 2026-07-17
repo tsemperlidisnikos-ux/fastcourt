@@ -185,9 +185,11 @@ export function DrawLibraryView() {
         return false;
       }
       if (filter === "favorites" && !item.favorite) return false;
+      if (filter === "counters" && !item.defenseCounter?.enabled) return false;
       if (
         filter !== "all" &&
         filter !== "favorites" &&
+        filter !== "counters" &&
         item.type !== filter
       ) {
         return false;
@@ -207,11 +209,18 @@ export function DrawLibraryView() {
         return false;
       }
       if (!q) return true;
+      const counterHay = [
+        ...(item.defenseCounter?.coverages ?? []),
+        ...(item.defenseCounter?.vsPatterns ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
       return (
         item.title.toLowerCase().includes(q) ||
         (item.team || "").toLowerCase().includes(q) ||
         (item.series || "").toLowerCase().includes(q) ||
-        item.tags.some((t) => t.toLowerCase().includes(q))
+        item.tags.some((t) => t.toLowerCase().includes(q)) ||
+        (counterHay.length > 0 && counterHay.includes(q))
       );
     });
 
@@ -746,6 +755,7 @@ export function DrawLibraryView() {
             season: previewPlay.season,
             playNotes: previewPlay.playNotes,
             videoUrl: previewPlay.videoUrl,
+            defenseCounter: previewPlay.defenseCounter,
           }}
           onClose={() => setEditDetailsOpen(false)}
           onSubmit={async (details) => {

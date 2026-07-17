@@ -19,6 +19,7 @@ import {
 } from "@/lib/game-plan/timeout-mode";
 import {
   formatReadSuccessBadge,
+  lookupCounterSuccessPct,
   lookupReadSuccessPct,
   type ReadSuccessLookup,
 } from "@/lib/practice/read-success-by-call";
@@ -43,6 +44,7 @@ function CounterTimeoutView({
   hasNext,
   slideIndex,
   slideCount,
+  readSuccessLookup,
 }: {
   cue: GamePlanTimeoutCue;
   countdownSeconds: number;
@@ -53,8 +55,17 @@ function CounterTimeoutView({
   hasNext: boolean;
   slideIndex: number;
   slideCount: number;
+  readSuccessLookup?: ReadSuccessLookup;
 }) {
   const [secondsLeft, setSecondsLeft] = useState(countdownSeconds);
+  const successPct = readSuccessLookup
+    ? lookupCounterSuccessPct(
+        readSuccessLookup,
+        cue.title,
+        cue.defensePlayId,
+      )
+    : null;
+  const successBadge = formatReadSuccessBadge(successPct);
 
   useEffect(() => {
     setSecondsLeft(countdownSeconds);
@@ -95,6 +106,9 @@ function CounterTimeoutView({
             <span className="fc-timeout-counter-pattern">vs {cue.targetsPattern}</span>
           ) : null}
           <h1 className="fc-timeout-call">{cue.title}</h1>
+          {successBadge ? (
+            <p className="fc-timeout-read-success">{successBadge}</p>
+          ) : null}
           <p className="fc-timeout-counter-detail">{cue.detail}</p>
         </div>
         <div className="fc-timeout-header-meta">
@@ -131,6 +145,18 @@ function CounterTimeoutView({
                 rel="noopener noreferrer"
               >
                 Watch scout clip ↗
+              </Link>
+            </p>
+          ) : null}
+          {cue.defensePlayId ? (
+            <p className="fc-timeout-counter-film">
+              <Link
+                className="fc-timeout-counter-film-link"
+                href={`/designer?item=${encodeURIComponent(cue.defensePlayId)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open defense play ↗
               </Link>
             </p>
           ) : null}
@@ -495,7 +521,12 @@ export function TimeoutOverlay({
     <>
       {title ? <span className="visually-hidden">{title}</span> : null}
       {slide.kind === "counter" ? (
-        <CounterTimeoutView key={slide.cue.id + index} cue={slide.cue} {...common} />
+        <CounterTimeoutView
+          key={slide.cue.id + index}
+          cue={slide.cue}
+          readSuccessLookup={readSuccessLookup}
+          {...common}
+        />
       ) : slide.kind === "read" ? (
         <ReadTimeoutView
           key={`${slide.read.play.id}-${slide.read.frameIndex}-${index}`}

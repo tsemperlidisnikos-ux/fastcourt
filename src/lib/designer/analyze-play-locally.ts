@@ -1,7 +1,6 @@
 import {
-  PATTERN_COUNTER_GUIDE,
+  buildLocalCountersForPatterns,
   suggestDefensePlaysForCounter,
-  type CounterCoverageId,
 } from "@/lib/film-room/film-counter-playbook";
 import { buildCoachAlternatives } from "@/lib/designer/designer-coach-alternatives";
 import { buildSamePlayFrameAlternatives } from "@/lib/designer/designer-coach-same-play-frames";
@@ -408,24 +407,11 @@ function counterSuggestions(
   counters: FilmClipCounterSuggestion[];
   linked: DesignerCoachLinkedPlay[];
 } {
-  const counters: FilmClipCounterSuggestion[] = [];
+  const counters = buildLocalCountersForPatterns(patterns);
   const linked: DesignerCoachLinkedPlay[] = [];
   const seenPlayIds = new Set<string>();
 
-  for (const pattern of patterns.slice(0, 3)) {
-    const guide = PATTERN_COUNTER_GUIDE[pattern];
-    if (!guide) continue;
-
-    const coverage = inferCoverageFromGuide(guide);
-    const counter: FilmClipCounterSuggestion = {
-      title: `Vs ${pattern}`,
-      detail: guide,
-      coverage,
-      targetsPattern: pattern,
-      priority: "medium",
-    };
-    counters.push(counter);
-
+  for (const counter of counters) {
     const matches = suggestDefensePlaysForCounter(
       library,
       counter,
@@ -438,7 +424,7 @@ function counterSuggestions(
       linked.push({
         playId: match.play.id,
         title: match.play.title,
-        reason: match.reasons[0] ?? `Counter vs ${pattern}`,
+        reason: match.reasons[0] ?? `Counter vs ${counter.targetsPattern ?? "set"}`,
       });
     }
   }
@@ -451,17 +437,6 @@ function counterSuggestions(
   }
 
   return { counters: mergedCounters, linked };
-}
-
-function inferCoverageFromGuide(guide: string): CounterCoverageId {
-  const lower = guide.toLowerCase();
-  if (lower.includes("ice")) return "ice";
-  if (lower.includes("switch")) return "switch";
-  if (lower.includes("drop")) return "drop";
-  if (lower.includes("blitz") || lower.includes("trap")) return "blitz";
-  if (lower.includes("hedge")) return "hedge";
-  if (lower.includes("show")) return "show";
-  return "other";
 }
 
 /** Rule-based coaching for the current frame (no API). */

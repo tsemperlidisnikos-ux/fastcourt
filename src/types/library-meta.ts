@@ -120,6 +120,8 @@ export interface GamePlanTimeoutCue {
   screenerRule?: string;
   weakPoint?: string;
   priority?: "high" | "medium" | "low";
+  /** Matched Counter Library / defense play for Designer deep links. */
+  defensePlayId?: string;
   sourceFilmSessionId?: string;
   sourceFilmTimestamp?: number;
   createdAt: string;

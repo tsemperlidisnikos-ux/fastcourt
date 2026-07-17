@@ -27,6 +27,7 @@ export function timeoutCueSignature(cue: Pick<
 export function counterToTimeoutCue(
   counter: FilmClipCounterSuggestion,
   film?: { sessionId?: string; timestamp?: number },
+  defensePlayId?: string,
 ): GamePlanTimeoutCue {
   return {
     id: newGamePlanTimeoutCueId(),
@@ -39,6 +40,7 @@ export function counterToTimeoutCue(
     screenerRule: counter.screenerRule,
     weakPoint: counter.weakPoint,
     priority: counter.priority,
+    defensePlayId: defensePlayId?.trim() || undefined,
     sourceFilmSessionId: film?.sessionId,
     sourceFilmTimestamp: film?.timestamp,
     createdAt: new Date().toISOString(),
@@ -88,6 +90,10 @@ export function normalizeTimeoutCues(
         row.priority === "medium" ||
         row.priority === "low"
           ? row.priority
+          : undefined,
+      defensePlayId:
+        typeof row.defensePlayId === "string"
+          ? row.defensePlayId.trim() || undefined
           : undefined,
       sourceFilmSessionId: row.sourceFilmSessionId?.trim() || undefined,
       sourceFilmTimestamp:

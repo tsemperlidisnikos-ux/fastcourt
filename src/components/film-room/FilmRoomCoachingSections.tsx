@@ -83,12 +83,20 @@ function CounterCard({
         {matchedPlays.length ? (
           <ul className="fc-film-counter-matches" aria-label="Library matches">
             {matchedPlays.map((play) => (
-              <li key={play.id}>{play.title}</li>
+              <li key={play.id}>
+                <a
+                  href={`/designer?item=${encodeURIComponent(play.id)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {play.title}
+                </a>
+              </li>
             ))}
           </ul>
         ) : (
           <span className="fc-film-counter-no-match">
-            Tag defense plays with coverage name (ICE, switch, blitz…)
+            Mark defense plays in Edit Details → Counter Library
           </span>
         )}
       </span>
@@ -138,8 +146,8 @@ export function FilmRoomCoachingSections({
             </h4>
             {isCounters ? (
               <p className="fc-film-counter-section-hint">
-                Coverage + assignments vs their set. Matched plays come from your
-                library tags.
+                Coverage + assignments vs their set. Matched plays come from Counter
+                Library tags. Checked counters become Game Day timeout cues on Apply.
               </p>
             ) : null}
             <ul className="fc-film-coaching-list">

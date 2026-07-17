@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildLocalCountersForPatterns,
   inferCounterCoverageFromText,
   normalizeCounterCoverage,
   normalizeCounterSuggestion,
@@ -24,6 +25,14 @@ function stubPlay(id: string, title: string, tags: string[] = []): StoredPlay {
 test("normalizeCounterCoverage maps aliases", () => {
   assert.equal(normalizeCounterCoverage("hard show"), "hard_show");
   assert.equal(normalizeCounterCoverage("ICE"), "ice");
+});
+
+test("buildLocalCountersForPatterns returns rich PNR counters", () => {
+  const counters = buildLocalCountersForPatterns(["PNR", "Horns"]);
+  assert.ok(counters.length >= 2);
+  assert.ok(counters.every((c) => c.trigger && c.ballHandlerRule && c.screenerRule));
+  assert.ok(counters.some((c) => c.coverage === "ice" && c.targetsPattern === "PNR"));
+  assert.ok(counters.some((c) => c.targetsPattern === "Horns"));
 });
 
 test("normalizeCounterSuggestion parses rich counter", () => {
@@ -71,4 +80,35 @@ test("suggestDefensePlaysForCounter matches tagged plays", () => {
   const matches = suggestDefensePlaysForCounter(plays, counter, new Set(), 3);
   assert.equal(matches.length, 1);
   assert.equal(matches[0]?.play.id, "p_ice");
+});
+
+test("suggestDefensePlaysForCounter prefers Counter Library meta", () => {
+  const heuristic = stubPlay("p_tag", "Random ICE tag", ["defense", "ice"]);
+  const library: StoredPlay = {
+    ...stubPlay("p_lib", "Our ICE vs side PNR", []),
+    defenseCounter: {
+      enabled: true,
+      coverages: ["ice"],
+      vsPatterns: ["PNR"],
+      notes: "Late clock",
+    },
+  };
+  const counter = normalizeCounterSuggestion(
+    {
+      title: "ICE side PNR",
+      detail: "Force baseline",
+      coverage: "ice",
+      targetsPattern: "PNR",
+    },
+    "PNR",
+  )!;
+  const matches = suggestDefensePlaysForCounter(
+    [heuristic, library],
+    counter,
+    new Set(),
+    2,
+  );
+  assert.equal(matches[0]?.play.id, "p_lib");
+  assert.ok(matches[0]!.score > (matches[1]?.score ?? 0));
+  assert.ok(matches[0]!.reasons.some((r) => /Counter Library/i.test(r)));
 });

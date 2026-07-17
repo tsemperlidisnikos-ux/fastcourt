@@ -227,6 +227,8 @@ export function DesignerScreen() {
   const [exportAnimProgress, setExportAnimProgress] = useState(0);
   const [openToolGroups, setOpenToolGroups] = useState<Set<string>>(defaultOpenToolGroups);
   const [sidebarTab, setSidebarTab] = useState<"frames" | "coach">("frames");
+  const [coachAnalyzeRequestId, setCoachAnalyzeRequestId] = useState(0);
+  const [coachSuggestionCount, setCoachSuggestionCount] = useState(0);
 
   useEffect(() => {
     if (storedMeta?.type) {
@@ -479,6 +481,7 @@ export function DesignerScreen() {
       tags: storedMeta?.tags ?? [],
       playNotes: storedMeta?.playNotes,
       videoUrl: storedMeta?.videoUrl,
+      defenseCounter: storedMeta?.defenseCounter,
       favorite: storedMeta?.favorite,
       createdAt: storedMeta?.createdAt ?? now,
       updatedAt: now,
@@ -564,6 +567,14 @@ export function DesignerScreen() {
       tags: values.tags,
       playNotes: values.playNotes || undefined,
       videoUrl: values.videoUrl || undefined,
+      defenseCounter: values.defenseCounter?.enabled
+        ? {
+            enabled: true,
+            coverages: values.defenseCounter.coverages ?? [],
+            vsPatterns: values.defenseCounter.vsPatterns ?? [],
+            notes: values.defenseCounter.notes?.trim() || undefined,
+          }
+        : undefined,
     });
     if (!doc) return;
     setTitle(doc.title);
@@ -868,6 +879,11 @@ export function DesignerScreen() {
                   onEmbedCode: () => void handleCreateEmbedCode(),
                   onDownload: () => void handleDownloadPlay(),
                   onPrint: handlePrint,
+                  onAnalyze: () => {
+                    setMenuOpen(false);
+                    setSidebarTab("coach");
+                    setCoachAnalyzeRequestId((n) => n + 1);
+                  },
                 }}
               />
             </div>
@@ -1256,6 +1272,11 @@ export function DesignerScreen() {
               onClick={() => setSidebarTab("coach")}
             >
               Coach
+              {coachSuggestionCount > 0 ? (
+                <span className="ds-sidebar-tab-badge" aria-label={`${coachSuggestionCount} suggestions`}>
+                  {coachSuggestionCount}
+                </span>
+              ) : null}
             </button>
           </div>
           <div
@@ -1320,6 +1341,9 @@ export function DesignerScreen() {
                 playNotes: storedMeta?.playNotes,
               }}
               libraryPlays={libraryPlays}
+              analyzeRequestId={coachAnalyzeRequestId}
+              panelActive={sidebarTab === "coach"}
+              onSuggestionCountChange={setCoachSuggestionCount}
             />
           </div>
         </aside>
@@ -1338,6 +1362,7 @@ export function DesignerScreen() {
           season: storedMeta?.season,
           playNotes: storedMeta?.playNotes,
           videoUrl: storedMeta?.videoUrl,
+          defenseCounter: storedMeta?.defenseCounter,
         }}
         onClose={() => setDetailsOpen(false)}
         onSubmit={handleDetailsSubmit}

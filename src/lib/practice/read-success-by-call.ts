@@ -68,6 +68,44 @@ export function lookupReadSuccessPct(
   return Math.round((bucket.landed / marked) * 100);
 }
 
+/** Match timeout cue titles against longer Counter drill liveCall labels. */
+export function lookupCounterSuccessPct(
+  lookup: ReadSuccessLookup,
+  cueTitle: string,
+  defensePlayId?: string,
+): number | null {
+  const exact = lookupReadSuccessPct(lookup, cueTitle, defensePlayId);
+  if (exact != null) return exact;
+
+  const titleKey = normalizeCallKey(cueTitle);
+  if (!titleKey) return null;
+
+  if (defensePlayId) {
+    let playLanded = 0;
+    let playMissed = 0;
+    for (const [key, bucket] of lookup.byPlayCall) {
+      if (!key.startsWith(`${defensePlayId}|`)) continue;
+      const callPart = key.slice(defensePlayId.length + 1);
+      if (!callPart.includes(titleKey)) continue;
+      playLanded += bucket.landed;
+      playMissed += bucket.missed;
+    }
+    const playMarked = playLanded + playMissed;
+    if (playMarked > 0) return Math.round((playLanded / playMarked) * 100);
+  }
+
+  let landed = 0;
+  let missed = 0;
+  for (const [call, bucket] of lookup.byCall) {
+    if (!call.includes(titleKey)) continue;
+    landed += bucket.landed;
+    missed += bucket.missed;
+  }
+  const marked = landed + missed;
+  if (marked <= 0) return null;
+  return Math.round((landed / marked) * 100);
+}
+
 export function formatReadSuccessBadge(pct: number | null): string | null {
   if (pct == null) return null;
   return `${pct}% landed`;

@@ -11,6 +11,7 @@ import {
   findRecentPracticeSessionForDrill,
   practiceSessionLibraryHref,
 } from "@/lib/coach/coach-dashboard";
+import { buildCounterSuccessModel } from "@/lib/coach/counter-success";
 import { getAllRosterPlayers } from "@/lib/players/player-roster";
 import { createDrillPracticeItems } from "@/lib/practice/drill-suggestions";
 import { useFilmRoomStore } from "@/stores/film-room-store";
@@ -23,6 +24,7 @@ export function CoachDashboardView() {
   const practiceSessions = useOrganizerStore((s) => s.practiceSessions);
   const plays = useOrganizerStore((s) => s.plays);
   const teams = useOrganizerStore((s) => s.teams);
+  const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const createPracticeSession = useOrganizerStore((s) => s.createPracticeSession);
   const appendPracticeItems = useOrganizerStore((s) => s.appendPracticeItems);
   const filmSessions = useFilmRoomStore((s) => s.sessions);
@@ -64,6 +66,17 @@ export function CoachDashboardView() {
       }),
     [practiceSessions, filmSessions, plays, teamFilter, rosterPlayers],
   );
+
+  const counterSuccess = useMemo(() => {
+    const team = teamFilter.trim();
+    const sessions = team
+      ? practiceSessions.filter((row) => row.team === team)
+      : practiceSessions;
+    const plans = team
+      ? gamePlans.filter((row) => row.team === team)
+      : gamePlans;
+    return buildCounterSuccessModel(sessions, plans, 8);
+  }, [practiceSessions, gamePlans, teamFilter]);
 
   const markedTrend = model.practiceTrend.filter(
     (row) => row.landedCount + row.missedCount > 0,
@@ -258,6 +271,63 @@ export function CoachDashboardView() {
               Assign players in Practice Live when marking reads.
             </p>
           )}
+        </section>
+
+        <section className="coach-dashboard-card coach-dashboard-counters">
+          <h3>Counter success</h3>
+          {counterSuccess.overallRatePct != null ? (
+            <>
+              <p className="coach-dashboard-big-stat">
+                {counterSuccess.overallRatePct}%
+              </p>
+              <p className="coach-dashboard-stat-meta">
+                {counterSuccess.totalLanded} landed · {counterSuccess.totalMissed}{" "}
+                missed · {counterSuccess.practicedCueCount} practiced
+                {counterSuccess.pendingCueCount
+                  ? ` · ${counterSuccess.pendingCueCount} timeout cues not drilled`
+                  : ""}
+              </p>
+            </>
+          ) : (
+            <p className="coach-dashboard-empty">
+              Add counters to practice from Designer Coach, then mark Landed /
+              Missed in Practice Live.
+            </p>
+          )}
+          {counterSuccess.rows.length ? (
+            <ul className="coach-dashboard-counter-list">
+              {counterSuccess.rows.map((row) => (
+                <li key={row.id} className="coach-dashboard-counter-row">
+                  <div className="coach-dashboard-counter-main">
+                    <strong>{row.call}</strong>
+                    {row.targetsPattern || row.coverage ? (
+                      <span className="coach-dashboard-counter-meta">
+                        {[
+                          row.coverage,
+                          row.targetsPattern
+                            ? `vs ${row.targetsPattern}`
+                            : null,
+                          row.gamePlanTitle,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="coach-dashboard-counter-stats">
+                    {row.successRatePct != null
+                      ? `${row.successRatePct}%`
+                      : row.source === "timeout-cue"
+                        ? "Not drilled"
+                        : "—"}
+                    {row.landed + row.missed > 0
+                      ? ` · ${row.landed}✓ ${row.missed}✗`
+                      : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
 
         <section className="coach-dashboard-card coach-dashboard-film">

@@ -14,6 +14,11 @@ import {
   findSimilarPlays,
   formatSimilarityScore,
 } from "@/lib/library/play-dna";
+import {
+  formatCounterLibraryBadgeLabel,
+  formatCounterLibraryBadgeTitle,
+  isCounterLibraryItem,
+} from "@/lib/library/counter-library-badge";
 
 const CourtFrameThumbnail = dynamic(
   () =>
@@ -72,7 +77,7 @@ export function LibraryPreviewPanel({
 
   const similarPlays = useMemo(() => {
     if (!play || libraryPlays.length < 2) return [];
-    return findSimilarPlays(play, libraryPlays, { limit: 4 });
+    return findSimilarPlays(play, libraryPlays, { limit: 3 });
   }, [libraryPlays, play]);
 
   useEffect(() => {
@@ -160,6 +165,14 @@ export function LibraryPreviewPanel({
           <div className="org-preview-meta">
             <div className="org-preview-breadcrumb" id="library-preview-breadcrumb">
               {breadcrumb}
+              {isCounterLibraryItem(play) && play.defenseCounter ? (
+                <span
+                  className="fd-counter-badge fd-counter-badge-preview"
+                  title={formatCounterLibraryBadgeTitle(play.defenseCounter)}
+                >
+                  {formatCounterLibraryBadgeLabel(play.defenseCounter)}
+                </span>
+              ) : null}
             </div>
             <div className="org-preview-sub" id="library-preview-sub" />
           </div>

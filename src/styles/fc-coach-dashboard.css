@@ -251,6 +251,55 @@
   background: #fffbeb;
 }
 
+.coach-dashboard-counters {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.coach-dashboard-counter-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coach-dashboard-counter-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.coach-dashboard-counter-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.coach-dashboard-counter-main strong {
+  font-size: 13px;
+}
+
+.coach-dashboard-counter-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.coach-dashboard-counter-stats {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7f1d1d;
+  white-space: nowrap;
+}
+
 .coach-dashboard-player-list {
   list-style: none;
   margin: 0;

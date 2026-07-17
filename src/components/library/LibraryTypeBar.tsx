@@ -3,6 +3,7 @@
 const FILTERS = [
   { id: "all", label: "All" },
   { id: "favorites", label: "★ Favorites", favorite: true },
+  { id: "counters", label: "Counters", counter: true },
   { id: "play", label: "Plays" },
   { id: "drill", label: "Drills" },
   { id: "playbook", label: "Playbooks" },
@@ -23,7 +24,9 @@ export function LibraryTypeBar({ active, onChange }: Props) {
             type="button"
             className={`org-filter-chip org-filter-type${
               f.id === "favorites" ? " org-filter-favorites" : ""
-            }${active === f.id ? " active" : ""}`}
+            }${f.id === "counters" ? " org-filter-counters" : ""}${
+              active === f.id ? " active" : ""
+            }`}
             data-type={f.id}
             onClick={() => onChange(f.id)}
           >

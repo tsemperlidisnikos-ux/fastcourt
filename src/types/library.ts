@@ -2,6 +2,16 @@ import type { CourtType, CourtViewSettings, PlayDocument } from "@/types/designe
 
 export type LibraryItemType = "play" | "drill" | "playbook";
 
+/** Marks a library play as a reusable defensive counter for specific looks. */
+export interface DefenseCounterMeta {
+  enabled: boolean;
+  /** Coverage ids (ice, switch, drop, …) — see COUNTER_COVERAGE_LABELS. */
+  coverages: string[];
+  /** Offensive patterns this counters (PNR, Horns, Spain, …). */
+  vsPatterns: string[];
+  notes?: string;
+}
+
 export interface PlayDetailsValues {
   type: LibraryItemType;
   title: string;
@@ -13,6 +23,7 @@ export interface PlayDetailsValues {
   season: string;
   playNotes: string;
   videoUrl: string;
+  defenseCounter?: DefenseCounterMeta;
 }
 
 export interface FdbLazyMeta {
@@ -29,6 +40,8 @@ export interface StoredPlay extends PlayDocument {
   tags: string[];
   playNotes?: string;
   videoUrl?: string;
+  /** When set, Coach / Film Room prefer this play for matching counters. */
+  defenseCounter?: DefenseCounterMeta;
   favorite?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -54,6 +67,8 @@ export interface LibraryItem {
   frameCount: number;
   updatedAt: string;
   favorite?: boolean;
+  /** Snapshot when play is marked in Counter Library. */
+  defenseCounter?: Pick<DefenseCounterMeta, "enabled" | "coverages" | "vsPatterns">;
   source?: StoredPlay["source"];
   lazyPending?: boolean;
   ownerUserId?: string;

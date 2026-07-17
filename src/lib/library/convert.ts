@@ -361,6 +361,14 @@ export function patchStoredPlayFromDetails(
     season: details.season,
     playNotes: details.playNotes || undefined,
     videoUrl: details.videoUrl || undefined,
+    defenseCounter: details.defenseCounter?.enabled
+      ? {
+          enabled: true,
+          coverages: details.defenseCounter.coverages ?? [],
+          vsPatterns: details.defenseCounter.vsPatterns ?? [],
+          notes: details.defenseCounter.notes?.trim() || undefined,
+        }
+      : undefined,
     updatedAt: now,
   };
 }
@@ -377,6 +385,13 @@ export function storedPlayToLibraryItem(play: StoredPlay) {
     frameCount: play.frames.length,
     updatedAt: play.updatedAt,
     favorite: play.favorite,
+    defenseCounter: play.defenseCounter?.enabled
+      ? {
+          enabled: true as const,
+          coverages: play.defenseCounter.coverages ?? [],
+          vsPatterns: play.defenseCounter.vsPatterns ?? [],
+        }
+      : undefined,
     source: play.source,
     lazyPending: play.lazyPending,
     ownerUserId: play.ownerUserId,

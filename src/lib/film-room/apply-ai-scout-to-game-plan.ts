@@ -329,9 +329,20 @@ export function buildAiScoutGamePlanPatch(
   }
 
   const selectedCounters = resolveSelectedCounters(analysis, selectedCoachingKeys);
-  const newTimeoutCues = selectedCounters.map((counter) =>
-    counterToTimeoutCue(counter, { sessionId, timestamp }),
-  );
+  const excludedForCues = gamePlanPlayIds(plan);
+  const newTimeoutCues = selectedCounters.map((counter) => {
+    const matches = suggestDefensePlaysForCounter(
+      plays,
+      counter,
+      excludedForCues,
+      1,
+    );
+    return counterToTimeoutCue(
+      counter,
+      { sessionId, timestamp },
+      matches[0]?.play.id,
+    );
+  });
   const timeoutCues =
     newTimeoutCues.length > 0
       ? mergeTimeoutCues(plan.timeoutCues, newTimeoutCues)
