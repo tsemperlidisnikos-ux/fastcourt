@@ -26,10 +26,66 @@ export function memberRoleLabel(role: PendingTeamInvite["memberRole"]) {
   return "Coach";
 }
 
-export function buildTeamInviteUrl(token: string) {
+function toBase64Url(value: string) {
+  const encoded =
+    typeof btoa === "function"
+      ? btoa(value)
+      : Buffer.from(value, "utf8").toString("base64");
+  return encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function fromBase64Url(value: string) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padLength = (4 - (padded.length % 4)) % 4;
+  const withPad = padded + "=".repeat(padLength);
+  if (typeof atob === "function") {
+    return atob(withPad);
+  }
+  return Buffer.from(withPad, "base64").toString("utf8");
+}
+
+export function encodeInvitePayload(invite: PendingTeamInvite): string {
+  return toBase64Url(JSON.stringify(invite));
+}
+
+export function decodeInvitePayload(raw: string): PendingTeamInvite | null {
+  try {
+    const parsed = JSON.parse(fromBase64Url(raw)) as PendingTeamInvite;
+    if (
+      !parsed ||
+      typeof parsed.token !== "string" ||
+      typeof parsed.email !== "string" ||
+      typeof parsed.organizationId !== "string" ||
+      typeof parsed.memberId !== "string" ||
+      typeof parsed.teamAdminEmail !== "string"
+    ) {
+      return null;
+    }
+    return {
+      ...parsed,
+      token: parsed.token.trim().toLowerCase(),
+      email: normalizeEmail(parsed.email),
+      teamAdminEmail: normalizeEmail(parsed.teamAdminEmail),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function buildTeamInviteUrl(tokenOrInvite: string | PendingTeamInvite) {
   const path = window.location.pathname || "/login";
   const origin = window.location.origin || "";
-  return `${origin}${path}#team-invite=${token}`;
+  if (typeof tokenOrInvite === "string") {
+    return `${origin}${path}#team-invite=${tokenOrInvite}`;
+  }
+  const token = tokenOrInvite.token.trim().toLowerCase();
+  const payload = encodeInvitePayload({
+    ...tokenOrInvite,
+    token,
+    email: normalizeEmail(tokenOrInvite.email),
+    teamAdminEmail: normalizeEmail(tokenOrInvite.teamAdminEmail),
+  });
+  return `${origin}${path}#team-invite=${token}&d=${payload}`;
 }
 
 export function lookupInviteByToken(token: string): PendingTeamInvite | null {
@@ -121,6 +177,24 @@ export function clearPendingInvite() {
 export function consumeInviteFromUrlHash(): PendingTeamInvite | null {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash || "";
+  const payloadMatch = hash.match(/[?&#]d=([A-Za-z0-9_-]+)/);
+  if (payloadMatch?.[1]) {
+    const fromPayload = decodeInvitePayload(payloadMatch[1]);
+    if (fromPayload) {
+      storePendingInvite(fromPayload);
+      try {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+      } catch {
+        /* ignore */
+      }
+      return fromPayload;
+    }
+  }
+
   const match = hash.match(/team-invite=([a-f0-9]+)/i);
   if (!match) return null;
   const invite = lookupInviteByToken(match[1]);
@@ -137,4 +211,3 @@ export function consumeInviteFromUrlHash(): PendingTeamInvite | null {
   }
   return invite;
 }
-

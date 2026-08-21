@@ -3,6 +3,7 @@ import { ShareProviders } from "@/components/share/ShareProviders";
 import {
   APP_DESCRIPTION,
   APP_ICON_PATH,
+  APP_LOGO_PATH,
   APP_NAME,
   PWA_BACKGROUND_COLOR,
   PWA_THEME_COLOR,
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: APP_ICON_PATH, sizes: "512x512", type: "image/png" },
-      { url: "/icons/fastcourt-logo.png", sizes: "192x192", type: "image/png" },
+      { url: APP_LOGO_PATH, sizes: "192x192", type: "image/png" },
     ],
     apple: [{ url: APP_ICON_PATH, sizes: "180x180", type: "image/png" }],
   },

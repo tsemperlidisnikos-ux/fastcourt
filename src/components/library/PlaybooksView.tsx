@@ -16,6 +16,7 @@ import {
 import { PlaybookRemovePlayDialog } from "@/components/library/PlaybookDialogs";
 import { shareContentToPlayers } from "@/lib/players/share-to-players";
 import { syncLibraryForUser } from "@/lib/cloud/library-sync";
+import { canAddItemToPlaybook } from "@/lib/library/counter-library-badge";
 import { FC_CONTEXT_MENU_TRIGGER_ATTR } from "@/lib/ui/context-menu-policy";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
@@ -55,6 +56,7 @@ export function PlaybooksView() {
   const teams = useOrganizerStore((s) => s.teams);
   const createPlaybook = useOrganizerStore((s) => s.createPlaybook);
   const updatePlaybook = useOrganizerStore((s) => s.updatePlaybook);
+  const reorderPlaybookPlays = useOrganizerStore((s) => s.reorderPlaybookPlays);
   const deletePlaybook = useOrganizerStore((s) => s.deletePlaybook);
   const addPlayToPlaybook = useOrganizerStore((s) => s.addPlayToPlaybook);
   const removePlayFromPlaybook = useOrganizerStore((s) => s.removePlayFromPlaybook);
@@ -137,7 +139,7 @@ export function PlaybooksView() {
   const to = Math.min(playbooks.length, (safePage + 1) * PAGE_SIZE);
 
   const availablePlays = useMemo(
-    () => plays.filter((p) => p.type !== "playbook"),
+    () => plays.filter((p) => canAddItemToPlaybook(p) && p.type !== "playbook"),
     [plays],
   );
 
@@ -234,6 +236,11 @@ export function PlaybooksView() {
     setSelectedPlayId(playId);
     setSelectedPageIndex(pageIndex);
     setFocusPageIndex(pageIndex);
+  }
+
+  function handleReorderPlays(fromIndex: number, toIndex: number) {
+    if (!selected) return;
+    void reorderPlaybookPlays(selected.id, fromIndex, toIndex);
   }
 
   function handleRequestRemovePlay(playId: string) {
@@ -517,6 +524,7 @@ export function PlaybooksView() {
                     selectedPlayId={activePlayId}
                     onSelectPlay={handleSelectPlay}
                     onRemovePlay={handleRequestRemovePlay}
+                    onReorderPlays={handleReorderPlays}
                   />
                 ) : null}
                 {selected ? (

@@ -1,4 +1,5 @@
 import { ensureInviteToken } from "@/lib/auth/team-invite-token";
+import { isMasterAdminEmail } from "@/lib/auth/roles";
 import type { OrgMember, TeamOrganization } from "@/types/team-org";
 
 const STORAGE_KEY = "fastcourt_team_orgs_v1";
@@ -104,4 +105,26 @@ export function newOrganization(input: {
     coaches: [],
     players: [],
   };
+}
+
+/** Persist the cloud/local user id of the team admin for shared library resolution. */
+export function rememberTeamAdminUserId(
+  adminEmail: string,
+  userId: string,
+): void {
+  const normalizedEmail = adminEmail.trim().toLowerCase();
+  const trimmedId = userId.trim();
+  if (!normalizedEmail || !trimmedId) return;
+  // Never pin a platform / master-admin account as a team library owner.
+  if (isMasterAdminEmail(normalizedEmail)) return;
+
+  const orgs = loadTeamOrganizations();
+  let changed = false;
+  const next = orgs.map((org) => {
+    if (org.teamAdminEmail.trim().toLowerCase() !== normalizedEmail) return org;
+    if (org.teamAdminUserId === trimmedId) return org;
+    changed = true;
+    return { ...org, teamAdminUserId: trimmedId };
+  });
+  if (changed) saveTeamOrganizations(next);
 }

@@ -236,7 +236,7 @@ export function CourtActionShape({
   }
 
   if (action.type === "screen") {
-    const bar = screenBarPointsFromPolyline(points, court);
+    const bar = screenBarPointsFromPolyline(points, court, courtType);
     return wrap(
       <>
         <Line

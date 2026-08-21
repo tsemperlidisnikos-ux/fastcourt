@@ -111,31 +111,49 @@ export const useFilmRoomStore = create<FilmRoomState>((set, get) => ({
   },
 
   async createUploadSession(file, title) {
-    const blobId = newId("film_blob");
-    await putFilmRoomBlob(blobId, file, file.name, file.type || undefined);
-    const session: FilmRoomSession = {
-      id: newId("film"),
-      title: title?.trim() || file.name.replace(/\.[^.]+$/, "") || "Untitled clip",
-      source: {
-        kind: "upload",
-        blobId,
-        fileName: file.name,
-        mimeType: file.type || undefined,
-      },
-      strokes: [],
-      events: [],
-      disruptions: [],
-      bookmarks: [],
-      analyses: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await putFilmRoomSession(session);
-    set((s) => ({
-      sessions: [session, ...s.sessions],
-      activeSessionId: session.id,
-    }));
-    return session.id;
+    try {
+      const blobId = newId("film_blob");
+      await putFilmRoomBlob(blobId, file, file.name, file.type || undefined);
+      const session: FilmRoomSession = {
+        id: newId("film"),
+        title: title?.trim() || file.name.replace(/\.[^.]+$/, "") || "Untitled clip",
+        source: {
+          kind: "upload",
+          blobId,
+          fileName: file.name,
+          mimeType: file.type || undefined,
+        },
+        strokes: [],
+        events: [],
+        disruptions: [],
+        bookmarks: [],
+        analyses: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      await putFilmRoomSession(session);
+      set((s) => ({
+        sessions: [session, ...s.sessions],
+        activeSessionId: session.id,
+      }));
+      return session.id;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "");
+      if (
+        error instanceof DOMException &&
+        (error.name === "QuotaExceededError" || error.code === 22)
+      ) {
+        throw new Error(
+          "Not enough browser storage for this clip. Try a shorter MP4 or delete old sessions.",
+        );
+      }
+      if (/quota|QuotaExceeded/i.test(message)) {
+        throw new Error(
+          "Not enough browser storage for this clip. Try a shorter MP4 or delete old sessions.",
+        );
+      }
+      throw error instanceof Error ? error : new Error(message || "Upload failed.");
+    }
   },
 
   async createUrlSession(source, title) {

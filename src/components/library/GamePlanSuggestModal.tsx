@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import { useMemo, useState } from "react";
 import { useClientMounted } from "@/hooks/useClientMounted";
+import { usePlatformFeatures } from "@/hooks/usePlatformFeatures";
 import {
   enrichSuggestionsWithPlayDna,
   gamePlanSuggestModalTitle,
@@ -35,20 +36,21 @@ function GamePlanSuggestModalBody({
   onClose,
   onAdd,
 }: Props) {
+  const platformFeatures = usePlatformFeatures();
   const suggestions = useMemo(() => {
     const tagMatches = suggestPlaysForGamePlanCategory(
       plays,
       categoryId,
       excludedPlayIds,
     );
-    if (!anchorPlays.length) return tagMatches;
+    if (!platformFeatures.similarPlays || !anchorPlays.length) return tagMatches;
     return enrichSuggestionsWithPlayDna(
       tagMatches,
       anchorPlays,
       plays,
       excludedPlayIds,
     );
-  }, [anchorPlays, categoryId, excludedPlayIds, plays]);
+  }, [anchorPlays, categoryId, excludedPlayIds, platformFeatures.similarPlays, plays]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   function toggle(id: string) {
@@ -66,6 +68,8 @@ function GamePlanSuggestModalBody({
     onClose();
   }
 
+  const useDna = platformFeatures.similarPlays && anchorPlays.length > 0;
+
   return createPortal(
     <div className="fc-game-plan-suggest-overlay" role="dialog" aria-modal="true">
       <div className="fc-game-plan-suggest-backdrop" onClick={onClose} aria-hidden />
@@ -74,7 +78,7 @@ function GamePlanSuggestModalBody({
           <h2>{gamePlanSuggestModalTitle(categoryId)}</h2>
           <p>
             Matched from tags, titles
-            {anchorPlays.length ? " and Play DNA vs plays already in this category" : ""}.
+            {useDna ? " and Play DNA vs plays already in this category" : ""}.
           </p>
         </header>
         <div className="fc-game-plan-suggest-body">

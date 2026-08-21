@@ -26,6 +26,7 @@ lint-report.json
 # production
 /build
 /dist-electron
+/dist-usb
 
 # misc
 scripts/tmp-*
@@ -42,8 +43,14 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
+# vercel / netlify
 .vercel
+.netlify
+
+# local debug logs
+*.log
+tailwindcss-*.log
+netlify_deploy_debug.log
 
 # typescript
 *.tsbuildinfo

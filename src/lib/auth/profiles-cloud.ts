@@ -66,11 +66,65 @@ export async function saveCloudAdminUsers(
   const cloudUsers = users.filter(isPersistableCloudProfile);
   if (!cloudUsers.length) return { ok: true };
 
-  const payload = cloudUsers.map(adminUserToProfileUpdate);
-  const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
+  // Prefer UPDATE (not upsert): upsert still evaluates INSERT RLS and fails
+  // for admins because only profiles_insert_own (auth.uid() = id) existed.
+  for (const record of cloudUsers) {
+    const payload = adminUserToProfileUpdate(record);
+    const { data, error } = await supabase
+      .from("profiles")
+      .update(payload)
+      .eq("id", record.id)
+      .select("id");
 
-  if (error) return { ok: false, error: error.message };
+    if (error) return { ok: false, error: error.message };
+
+    // Row missing (e.g. never signed up in cloud) — try insert; needs admin INSERT policy.
+    if (!data?.length) {
+      const { error: insertError } = await supabase.from("profiles").insert(payload);
+      if (insertError) {
+        return {
+          ok: false,
+          error:
+            insertError.message.includes("row-level security")
+              ? `${insertError.message} Run migration 018_profiles_admin_insert.sql in Supabase SQL Editor.`
+              : insertError.message,
+        };
+      }
+    }
+  }
+
   return { ok: true };
+}
+
+/** Server-side save (service role) — bypasses client RLS on profiles. */
+export async function saveCloudAdminUsersViaApi(
+  users: AdminUserRecord[],
+): Promise<{ ok: true; updated?: number } | { ok: false; error: string }> {
+  const cloudUsers = users.filter(isPersistableCloudProfile);
+  if (!cloudUsers.length) return { ok: true, updated: 0 };
+
+  try {
+    const response = await fetch("/api/admin/profiles", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ users: cloudUsers }),
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; error?: string; hint?: string; updated?: number }
+      | null;
+    if (!response.ok || !payload?.ok) {
+      return {
+        ok: false,
+        error: payload?.hint || payload?.error || `HTTP ${response.status}`,
+      };
+    }
+    return { ok: true, updated: payload.updated };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Cloud save failed",
+    };
+  }
 }
 
 export async function deleteCloudAdminUser(

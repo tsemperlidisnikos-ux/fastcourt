@@ -25,6 +25,7 @@ import {
   setPlayerHomework,
 } from "@/lib/library/meta";
 import { createRematchGamePlan } from "@/lib/game-plan/opponent-history";
+import { canAddItemToPlaybook } from "@/lib/library/counter-library-badge";
 import { getTeamRoster } from "@/lib/players/player-roster";
 import {
   buildHomeworkFromGamePlan,
@@ -531,6 +532,9 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
   },
 
   addPlayToPlaybook: async (playbookId, playId) => {
+    const play = get().plays.find((entry) => entry.id === playId);
+    if (!play || !canAddItemToPlaybook(play)) return;
+
     const playbooks = get().playbooks.map((s) => {
       if (s.id !== playbookId) return s;
       if (s.playRefs.includes(playId)) return s;
@@ -573,7 +577,9 @@ export const useOrganizerStore = create<OrganizerState>((set, get) => ({
 
   resolvePlaybookPlays: (section) => {
     const byId = new Map(get().plays.map((p) => [p.id, p]));
-    return section.playRefs.map((id) => byId.get(id)).filter(Boolean) as StoredPlay[];
+    return section.playRefs
+      .map((id) => byId.get(id))
+      .filter((play): play is StoredPlay => !!play && canAddItemToPlaybook(play));
   },
 
   createGamePlan: async (opponent, team) => {

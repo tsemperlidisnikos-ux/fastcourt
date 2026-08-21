@@ -2,9 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createGamePlanDraft } from "../../src/lib/game-plan/game-plan-items.ts";
 import {
+  TIMEOUT_CUES_MAX,
+  addTimeoutCue,
   counterToTimeoutCue,
+  createManualTimeoutCue,
+  listCounterLibraryPlays,
   mergeTimeoutCues,
+  patchTimeoutCue,
   pickTopTimeoutCues,
+  removeTimeoutCue,
+  timeoutCueFromCounterLibraryPlay,
 } from "../../src/lib/game-plan/game-day-timeout-cues.ts";
 import { buildTimeoutViewSlides } from "../../src/lib/game-plan/timeout-mode.ts";
 import type { StoredPlay } from "../../src/types/library.ts";
@@ -84,4 +91,91 @@ test("buildTimeoutViewSlides puts counters before play calls", () => {
   assert.equal(slides.length, 2);
   assert.equal(slides[0]?.kind, "counter");
   assert.equal(slides[1]?.kind, "play");
+});
+
+test("createManualTimeoutCue requires title and detail", () => {
+  assert.equal(
+    createManualTimeoutCue({ title: "", detail: "x", coverage: "ice" }),
+    null,
+  );
+  const cue = createManualTimeoutCue({
+    title: "ICE side",
+    detail: "Force baseline.",
+    coverage: "ice",
+    targetsPattern: "PNR",
+    priority: "high",
+    ballHandlerRule: "No middle",
+  });
+  assert.ok(cue);
+  assert.equal(cue?.title, "ICE side");
+  assert.equal(cue?.ballHandlerRule, "No middle");
+});
+
+test("timeoutCueFromCounterLibraryPlay maps defenseCounter meta", () => {
+  const play = stubPlay("def_ice", "Team ICE");
+  play.defenseCounter = {
+    enabled: true,
+    coverages: ["ice"],
+    vsPatterns: ["PNR"],
+    notes: "Prefer vs lefty BH",
+  };
+  const cue = timeoutCueFromCounterLibraryPlay(play);
+  assert.ok(cue);
+  assert.equal(cue?.defensePlayId, "def_ice");
+  assert.equal(cue?.coverage, "ice");
+  assert.equal(cue?.targetsPattern, "PNR");
+  assert.equal(cue?.detail, "Prefer vs lefty BH");
+});
+
+test("listCounterLibraryPlays filters enabled counters", () => {
+  const ice = stubPlay("a", "ICE");
+  ice.defenseCounter = { enabled: true, coverages: ["ice"], vsPatterns: [] };
+  const plain = stubPlay("b", "Plain");
+  const drill = stubPlay("c", "Drill");
+  drill.type = "drill";
+  drill.defenseCounter = { enabled: true, coverages: ["drop"], vsPatterns: [] };
+  const listed = listCounterLibraryPlays([plain, drill, ice]);
+  assert.equal(listed.length, 1);
+  assert.equal(listed[0]?.id, "a");
+});
+
+test("patchTimeoutCue and removeTimeoutCue update the list", () => {
+  const first = counterToTimeoutCue({
+    title: "ICE",
+    detail: "Force baseline.",
+    coverage: "ice",
+    priority: "low",
+  });
+  const second = counterToTimeoutCue({
+    title: "Drop",
+    detail: "Drop big.",
+    coverage: "drop",
+    priority: "medium",
+  });
+  let cues = mergeTimeoutCues(undefined, [first, second]);
+  cues = patchTimeoutCue(cues, first.id, {
+    priority: "high",
+    detail: "Force baseline hard.",
+  });
+  assert.equal(cues[0]?.id, first.id);
+  assert.equal(cues[0]?.priority, "high");
+  assert.equal(cues[0]?.detail, "Force baseline hard.");
+  cues = removeTimeoutCue(cues, first.id);
+  assert.equal(cues.length, 1);
+  assert.equal(cues[0]?.coverage, "drop");
+});
+
+test("addTimeoutCue respects max cap", () => {
+  let cues = mergeTimeoutCues(undefined, []);
+  for (let i = 0; i < TIMEOUT_CUES_MAX + 2; i += 1) {
+    const cue = createManualTimeoutCue({
+      title: `Cue ${i}`,
+      detail: `Detail ${i}`,
+      coverage: "other",
+      priority: "medium",
+    });
+    assert.ok(cue);
+    cues = addTimeoutCue(cues, cue!);
+  }
+  assert.equal(cues.length, TIMEOUT_CUES_MAX);
 });

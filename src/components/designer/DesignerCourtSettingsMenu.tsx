@@ -12,6 +12,7 @@ interface ExportHandlers {
   onEmbedCode: () => void;
   onDownload: () => void;
   onPrint: () => void;
+  onAnalyze?: () => void;
 }
 
 export function DesignerCourtSettingsMenu({
@@ -45,6 +46,20 @@ export function DesignerCourtSettingsMenu({
       {exportHandlers ? (
         <>
           <div className="ds-fd-court-settings-sep" />
+          {exportHandlers.onAnalyze ? (
+            <div className="ds-fd-court-settings-export">
+              <span className="ds-fd-court-settings-label">Coach</span>
+              <div className="ds-fd-court-settings-export-grid">
+                <button
+                  type="button"
+                  title="Analyze current frame for coaching suggestions"
+                  onClick={exportHandlers.onAnalyze}
+                >
+                  Analyze
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="ds-fd-court-settings-export">
             <span className="ds-fd-court-settings-label">Share &amp; export</span>
             <div className="ds-fd-court-settings-export-grid">

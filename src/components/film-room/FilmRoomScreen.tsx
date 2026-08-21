@@ -11,6 +11,7 @@ import { useLibraryNavModules } from "@/hooks/useLibraryNavModules";
 import { isLibraryNavModuleEnabled } from "@/lib/settings/library-nav-modules";
 import { useFilmRoomStore } from "@/stores/film-room-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { appConfirm } from "@/stores/dialog-store";
 
 import type { LibraryNavModuleId } from "@/types/library-nav-modules";
@@ -37,6 +38,17 @@ export function FilmRoomScreen({
   const removeSession = useFilmRoomStore((s) => s.removeSession);
   const metaHydrated = useOrganizerStore((s) => s.hydrated);
   const loadMeta = useOrganizerStore((s) => s.loadMeta);
+  const applySettings = useSettingsStore((s) => s.applyAll);
+  const settingsHydrated = useSettingsStore((s) => s.hydrated);
+  const hydrateSettings = useSettingsStore((s) => s.hydrate);
+
+  useEffect(() => {
+    if (!settingsHydrated) hydrateSettings();
+  }, [settingsHydrated, hydrateSettings]);
+
+  useEffect(() => {
+    applySettings();
+  }, [applySettings, navModuleId]);
 
   useEffect(() => {
     void load();
@@ -97,7 +109,7 @@ export function FilmRoomScreen({
                 <p className="fc-film-empty">Loading sessions…</p>
               ) : sessions.length === 0 ? (
                 <p className="fc-film-empty">
-                  No clips yet. Upload a video or paste a YouTube link.
+                  No clips yet. Upload a video to get started.
                 </p>
               ) : (
                 sessions.map((session) => {
@@ -155,7 +167,7 @@ export function FilmRoomScreen({
               <div className="fc-film-main-empty">
                 <h2>Annotate game film</h2>
                 <p>
-                  Upload an MP4 or add a YouTube link, then draw on the video. Annotations sync to
+                  Upload an MP4, then draw on the video. Annotations sync to
                   the playhead — rewind to see them again at the right moment.
                 </p>
               </div>

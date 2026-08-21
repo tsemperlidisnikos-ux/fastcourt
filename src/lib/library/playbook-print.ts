@@ -103,6 +103,8 @@ export interface PlaybookPrintSettings {
   orientation?: PlaybookPrintOrientation;
   format?: PlaybookFormatOptions;
   overwriteClassicLayout?: boolean;
+  sortBySeries?: boolean;
+  sortByTags?: boolean;
 }
 
 export const DEFAULT_PLAYBOOK_PRINT_SETTINGS: PlaybookPrintSettings = {
@@ -111,7 +113,267 @@ export const DEFAULT_PLAYBOOK_PRINT_SETTINGS: PlaybookPrintSettings = {
   includeNotes: true,
   includePageNumbers: true,
   eachPlaySeparatePage: true,
+  sortBySeries: false,
+  sortByTags: false,
 };
+
+function comparePlaybookSortKey(a: string, b: string) {
+  return a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+}
+
+function playTagsKey(play: StoredPlay) {
+  return (play.tags ?? [])
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function playGroupKey(
+  play: StoredPlay,
+  bySeries: boolean,
+  byTags: boolean,
+): string {
+  if (bySeries && byTags) {
+    return `${play.series?.trim() || "\0"}||${playTagsKey(play).toLowerCase()}`;
+  }
+  if (bySeries) return play.series?.trim() || "\0";
+  if (byTags) return playTagsKey(play).toLowerCase() || "\0";
+  return play.id;
+}
+
+function playGroupLabel(
+  play: StoredPlay,
+  bySeries: boolean,
+  byTags: boolean,
+): string {
+  if (bySeries && byTags) {
+    const series = play.series?.trim();
+    const tags = playTagsKey(play);
+    if (series && tags) return `${series} · ${tags}`;
+    return series || tags || "Ungrouped";
+  }
+  if (bySeries) return play.series?.trim() || "No series";
+  if (byTags) return playTagsKey(play) || "No tags";
+  return play.title?.trim() || "Untitled";
+}
+
+function framesForPlay(play: StoredPlay): PlaybookFrameItem[] {
+  return play.frames.map((frame, frameIndex) => ({
+    playId: play.id,
+    playTitle: play.title,
+    series: play.series ?? "",
+    frameId: frame.id,
+    frameName: frame.name || `Frame ${frameIndex + 1}`,
+    notes: (frame.notes ?? "").trim(),
+    frameNum: frameIndex + 1,
+    frameTotal: play.frames.length,
+    courtType: play.courtType,
+    playType: play.type,
+    team: play.team,
+    frame,
+    courtView: play.courtView,
+  }));
+}
+
+const PAD_FRAME_STUB: StoredPlay["frames"][number] = {
+  id: "__pad__",
+  name: "",
+  objects: [],
+  actions: [],
+};
+
+function makeRowPadItem(play: StoredPlay, padIndex: number): PlaybookFrameItem {
+  return {
+    playId: play.id,
+    playTitle: "",
+    series: play.series ?? "",
+    frameId: `__pad__${play.id}__${padIndex}`,
+    frameName: "",
+    notes: "",
+    frameNum: 0,
+    frameTotal: 0,
+    courtType: play.courtType,
+    playType: play.type,
+    team: play.team,
+    frame: PAD_FRAME_STUB,
+    courtView: play.courtView,
+    isPad: true,
+  };
+}
+
+function makePlayTitleItem(play: StoredPlay): PlaybookFrameItem {
+  return {
+    playId: play.id,
+    playTitle: play.title?.trim() || "Untitled",
+    series: play.series ?? "",
+    frameId: `__title__${play.id}`,
+    frameName: "",
+    notes: "",
+    frameNum: 0,
+    frameTotal: 0,
+    courtType: play.courtType,
+    playType: play.type,
+    team: play.team,
+    frame: PAD_FRAME_STUB,
+    courtView: play.courtView,
+    isPlayTitle: true,
+  };
+}
+
+/** How many grid slots an item consumes (play titles are banners, not frame slots). */
+export function playbookItemSlotCount(
+  item: PlaybookFrameItem,
+  _cols: number,
+): number {
+  if (item.isPlayTitle) return 0;
+  return 1;
+}
+
+export function playbookItemsSlotCount(
+  items: PlaybookFrameItem[],
+  cols: number,
+): number {
+  return items.reduce(
+    (sum, item) => sum + playbookItemSlotCount(item, cols),
+    0,
+  );
+}
+
+function chunkItemsByPageCapacity(
+  items: PlaybookFrameItem[],
+  framesPerPage: number,
+  cols: number,
+): PlaybookFrameItem[][] {
+  const chunks: PlaybookFrameItem[][] = [];
+  let current: PlaybookFrameItem[] = [];
+  let used = 0;
+
+  for (const item of items) {
+    const need = playbookItemSlotCount(item, cols);
+    // Titles are free height banners — keep them with following frames.
+    // If the page is already full, start the title on the next page.
+    const fits = item.isPlayTitle
+      ? used < framesPerPage
+      : used + need <= framesPerPage;
+
+    if (current.length > 0 && !fits) {
+      chunks.push(current);
+      current = [];
+      used = 0;
+    }
+    current.push(item);
+    used += need;
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
+/**
+ * Flatten group plays into one slot list. When eachPlayNewLine is on,
+ * pad the current row so the next play starts in column 1.
+ * When includePlayTitles is on, insert a full-row play name before frames.
+ */
+function packGroupFrameItems(
+  plays: StoredPlay[],
+  cols: number,
+  eachPlayNewLine: boolean,
+  includePlayTitles: boolean,
+): PlaybookFrameItem[] {
+  const items: PlaybookFrameItem[] = [];
+  let padSeq = 0;
+
+  for (const play of plays) {
+    const frames = framesForPlay(play);
+    if (!frames.length) continue;
+
+    if (eachPlayNewLine && items.length > 0) {
+      const rem = playbookItemsSlotCount(items, cols) % cols;
+      if (rem !== 0) {
+        const padsNeeded = cols - rem;
+        for (let i = 0; i < padsNeeded; i += 1) {
+          items.push(makeRowPadItem(play, padSeq++));
+        }
+      }
+    }
+
+    if (includePlayTitles) {
+      items.push(makePlayTitleItem(play));
+    }
+
+    items.push(...frames);
+  }
+
+  return items;
+}
+
+/** Order plays for print/preview when Layout Options sort flags are on. */
+export function sortPlaysForPlaybookPrint(
+  plays: StoredPlay[],
+  options: { sortBySeries?: boolean; sortByTags?: boolean },
+): StoredPlay[] {
+  const bySeries = Boolean(options.sortBySeries);
+  const byTags = Boolean(options.sortByTags);
+  if (!bySeries && !byTags) return plays;
+
+  return [...plays].sort((left, right) => {
+    if (bySeries) {
+      const cmp = comparePlaybookSortKey(
+        left.series?.trim() || "",
+        right.series?.trim() || "",
+      );
+      if (cmp !== 0) return cmp;
+    }
+    if (byTags) {
+      const cmp = comparePlaybookSortKey(playTagsKey(left), playTagsKey(right));
+      if (cmp !== 0) return cmp;
+    }
+    return comparePlaybookSortKey(left.title || "", right.title || "");
+  });
+}
+
+function groupPlaysForPrint(
+  plays: StoredPlay[],
+  bySeries: boolean,
+  byTags: boolean,
+): { key: string; label: string; plays: StoredPlay[] }[] {
+  if (!bySeries && !byTags) {
+    return plays.map((play) => ({
+      key: play.id,
+      label: play.title?.trim() || "Untitled",
+      plays: [play],
+    }));
+  }
+
+  const groups: { key: string; label: string; plays: StoredPlay[] }[] = [];
+  for (const play of plays) {
+    const key = playGroupKey(play, bySeries, byTags);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.plays.push(play);
+      continue;
+    }
+    groups.push({
+      key,
+      label: playGroupLabel(play, bySeries, byTags),
+      plays: [play],
+    });
+  }
+  return groups;
+}
+
+/** Entries in TOC before page numbers are known (for page-count estimate). */
+function estimatePlaybookTocEntryCount(
+  plays: StoredPlay[],
+  bySeries: boolean,
+  byTags: boolean,
+): number {
+  // Playbook section + one row per play; group mode adds a header per group.
+  let count = 1 + plays.length;
+  if (bySeries || byTags) {
+    count += groupPlaysForPrint(plays, bySeries, byTags).length;
+  }
+  return count;
+}
 
 export interface PlaybookFrameItem {
   playId: string;
@@ -126,6 +388,11 @@ export interface PlaybookFrameItem {
   playType: LibraryItemType;
   team?: string;
   frame: StoredPlay["frames"][number];
+  courtView?: StoredPlay["courtView"];
+  /** Invisible spacer so the next play starts on a new grid row. */
+  isPad?: boolean;
+  /** Full-width centered play name row before that play's frames. */
+  isPlayTitle?: boolean;
 }
 
 export type PlaybookContentSheet =
@@ -136,6 +403,8 @@ export type PlaybookContentSheet =
       items: PlaybookFrameItem[];
       playHeader: boolean;
       playContinued: boolean;
+      /** When sorting by series/tags, shared group label for the sheet header. */
+      groupLabel?: string;
     };
 
 export interface PlaybookPagination {
@@ -169,61 +438,99 @@ export function computePlaybookPagination(
   plays: StoredPlay[],
   settings: PlaybookPrintSettings,
 ): PlaybookPagination {
+  const bySeries = Boolean(
+    settings.sortBySeries ?? settings.format?.sortBySeries,
+  );
+  const byTags = Boolean(settings.sortByTags ?? settings.format?.sortByTags);
+  const groupMode = bySeries || byTags;
+  const orderedPlays = sortPlaysForPlaybookPrint(plays, {
+    sortBySeries: bySeries,
+    sortByTags: byTags,
+  });
   const grid = getPlaybookGridLayout(settings.format);
   const framesPerPage = grid.framesPerPage;
-  const includeToc = settings.includeToc !== false && plays.length > 0;
+  const includeToc = settings.includeToc !== false && orderedPlays.length > 0;
   const coverPages = settings.includeCover !== false ? 1 : 0;
+  const tocEntryEstimate = estimatePlaybookTocEntryCount(
+    orderedPlays,
+    bySeries,
+    byTags,
+  );
   const tocPages = includeToc
     ? Math.max(
         1,
-        Math.ceil((plays.length + 2) / FASTDRAW_TOC_ENTRIES_PER_PAGE),
+        Math.ceil(tocEntryEstimate / FASTDRAW_TOC_ENTRIES_PER_PAGE),
       )
     : 0;
 
   const contentSheets: PlaybookContentSheet[] = [];
   const playStartPages: number[] = [];
+  const playStartById = new Map<string, number>();
   let cursorPage = coverPages + tocPages + 1;
 
-  plays.forEach((play) => {
-    playStartPages.push(cursorPage);
+  const groups = groupPlaysForPrint(orderedPlays, bySeries, byTags);
+  const eachPlayNewLine = settings.format?.eachPlayNewLine !== false;
+  const includePlayTitles =
+    groupMode && settings.format?.showPlayTitles !== false;
+  const cols = grid.cols;
 
-    const frameItems: PlaybookFrameItem[] = play.frames.map((frame, frameIndex) => ({
-      playId: play.id,
-      playTitle: play.title,
-      series: play.series ?? "",
-      frameId: frame.id,
-      frameName: frame.name || `Frame ${frameIndex + 1}`,
-      notes: (frame.notes ?? "").trim(),
-      frameNum: frameIndex + 1,
-      frameTotal: play.frames.length,
-      courtType: play.courtType,
-      playType: play.type,
-      team: play.team,
-      frame,
-    }));
-
-    for (let i = 0; i < frameItems.length; i += framesPerPage) {
-      contentSheets.push({
-        type: "grid",
-        play,
-        items: frameItems.slice(i, i + framesPerPage),
-        playHeader: i === 0,
-        playContinued: i > 0,
-      });
-      cursorPage++;
-    }
+  for (const group of groups) {
+    const frameItems = packGroupFrameItems(
+      group.plays,
+      cols,
+      eachPlayNewLine,
+      includePlayTitles,
+    );
+    const headerPlay = group.plays[0]!;
 
     if (!frameItems.length) {
+      for (const play of group.plays) {
+        if (!playStartById.has(play.id)) {
+          playStartById.set(play.id, cursorPage);
+        }
+      }
       contentSheets.push({
         type: "grid",
-        play,
+        play: headerPlay,
         items: [],
         playHeader: true,
         playContinued: false,
+        groupLabel: groupMode ? group.label : undefined,
       });
       cursorPage++;
+      continue;
     }
-  });
+
+    const chunks = chunkItemsByPageCapacity(
+      frameItems,
+      framesPerPage,
+      cols,
+    );
+    chunks.forEach((chunk, chunkIndex) => {
+      for (const item of chunk) {
+        if (item.isPad) continue;
+        if (!playStartById.has(item.playId)) {
+          playStartById.set(item.playId, cursorPage);
+        }
+      }
+      const firstReal = chunk.find((item) => !item.isPad);
+      const chunkPlay =
+        group.plays.find((play) => play.id === firstReal?.playId) ?? headerPlay;
+      contentSheets.push({
+        type: "grid",
+        play: chunkPlay,
+        items: chunk,
+        playHeader: chunkIndex === 0,
+        playContinued: chunkIndex > 0,
+        groupLabel: groupMode ? group.label : undefined,
+      });
+      cursorPage++;
+    });
+  }
+
+  for (const play of orderedPlays) {
+    playStartPages.push(playStartById.get(play.id) ?? coverPages + tocPages + 1);
+  }
 
   const totalPages = coverPages + tocPages + contentSheets.length;
   const firstContentPage = coverPages + tocPages + 1;
@@ -244,10 +551,23 @@ export function buildPlaybookTocEntries(
   pagination: PlaybookPagination,
   playbookName: string,
   coachLine = "",
+  settings?: Pick<PlaybookPrintSettings, "sortBySeries" | "sortByTags" | "format">,
 ): PlaybookTocEntry[] {
+  const bySeries = Boolean(
+    settings?.sortBySeries ?? settings?.format?.sortBySeries,
+  );
+  const byTags = Boolean(settings?.sortByTags ?? settings?.format?.sortByTags);
+  const orderedPlays = sortPlaysForPlaybookPrint(plays, {
+    sortBySeries: bySeries,
+    sortByTags: byTags,
+  });
   const { playStartPages, firstContentPage } = pagination;
   const sectionName = playbookName || "Playbook";
   const entries: PlaybookTocEntry[] = [];
+  const pageByPlayId = new Map<string, number>();
+  orderedPlays.forEach((play, i) => {
+    pageByPlayId.set(play.id, playStartPages[i] ?? firstContentPage);
+  });
 
   if (coachLine) {
     entries.push({
@@ -265,7 +585,32 @@ export function buildPlaybookTocEntries(
     indent: 1,
   });
 
-  plays.forEach((play, i) => {
+  if (bySeries || byTags) {
+    const groups = groupPlaysForPrint(orderedPlays, bySeries, byTags);
+    groups.forEach((group, groupIndex) => {
+      const groupNum = groupIndex + 1;
+      const groupPage =
+        pageByPlayId.get(group.plays[0]?.id ?? "") ?? firstContentPage;
+      entries.push({
+        num: `1.1.${groupNum}`,
+        label: group.label,
+        page: groupPage,
+        indent: 2,
+        group: true,
+      });
+      group.plays.forEach((play, playIndex) => {
+        entries.push({
+          num: `1.1.${groupNum}.${playIndex + 1}`,
+          label: play.title || "Untitled",
+          page: pageByPlayId.get(play.id) ?? firstContentPage,
+          indent: 3,
+        });
+      });
+    });
+    return entries;
+  }
+
+  orderedPlays.forEach((play, i) => {
     entries.push({
       num: `1.1.${i + 1}`,
       label: play.title || "Untitled",

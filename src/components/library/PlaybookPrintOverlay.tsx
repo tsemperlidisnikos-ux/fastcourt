@@ -10,6 +10,7 @@ import { waitForPrintContentReady } from "@/lib/print/wait-for-print-content-rea
 import { usePlaybookPrintConfigStore } from "@/stores/playbook-print-config-store";
 import type { PlaybookSection } from "@/types/library-meta";
 import type { StoredPlay } from "@/types/library";
+import type { PlaybookPrintConfig } from "@/types/playbook-print-config";
 
 interface Props {
   playbook: PlaybookSection;
@@ -28,6 +29,15 @@ export function PlaybookPrintOverlay({
   const printConfig = usePlaybookPrintConfigStore((s) => s.config);
   const hydratePrintConfig = usePlaybookPrintConfigStore((s) => s.hydrate);
   const printConfigHydrated = usePlaybookPrintConfigStore((s) => s.hydrated);
+  /** Live draft from settings pane — preview updates before Save. */
+  const [previewConfig, setPreviewConfig] = useState<PlaybookPrintConfig | null>(
+    null,
+  );
+  const activePrintConfig = previewConfig ?? printConfig;
+
+  useEffect(() => {
+    setPreviewConfig(null);
+  }, [printConfig]);
   const handlePrint = useOverlayPrint({
     printClass: "fc-playbook-print-active",
     contentRootId: "fc-playbook-print-content",
@@ -109,6 +119,7 @@ export function PlaybookPrintOverlay({
               className="fc-print-overlay-settings-pane"
               closeOnSave={false}
               onClose={() => setSettingsOpen(false)}
+              onDraftChange={setPreviewConfig}
             />
           ) : null}
           <div
@@ -120,7 +131,7 @@ export function PlaybookPrintOverlay({
               team={playbook.team}
               subtitle={playbook.subtitle}
               plays={plays}
-              printConfig={printConfig}
+              printConfig={activePrintConfig}
             />
           </div>
         </div>

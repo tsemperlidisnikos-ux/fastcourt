@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   defaultFilmBookmarkLabel,
   FILM_BOOKMARK_QUICK_LABELS,
-  FILM_DISRUPTION_BOOKMARK_LABEL,
   formatFilmBookmarkSummary,
   sortFilmBookmarks,
 } from "@/lib/film-room/film-room-bookmarks";
@@ -121,15 +120,6 @@ export function FilmRoomBookmarkBar({
             }
           }}
         />
-        <button
-          type="button"
-          className="fc-film-bookmark-add-btn fc-film-bookmark-disruption-btn"
-          disabled={disabled}
-          title="Mark where the play broke (Shift+B)"
-          onClick={() => handleAdd(FILM_DISRUPTION_BOOKMARK_LABEL, "disruption")}
-        >
-          Plan broke here
-        </button>
         <button
           type="button"
           className="fc-film-bookmark-add-btn"

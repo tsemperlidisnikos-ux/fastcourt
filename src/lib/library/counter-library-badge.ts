@@ -23,9 +23,39 @@ const SHORT_COVERAGE: Record<string, string> = {
 };
 
 export function isCounterLibraryItem(
-  item: { defenseCounter?: CounterBadgeMeta } | null | undefined,
+  item:
+    | {
+        defenseCounter?: CounterBadgeMeta;
+        tags?: string[];
+      }
+    | null
+    | undefined,
 ): boolean {
-  return Boolean(item?.defenseCounter?.enabled);
+  if (item?.defenseCounter?.enabled) return true;
+  return Boolean(
+    item?.tags?.some((tag) => tag.trim().toLowerCase() === "counter"),
+  );
+}
+
+export function canAddItemToPlaybook(
+  item:
+    | {
+        type?: string;
+        defenseCounter?: CounterBadgeMeta;
+        tags?: string[];
+      }
+    | null
+    | undefined,
+): boolean {
+  if (!item) return false;
+  if (item.type === "playbook") return false;
+  return !isCounterLibraryItem(item);
+}
+
+export function filterPlaybookEligibleItems<T extends { type?: string; tags?: string[]; defenseCounter?: CounterBadgeMeta }>(
+  items: T[],
+): T[] {
+  return items.filter((item) => canAddItemToPlaybook(item));
 }
 
 export function formatCounterLibraryBadgeLabel(meta: CounterBadgeMeta): string {

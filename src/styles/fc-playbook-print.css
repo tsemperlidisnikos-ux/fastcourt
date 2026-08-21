@@ -222,6 +222,16 @@
   padding-left: 28px;
 }
 
+.fc-playbook-print-root .fd-toc-indent-3 {
+  padding-left: 42px;
+}
+
+.fc-playbook-print-root .fd-toc-group-row .fd-toc-label {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .fc-playbook-print-root .fd-toc-label {
   flex: 0 1 auto;
   white-space: nowrap;
@@ -293,6 +303,29 @@
   grid-template-columns: repeat(var(--fd-grid-cols, 2), minmax(0, 1fr));
   grid-template-rows: repeat(var(--fd-grid-rows, 2), minmax(0, 1fr));
   gap: 10px 8px;
+}
+
+/* When frame notes are off, pack courts tightly — no stretched empty row gaps. */
+.fc-playbook-print-root.fd-print-no-notes .fd-grid,
+.fc-playbook-print-root.fd-print-no-notes .fd-grid-with-header,
+.fc-playbook-print-root .fd-grid.fd-grid-compact {
+  flex: 0 0 auto;
+  align-content: start;
+}
+
+.fc-playbook-print-root.fd-print-no-notes .fd-grid-3,
+.fc-playbook-print-root.fd-print-no-notes .fd-grid-4,
+.fc-playbook-print-root.fd-print-no-notes .fd-grid-6,
+.fc-playbook-print-root.fd-print-no-notes .fd-grid-9,
+.fc-playbook-print-root.fd-print-no-notes .fd-grid-custom,
+.fc-playbook-print-root .fd-grid.fd-grid-compact {
+  grid-template-rows: repeat(var(--fd-grid-rows, 2), auto);
+  gap: 4px 8px;
+}
+
+.fc-playbook-print-root.fd-print-no-notes .fd-cell-notes,
+.fc-playbook-print-root.fd-print-no-notes .fd-cell-notes-empty {
+  display: none !important;
 }
 
 .fc-playbook-print-root .fd-grid-with-header {
@@ -558,6 +591,27 @@
   font-weight: 600;
   color: #64748b;
   margin-left: auto;
+}
+
+.fc-playbook-print-root .fd-inline-play-title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px 4px;
+  margin: 2px 0 4px;
+  min-height: 1.4em;
+}
+
+.fc-playbook-print-root .fd-inline-play-title-text {
+  margin: 0;
+  font-size: var(--fd-print-font-chapter-title, 14px);
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #0f172a;
 }
 
 .fc-playbook-print-root .fd-section-sheet {
@@ -947,6 +1001,14 @@ html.fc-playbook-print-iframe .fc-playbook-print-root .fd-sheet {
   html.fc-playbook-print-active .fc-playbook-print-root .fd-grid {
     flex: 1 1 auto !important;
     min-height: 0 !important;
+  }
+
+  html.fc-playbook-print-active .fc-playbook-print-root.fd-print-no-notes .fd-grid-with-header,
+  html.fc-playbook-print-active .fc-playbook-print-root.fd-print-no-notes .fd-grid,
+  html.fc-playbook-print-active .fc-playbook-print-root .fd-grid.fd-grid-compact {
+    flex: 0 0 auto !important;
+    align-content: start !important;
+    grid-template-rows: repeat(var(--fd-grid-rows, 2), auto) !important;
   }
 
   html.fc-playbook-print-active .fc-playbook-print-root .fd-cell {

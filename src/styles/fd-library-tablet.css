@@ -1244,10 +1244,13 @@ html[data-device-class="tablet"] #screen-organizer .fc-lib-preview-frames-grid {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(
+    var(--fc-lib-frames-grid-cols, 3),
+    minmax(0, 1fr)
+  ) !important;
   grid-auto-rows: min-content;
   grid-auto-flow: row;
-  gap: 12px;
+  gap: var(--fc-lib-frames-grid-gap, 20px) !important;
   padding: 14px 16px 20px;
   background: #fff !important;
   align-content: start !important;
@@ -1428,7 +1431,10 @@ html[data-device-class="tablet"] #screen-organizer .fd-preview-content.fc-fd-zoo
 html[data-device-class="tablet"] #screen-organizer .org-preview-frames.fc-fd-zoom-125,
 html[data-device-class="tablet"] #screen-organizer .fd-preview-content.fc-fd-zoom-150,
 html[data-device-class="tablet"] #screen-organizer .org-preview-frames.fc-fd-zoom-150 {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(
+    var(--fc-lib-frames-grid-cols, 3),
+    minmax(0, 1fr)
+  ) !important;
   zoom: 1 !important;
   transform: none !important;
 }

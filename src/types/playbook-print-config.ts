@@ -31,6 +31,10 @@ export interface PlaybookFormatOptions {
   playTitle: PlaybookPrintFieldSource;
   playSubtitle: PlaybookPrintFieldSource;
   eachPlayNewLine: boolean;
+  /** Centered play name before frames when sorting packs multiple plays. */
+  showPlayTitles: boolean;
+  sortBySeries: boolean;
+  sortByTags: boolean;
 }
 
 export interface PlaybookPrintFontSizes {

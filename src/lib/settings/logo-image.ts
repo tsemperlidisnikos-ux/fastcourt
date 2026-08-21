@@ -64,23 +64,35 @@ function compressDataUrl(
   });
 }
 
-async function compressForStorage(dataUrl: string, mime: string): Promise<string> {
-  let result = await compressDataUrl(dataUrl, mime, DEFAULT_MAX_SIDE, DEFAULT_JPEG_QUALITY);
+async function compressForStorage(
+  dataUrl: string,
+  mime: string,
+  maxSide = DEFAULT_MAX_SIDE,
+): Promise<string> {
+  let result = await compressDataUrl(dataUrl, mime, maxSide, DEFAULT_JPEG_QUALITY);
   if (result.length <= MAX_STORED_DATA_URL_CHARS) return result;
 
-  result = await compressDataUrl(dataUrl, "image/jpeg", 192, 0.72);
+  result = await compressDataUrl(dataUrl, "image/jpeg", Math.min(maxSide, 192), 0.72);
   if (result.length <= MAX_STORED_DATA_URL_CHARS) return result;
 
-  result = await compressDataUrl(dataUrl, "image/jpeg", 128, 0.65);
+  result = await compressDataUrl(dataUrl, "image/jpeg", Math.min(maxSide, 128), 0.65);
   if (result.length <= MAX_STORED_DATA_URL_CHARS) return result;
 
   throw new Error("Image is too large after compression. Try a smaller file.");
 }
 
-export async function readLogoDataUrl(file: File): Promise<string> {
+/** Compress any image for localStorage (logos, scout photos, etc.). */
+export async function readCompressedImageDataUrl(
+  file: File,
+  options?: { maxSide?: number },
+): Promise<string> {
   if (file.size > MAX_FILE_BYTES) {
     throw new Error("Image must be under 8 MB.");
   }
   const dataUrl = await readFileAsDataUrl(file);
-  return compressForStorage(dataUrl, file.type);
+  return compressForStorage(dataUrl, file.type, options?.maxSide ?? DEFAULT_MAX_SIDE);
+}
+
+export async function readLogoDataUrl(file: File): Promise<string> {
+  return readCompressedImageDataUrl(file, { maxSide: DEFAULT_MAX_SIDE });
 }

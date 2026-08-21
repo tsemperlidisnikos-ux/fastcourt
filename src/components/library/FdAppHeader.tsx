@@ -28,6 +28,7 @@ function isNavTabActive(
 ) {
   if (tab.id === "film-room") return pathname.startsWith("/film-room");
   if (tab.id === "scouting") return pathname.startsWith("/scouting");
+  if (tab.id === "opponent-scout") return pathname.startsWith("/opponent-scout");
   return pathname.startsWith("/library") && activeTab === tab.id;
 }
 

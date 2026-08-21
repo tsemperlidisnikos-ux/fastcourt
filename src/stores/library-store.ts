@@ -27,6 +27,7 @@ import {
 import { recordLibraryDeletion } from "@/lib/library/tombstones";
 import { MOCK_LIBRARY } from "@/lib/library/mock-data";
 import { removeStarterDemoPlays } from "@/lib/library/starter-plays/remove-starter-demo-plays";
+import { ensureCounterLibrarySeedPlays } from "@/lib/library/starter-plays/seed-counter-library";
 import { useAuthStore } from "@/stores/auth-store";
 import type { LibraryItem, PlayDetailsValues, StoredPlay } from "@/types/library";
 
@@ -126,6 +127,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
       await seedMockIfEmpty();
       await removeStarterDemoPlays();
+      await ensureCounterLibrarySeedPlays();
       const plays = await visiblePlays();
       set({
         items: plays.map(storedPlayToLibraryItem),
@@ -193,6 +195,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     };
     await putStoredPlay(updated);
     await get().refresh();
+    void scheduleCloudLibrarySync();
   },
 
   duplicatePlay: async (id) => {
@@ -211,6 +214,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     });
     await putStoredPlay(copy);
     await get().refresh();
+    void scheduleCloudLibrarySync();
     return copy;
   },
 

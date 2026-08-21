@@ -99,7 +99,12 @@ export function organizationGrantsAppAccess(
   if (!isOrganizationSubscriptionActive(membership.org)) return false;
   if (membership.memberStatus === "disabled") return false;
   if (membership.memberRole === "player") return true;
-  return membership.memberStatus === "active" || membership.memberRole === "team_admin";
+  // Invited coaches share the team library as soon as they appear on the roster.
+  return (
+    membership.memberStatus === "active" ||
+    membership.memberStatus === "invited" ||
+    membership.memberRole === "team_admin"
+  );
 }
 
 export function applyOrganizationAccess(user: SessionUser): SessionUser {

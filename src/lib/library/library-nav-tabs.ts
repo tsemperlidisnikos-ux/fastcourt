@@ -3,6 +3,12 @@ import type { LibraryNavModuleId } from "@/types/library-nav-modules";
 export const LIBRARY_NAV_TABS = [
   { id: "draw" as const, label: "LIBRARY", href: "/library" },
   {
+    id: "counters" as const,
+    label: "COUNTERS",
+    shortLabel: "CTR",
+    href: "/library?tab=counters",
+  },
+  {
     id: "playbooks" as const,
     label: "PLAYBOOKS",
     href: "/library?tab=playbooks",
@@ -35,14 +41,24 @@ export const LIBRARY_NAV_TABS = [
     label: "SCOUTING",
     href: "/scouting",
   },
+  {
+    id: "opponent-scout" as const,
+    label: "OPPONENT SCOUT",
+    shortLabel: "SCOUT",
+    href: "/opponent-scout",
+  },
 ] as const;
 
 export type LibraryNavTabId = (typeof LIBRARY_NAV_TABS)[number]["id"];
 
-export type LibraryScreenTab = Exclude<LibraryNavTabId, "film-room" | "scouting">;
+export type LibraryScreenTab = Exclude<
+  LibraryNavTabId,
+  "film-room" | "scouting" | "opponent-scout"
+>;
 
 export const LIBRARY_NAV_MODULE_LABELS: Record<LibraryNavModuleId, string> = {
   draw: "Library",
+  counters: "Counters",
   playbooks: "Playbooks",
   gameplan: "Game plan",
   fields: "Fields",
@@ -51,4 +67,5 @@ export const LIBRARY_NAV_MODULE_LABELS: Record<LibraryNavModuleId, string> = {
   players: "Players",
   "film-room": "Film room",
   scouting: "Scouting",
+  "opponent-scout": "Opponent scout",
 };

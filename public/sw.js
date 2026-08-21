@@ -8,8 +8,8 @@ const STATIC_CACHE = `fastcourt-static-${BUILD}`;
 const PRECACHE_URLS = [
   "/offline.html",
   "/manifest.webmanifest",
-  "/assets/landing/fastcourt-intro-mark.png",
-  "/icons/fastcourt-logo.png",
+  "/assets/landing/fastcourt-intro-mark.png?v=20260802",
+  "/icons/fastcourt-logo.png?v=20260802",
   "/assets/courts/oak-veneered-mdf.jpg?v=3",
   "/assets/courts/accoya-planed-all-round-66.jpg?v=3",
 ];

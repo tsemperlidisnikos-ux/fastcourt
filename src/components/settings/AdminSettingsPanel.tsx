@@ -24,9 +24,14 @@ import {
   deleteCloudAdminUser,
   fetchCloudAdminUsers,
   isPersistableCloudProfile,
-  saveCloudAdminUsers,
+  saveCloudAdminUsersViaApi,
 } from "@/lib/auth/profiles-cloud";
 import { createClient } from "@/lib/supabase/client";
+import {
+  extractPlatformLayout,
+  savePlatformLayout,
+} from "@/lib/settings/platform-layout";
+import { saveCloudPlatformLayout } from "@/lib/settings/platform-layout-cloud";
 import {
   loadTeamOrganizations,
   saveTeamOrganizations,
@@ -42,6 +47,7 @@ import { PdfBrandingSection } from "@/components/settings/PdfBrandingSection";
 import { TeamOrganizationsSection } from "@/components/settings/TeamOrganizationsSection";
 import { ToolsSection } from "@/components/settings/ToolsSection";
 import { AdminPurgeSection } from "@/components/settings/AdminPurgeSection";
+import { PlatformDiagnosticPanel } from "@/components/settings/PlatformDiagnosticPanel";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { appConfirm, appNotice } from "@/stores/dialog-store";
@@ -60,9 +66,14 @@ import {
   loadLibraryNavModules,
   saveLibraryNavModules,
 } from "@/lib/settings/library-nav-modules";
+import {
+  loadPlatformFeatures,
+  savePlatformFeatures,
+} from "@/lib/settings/platform-features";
 import { clearAllFieldCategoryEntries } from "@/lib/settings/clear-field-categories";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type { DefaultFieldsConfig } from "@/types/default-fields";
+import type { PlatformFeaturesConfig } from "@/types/platform-features";
 import type { AuthSession } from "@/types/auth";
 import type { AdminUserRecord } from "@/types/admin-user";
 import type { TeamOrganization } from "@/types/team-org";
@@ -77,6 +88,7 @@ type NavId =
   | "fields-details"
   | "pdf-branding"
   | "account"
+  | "diagnostic"
   | "tools";
 
 type NavItem = { id: NavId; label: string; kind: "embed" | "section" };
@@ -88,7 +100,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { id: "all-users", label: "All users", kind: "embed" },
       { id: "team-organizations", label: "Team organizations", kind: "embed" },
       { id: "billing", label: "Billing & setup", kind: "embed" },
-      { id: "library-modules", label: "Library navigation", kind: "embed" },
+      { id: "library-modules", label: "Library modules", kind: "embed" },
       { id: "appearance", label: "Appearance", kind: "section" },
       { id: "fields-details", label: "Fields details", kind: "section" },
     ],
@@ -101,6 +113,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "System",
     items: [
       { id: "account", label: "Account & system", kind: "section" },
+      { id: "diagnostic", label: "Application diagnostic", kind: "section" },
       { id: "tools", label: "Import & export", kind: "section" },
     ],
   },
@@ -610,6 +623,8 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
   const [libraryNavModules, setLibraryNavModules] = useState(() =>
     loadLibraryNavModules(),
   );
+  const [platformFeatures, setPlatformFeatures] =
+    useState<PlatformFeaturesConfig>(() => loadPlatformFeatures());
 
   useEffect(() => {
     const flag = "fc_fields_wiped_v2";
@@ -681,13 +696,10 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
     if (navId === "all-users") {
       const merged = users.map((u) => drafts[u.id] ?? u);
       if (session.cloud) {
-        const supabase = createClient();
-        if (supabase) {
-          const result = await saveCloudAdminUsers(supabase, merged);
-          if (!result.ok) {
-            appNotice("Cloud sync", result.error);
-            return;
-          }
+        const result = await saveCloudAdminUsersViaApi(merged);
+        if (!result.ok) {
+          appNotice("Cloud sync", result.error);
+          return;
         }
       }
       saveAdminUsers(merged);
@@ -719,8 +731,9 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
 
     if (navId === "library-modules") {
       saveLibraryNavModules(libraryNavModules);
+      savePlatformFeatures(platformFeatures);
       setDirty(false);
-      appNotice("Saved", "Library navigation updated.");
+      appNotice("Saved", "Library navigation and features updated.");
       return;
     }
 
@@ -736,6 +749,53 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
       await loadOrganizerMeta();
       setDirty(false);
       appNotice("Saved", "Default fields updated.");
+      return;
+    }
+
+    if (navId === "appearance") {
+      const layout = extractPlatformLayout(appearance);
+      savePlatformLayout(layout);
+      if (session.cloud) {
+        try {
+          const response = await fetch("/api/admin/platform-layout", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ layout }),
+          });
+          const payload = (await response.json().catch(() => null)) as
+            | {
+                ok?: boolean;
+                error?: string;
+                hint?: string;
+                fanOutUpdated?: number;
+                platformTable?: string;
+              }
+            | null;
+          if (!response.ok || !payload?.ok) {
+            appNotice(
+              "Layout sync",
+              payload?.hint ||
+                payload?.error ||
+                "Saved locally, but cloud sync for coaches failed.",
+            );
+          }
+        } catch {
+          const supabase = createClient();
+          if (supabase) {
+            await saveCloudPlatformLayout(supabase, layout);
+          }
+        }
+      }
+      const merged = users.map((u) => drafts[u.id] ?? u);
+      saveAdminUsers(merged);
+      setUsers(merged);
+      saveTeamOrganizations(orgs);
+      await persistAll(session.user);
+      setDirty(false);
+      appNotice(
+        "Saved",
+        "Appearance saved. Library layout (frames columns) syncs for all coaches.",
+      );
       return;
     }
 
@@ -1056,6 +1116,11 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
                       setLibraryNavModules(next);
                       setDirty(true);
                     }}
+                    platformFeatures={platformFeatures}
+                    onPlatformFeaturesChange={(next) => {
+                      setPlatformFeatures(next);
+                      setDirty(true);
+                    }}
                   />
                 </div>
               ) : null}
@@ -1114,6 +1179,10 @@ export function AdminSettingsPanel({ session }: { session: AuthSession }) {
 
                   {navId === "account" ? (
                     <AccountSystemSection session={session} />
+                  ) : null}
+
+                  {navId === "diagnostic" ? (
+                    <PlatformDiagnosticPanel />
                   ) : null}
 
                   {navId === "tools" ? (

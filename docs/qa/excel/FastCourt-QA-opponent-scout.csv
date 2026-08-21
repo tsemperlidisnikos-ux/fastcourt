@@ -1,0 +1,11 @@
+﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
+Opponent Scout,Reports & Players,OS-01,P0,Create new scout report,Opponent Scout → New → team name → Save,Report in sidebar list,,,,,
+Opponent Scout,Reports & Players,OS-02,P0,Add players + stats + strengths/weaknesses,,Fields save; Ctrl+S works,,,,,
+Opponent Scout,Reports & Players,OS-03,P1,Upload team logo + player photo,,Images compress; appear in editor,,,,,
+Opponent Scout,Reports & Players,OS-04,P1,Duplicate report,,"Copy with “(copy)” name, new ids",,,,,
+Opponent Scout,Reports & Players,OS-05,P1,Delete report with confirm,,Removed from list,,,,,
+Opponent Scout,Reports & Players,OS-06,P1,Unsaved guard,Edit → switch report / New / close tab,Confirm discard or beforeunload,,,,,
+Opponent Scout,Reports & Players,OS-07,P2,Quota error on huge photos,,"Friendly storage message, no crash",,,,,
+Opponent Scout,Print,OS-10,P0,Print / Export scout PDF,,"Players, logo, strengths/weaknesses",,,,,
+Opponent Scout,Print,OS-11,P1,Empty stats hidden (no — clutter),,Only filled stat columns print,,,,,
+Opponent Scout,Print,OS-12,P2,Page footer only if multi-page,,No fake “1 of 1” alone,,,,,

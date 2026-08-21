@@ -55,13 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isCloudEnabled()) {
       function syncLocalLibraryScope() {
         const session = useAuthStore.getState().session;
-        if (session?.user && !isLibraryScopeReady()) {
-          activateLibraryScope(
-            session.user.id,
-            session.user.id,
-            session.user,
-          );
-        }
+        if (!session?.user) return;
+        void prepareLibrarySessionForUser(session.user, null).catch((err) => {
+          console.error("FastCourt local library prepare failed:", err);
+        });
       }
 
       kickAuthRehydrate();

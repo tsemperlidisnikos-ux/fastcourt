@@ -1410,10 +1410,13 @@ html[data-device-class="desktop-wide"] #screen-organizer .org-preview-print-btn 
 .fd-ui .org-preview-frames:not(:has(.org-preview-empty-state)),
 .fd-ui .fc-lib-preview-frames-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(
+    var(--fc-lib-frames-grid-cols, 3),
+    minmax(0, 1fr)
+  );
   grid-auto-rows: min-content;
   grid-auto-flow: row;
-  gap: 12px;
+  gap: var(--fc-lib-frames-grid-gap, 20px);
   padding: 14px 16px 20px;
   align-content: start !important;
   align-items: start !important;

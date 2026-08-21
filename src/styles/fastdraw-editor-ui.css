@@ -185,6 +185,27 @@
   background: #000;
 }
 
+#screen-designer .ds-fd-save-btn {
+  border: 1px solid #111827;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 18px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#screen-designer .ds-fd-save-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+#screen-designer .ds-fd-save-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 #screen-designer .ds-unsaved-hint {
   color: #b45309;
   font-size: 12px;

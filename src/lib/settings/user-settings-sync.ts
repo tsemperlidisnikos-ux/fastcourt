@@ -21,6 +21,14 @@ import {
 } from "@/lib/practice/live-prefs";
 import { fetchCloudUserSettings, saveCloudUserSettings } from "@/lib/settings/user-settings-cloud";
 import {
+  applyPlatformLayoutToAppearance,
+  loadPlatformLayout,
+  normalizePlatformLayout,
+  savePlatformLayout,
+} from "@/lib/settings/platform-layout";
+import { fetchCloudPlatformLayout } from "@/lib/settings/platform-layout-cloud";
+import type { PlatformLayoutSettings } from "@/types/platform-layout";
+import {
   loadScopedUserSettings,
   mergeUserSettingsBundles,
   saveScopedUserSettings,
@@ -117,14 +125,64 @@ export async function syncScopedSettingsFromCloud(
   return merged;
 }
 
+/** Prefer newer cloud layout, else local shared layout (null = not configured). */
+async function resolvePlatformLayout(): Promise<PlatformLayoutSettings | null> {
+  const local = loadPlatformLayout();
+  if (!isCloudEnabled()) return local;
+
+  const supabase = createClient();
+  if (supabase) {
+    const result = await fetchCloudPlatformLayout(supabase);
+    if (result.ok && result.layout) {
+      const cloudTime = Date.parse(result.layout.updatedAt);
+      const localTime = local ? Date.parse(local.updatedAt) : 0;
+      if (
+        Number.isFinite(cloudTime) &&
+        (!Number.isFinite(localTime) || cloudTime >= localTime)
+      ) {
+        savePlatformLayout(result.layout);
+        return result.layout;
+      }
+      return local ?? result.layout;
+    }
+  }
+
+  // Fallback API (service role) when direct table read is unavailable.
+  try {
+    const response = await fetch("/api/admin/platform-layout", {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (response.ok) {
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        layout?: PlatformLayoutSettings | null;
+      };
+      if (payload.ok && payload.layout) {
+        savePlatformLayout(payload.layout);
+        return normalizePlatformLayout(payload.layout);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return local;
+}
+
 export async function loadSettingsForUser(
   user: SessionUser,
 ): Promise<ResolvedUserSettings> {
   const merged = await syncScopedSettingsFromCloud(user);
+  const platformLayout = await resolvePlatformLayout();
 
-  const appearance = merged.appearance
+  const appearanceBase = merged.appearance
     ? { ...DEFAULT_APPEARANCE, ...merged.appearance }
     : loadAppearanceSettings();
+  const appearance = applyPlatformLayoutToAppearance(
+    appearanceBase,
+    platformLayout,
+  );
 
   const membership = findOrganizationMembership(user.email);
   const useOrgBranding = Boolean(

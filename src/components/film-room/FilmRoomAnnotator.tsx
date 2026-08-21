@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { FilmRoomBookmarkBar } from "@/components/film-room/FilmRoomBookmarkBar";
 import { FilmRoomPossessionPlaylist, type FilmRoomPossessionPlaylistHandle } from "@/components/film-room/FilmRoomPossessionPlaylist";
 import { FilmRoomEvaluationStrip } from "@/components/film-room/FilmRoomEvaluationStrip";
 import { FilmRoomAnalysisHistoryPanel } from "@/components/film-room/FilmRoomAnalysisHistoryPanel";
@@ -104,8 +103,6 @@ export function FilmRoomAnnotator({
   const undoLastFilmDisruption = useFilmRoomStore((s) => s.undoLastFilmDisruption);
   const removeFilmDisruption = useFilmRoomStore((s) => s.removeFilmDisruption);
   const addFilmBookmark = useFilmRoomStore((s) => s.addFilmBookmark);
-  const updateFilmBookmark = useFilmRoomStore((s) => s.updateFilmBookmark);
-  const removeFilmBookmark = useFilmRoomStore((s) => s.removeFilmBookmark);
   const appendAnalysisRecord = useFilmRoomStore((s) => s.appendAnalysisRecord);
   const removeAnalysisRecord = useFilmRoomStore((s) => s.removeAnalysisRecord);
   const clearPenStrokes = useFilmRoomStore((s) => s.clearPenStrokes);
@@ -227,56 +224,12 @@ export function FilmRoomAnnotator({
     }
   }, [scoutTools]);
 
-  const isFilmFullscreen = useCallback(() => {
-    const shell = playerShellRef.current;
-    return !!shell && document.fullscreenElement === shell;
-  }, []);
-
   const togglePlay = useCallback(() => {
     const c = controllerRef.current;
     if (!c) return;
     if (c.isPlaying()) c.pause();
     else c.play();
   }, []);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      if (e.code === "Space" || e.key === " ") {
-        if (!isFilmFullscreen()) return;
-        e.preventDefault();
-        e.stopPropagation();
-        togglePlay();
-        return;
-      }
-
-      if (e.key !== "f" && e.key !== "F") {
-        if (e.key === "n" || e.key === "N" || e.key === "]") {
-          if (bookmarks.length > 0) {
-            e.preventDefault();
-            playlistRef.current?.goNext();
-          }
-          return;
-        }
-        if (e.key === "[") {
-          if (bookmarks.length > 0) {
-            e.preventDefault();
-            playlistRef.current?.goPrev();
-          }
-          return;
-        }
-        return;
-      }
-      if (scoutTools) return;
-      e.preventDefault();
-      void toggleFullscreen();
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [bookmarks.length, isFilmFullscreen, scoutTools, toggleFullscreen, togglePlay]);
 
   useEffect(() => {
     if (session.source.kind !== "upload") {
@@ -469,6 +422,117 @@ export function FilmRoomAnnotator({
     },
     [addFilmBookmark, currentTime, duration, session.id],
   );
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlay();
+        return;
+      }
+
+      if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        const c = controllerRef.current;
+        if (!c) return;
+        const next = Math.max(0, c.getCurrentTime() - (e.shiftKey ? 5 : 2));
+        c.seek(next);
+        setCurrentTime(next);
+        return;
+      }
+      if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        const c = controllerRef.current;
+        if (!c) return;
+        const dur = c.getDuration();
+        const nextTime = c.getCurrentTime() + (e.shiftKey ? 5 : 2);
+        const next =
+          Number.isFinite(dur) && dur > 0 ? Math.min(dur, nextTime) : nextTime;
+        c.seek(next);
+        setCurrentTime(next);
+        return;
+      }
+
+      if ((e.key === "f" || e.key === "F") && !scoutTools) {
+        e.preventDefault();
+        void toggleFullscreen();
+        return;
+      }
+
+      if (e.key === "n" || e.key === "N" || e.key === "]") {
+        if (bookmarks.length > 0) {
+          e.preventDefault();
+          playlistRef.current?.goNext();
+        }
+        return;
+      }
+      if (e.key === "[") {
+        if (bookmarks.length > 0) {
+          e.preventDefault();
+          playlistRef.current?.goPrev();
+        }
+        return;
+      }
+
+      if (e.key === "b" || e.key === "B") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (scoutTools) {
+            handleAddBookmark("Plan broke here", undefined, "disruption");
+          }
+        } else {
+          handleAddBookmark(
+            defaultFilmBookmarkLabel(
+              controllerRef.current?.getCurrentTime() ?? currentTime,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (!scoutTools) return;
+
+      const kind = FILM_EVENT_KEYBOARD_MAP[e.key];
+      if (kind) {
+        e.preventDefault();
+        handleTagAtPlayhead(kind, tagNoteDraft.trim() || undefined);
+        if (tagNoteDraft.trim()) setTagNoteDraft("");
+        return;
+      }
+      const disruptionKind = FILM_DISRUPTION_KEYBOARD_MAP[e.key.toLowerCase()];
+      if (disruptionKind) {
+        e.preventDefault();
+        handleDisruptionAtPlayhead(
+          disruptionKind,
+          tagNoteDraft.trim() || undefined,
+        );
+        if (tagNoteDraft.trim()) setTagNoteDraft("");
+      }
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    bookmarks.length,
+    currentTime,
+    handleAddBookmark,
+    handleDisruptionAtPlayhead,
+    handleTagAtPlayhead,
+    scoutTools,
+    tagNoteDraft,
+    toggleFullscreen,
+    togglePlay,
+  ]);
 
   const openAnalysisRecord = useCallback((record: FilmRoomAnalysisRecord) => {
     setAnalysisResult(record.result);
@@ -777,59 +841,13 @@ export function FilmRoomAnnotator({
 
   const handlePlayerShellKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (e.code !== "Space" && e.key !== " ") {
-        const target = e.target as HTMLElement;
-        if (
-          scoutTools &&
-          target.tagName !== "INPUT" &&
-          target.tagName !== "TEXTAREA" &&
-          !e.metaKey &&
-          !e.ctrlKey &&
-          !e.altKey
-        ) {
-          const kind = FILM_EVENT_KEYBOARD_MAP[e.key];
-          if (kind) {
-            e.preventDefault();
-            handleTagAtPlayhead(kind, tagNoteDraft.trim() || undefined);
-            if (tagNoteDraft.trim()) setTagNoteDraft("");
-            return;
-          }
-          const disruptionKind = FILM_DISRUPTION_KEYBOARD_MAP[e.key.toLowerCase()];
-          if (disruptionKind) {
-            e.preventDefault();
-            handleDisruptionAtPlayhead(
-              disruptionKind,
-              tagNoteDraft.trim() || undefined,
-            );
-            if (tagNoteDraft.trim()) setTagNoteDraft("");
-            return;
-          }
-          if (e.key === "b" || e.key === "B") {
-            e.preventDefault();
-            if (e.shiftKey) {
-              handleAddBookmark("Plan broke here", undefined, "disruption");
-            } else {
-              handleAddBookmark(defaultFilmBookmarkLabel(currentTime));
-            }
-          }
-        }
-        return;
+      // Window-level handler owns Space / tags / bookmarks.
+      // Keep shell focusable for accessibility without duplicate shortcuts.
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
       }
-      if (!isFilmFullscreen()) return;
-      e.preventDefault();
-      e.stopPropagation();
-      togglePlay();
     },
-    [
-      currentTime,
-      handleAddBookmark,
-      handleDisruptionAtPlayhead,
-      handleTagAtPlayhead,
-      isFilmFullscreen,
-      scoutTools,
-      tagNoteDraft,
-      togglePlay,
-    ],
+    [],
   );
 
   return (
@@ -912,7 +930,7 @@ export function FilmRoomAnnotator({
                 markerTimes={scoutTools ? inkMarkerTimes : []}
                 eventMarkerTimes={scoutTools ? eventMarkerTimes : []}
                 disruptionMarkerTimes={scoutTools ? disruptionMarkerTimes : []}
-                bookmarkMarkerTimes={scoutTools ? bookmarkMarkerTimes : []}
+                bookmarkMarkerTimes={bookmarkMarkerTimes}
                 fullscreen={fullscreen}
                 allowFullscreen={!scoutTools}
                 autoClearOnScrub={autoClearOnScrub}
@@ -1038,18 +1056,6 @@ export function FilmRoomAnnotator({
                 onRemove={(disruptionId) => removeFilmDisruption(session.id, disruptionId)}
                 onSeek={handleSliderSeek}
               />
-
-              <FilmRoomBookmarkBar
-                currentTime={currentTime}
-                bookmarks={bookmarks}
-                disabled={duration <= 0}
-                onAdd={handleAddBookmark}
-                onUpdate={(bookmarkId, patch) =>
-                  updateFilmBookmark(session.id, bookmarkId, patch)
-                }
-                onRemove={(bookmarkId) => removeFilmBookmark(session.id, bookmarkId)}
-                onSeek={handleSliderSeek}
-              />
             </>
           ) : null}
 
@@ -1096,13 +1102,18 @@ export function FilmRoomAnnotator({
       </div>
 
       <p className="fc-film-hint">
-        Hold the wheel to move it; rotate to jog. Use the timeline for quick jumps.
-        {scoutTools ? null : (
+        Hold the wheel to move it; rotate to jog. Use the timeline for quick jumps.{" "}
+        <kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> or <kbd>J</kbd>/<kbd>L</kbd>{" "}
+        jog · <kbd>B</kbd> chapter bookmark
+        {scoutTools ? (
+          <> · number keys tag events · <kbd>Shift+B</kbd> plan break</>
+        ) : (
           <>
             {" "}
-            Press <kbd>F</kbd> or ⛶ for fullscreen; <kbd>Space</kbd> play/pause in fullscreen.
+            · <kbd>F</kbd> fullscreen
           </>
         )}
+        .
       </p>
 
       <FilmRoomAddToGamePlanModal

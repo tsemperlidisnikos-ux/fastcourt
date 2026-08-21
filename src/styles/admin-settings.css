@@ -238,6 +238,10 @@
   max-width: 420px;
 }
 
+.fc-admin-settings .admin-library-nav-module-row:has(> .admin-library-nav-module-toggle:first-child) {
+  padding-left: 0.35rem;
+}
+
 .fc-admin-settings .admin-library-nav-module-row {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -2340,7 +2344,174 @@ html[data-theme="dark"] body {
   text-align: center;
 }
 
+.fc-admin-settings .fc-diag-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 16px;
+  align-items: start;
+}
+
+.fc-admin-settings .fc-diag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-admin-settings .fc-diag-run {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.fc-admin-settings .fc-diag-run:hover:not(:disabled) {
+  background: #0d9488;
+}
+
+.fc-admin-settings .fc-diag-progress {
+  margin-top: 12px;
+  background: rgba(15, 118, 110, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  min-height: 8px;
+}
+
+.fc-admin-settings .fc-diag-progress-bar {
+  height: 6px;
+  background: #0f766e;
+  transition: width 0.2s ease;
+}
+
+.fc-admin-settings .fc-diag-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin: 14px 0;
+}
+
+.fc-admin-settings .fc-diag-sev {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fc-admin-settings .fc-diag-sev--critical {
+  background: #fde8e8;
+  color: #9b1c1c;
+}
+
+.fc-admin-settings .fc-diag-sev--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.fc-admin-settings .fc-diag-sev--info {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.fc-admin-settings .fc-diag-sev--ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.fc-admin-settings .fc-diag-meta {
+  font-size: 12px;
+  color: var(--od-modal-muted);
+}
+
+.fc-admin-settings .fc-diag-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 280px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fc-admin-settings .fc-diag-filter select {
+  padding: 8px 10px;
+  border: 1px solid var(--od-border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.fc-admin-settings .fc-diag-list {
+  display: grid;
+  gap: 10px;
+  max-height: 420px;
+  overflow: auto;
+  margin-top: 12px;
+}
+
+.fc-admin-settings .fc-diag-card {
+  border: 1px solid var(--od-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.fc-admin-settings .fc-diag-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.fc-admin-settings .fc-diag-cat {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--od-modal-muted);
+  text-transform: uppercase;
+}
+
+.fc-admin-settings .fc-diag-detail,
+.fc-admin-settings .fc-diag-fix {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #334155;
+}
+
+.fc-admin-settings .fc-diag-aside-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--od-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.fc-admin-settings .fc-diag-aside-table th,
+.fc-admin-settings .fc-diag-aside-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--od-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.fc-admin-settings .fc-diag-aside-table th {
+  background: #f8fafc;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fc-admin-settings .fc-diag-aside-table td:first-child {
+  font-weight: 700;
+  width: 78px;
+  color: #0f172a;
+}
+
 @media (max-width: 1100px) {
+  .fc-admin-settings .fc-diag-layout {
+    grid-template-columns: 1fr;
+  }
+
   .fc-admin-settings .org-settings-fields-details-section .org-settings-fields-columns {
     grid-template-columns: 1fr;
   }

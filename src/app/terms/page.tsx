@@ -16,8 +16,8 @@ export default function TermsPage() {
         </a>
         .
       </p>
-      <Link href="/" className="text-sm text-[#2563eb] underline">
-        Home
+      <Link href="/login" className="text-sm text-[#2563eb] underline">
+        Back to login
       </Link>
     </main>
   );

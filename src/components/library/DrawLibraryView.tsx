@@ -36,6 +36,7 @@ import {
   type LibraryPlayContextMenuState,
 } from "@/components/library/LibraryPlayContextMenu";
 import { compareLibraryItems } from "@/lib/library/library-sort";
+import { isCounterLibraryItem } from "@/lib/library/counter-library-badge";
 import {
   canShowLibraryCreatedByColumn,
   loadCreatorNameIndex,
@@ -56,7 +57,14 @@ import {
 
 const PAGE_SIZE = 50;
 
-export function DrawLibraryView() {
+export type DrawLibraryVariant = "draw" | "counters";
+
+interface DrawLibraryViewProps {
+  variant?: DrawLibraryVariant;
+}
+
+export function DrawLibraryView({ variant = "draw" }: DrawLibraryViewProps) {
+  const isCountersLibrary = variant === "counters";
   const router = useRouter();
   const searchParams = useSearchParams();
   const session = useAuthStore((s) => s.session);
@@ -83,7 +91,7 @@ export function DrawLibraryView() {
   const loadMeta = useOrganizerStore((s) => s.loadMeta);
 
   const [sortId, setSortId] = useLibrarySortId();
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(isCountersLibrary ? "counters" : "all");
   const [query, setQuery] = useState("");
   const [seasonFilter, setSeasonFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -116,6 +124,10 @@ export function DrawLibraryView() {
   );
 
   useEffect(() => {
+    if (isCountersLibrary) setFilter("counters");
+  }, [isCountersLibrary]);
+
+  useEffect(() => {
     if (!metaHydrated) void loadMeta();
   }, [metaHydrated, loadMeta]);
 
@@ -138,13 +150,20 @@ export function DrawLibraryView() {
 
     if (changed) {
       const qs = params.toString();
-      router.replace(qs ? `/library?${qs}` : "/library", { scroll: false });
+      const base = isCountersLibrary ? "/library?tab=counters" : "/library";
+      if (isCountersLibrary) {
+        params.set("tab", "counters");
+        const next = params.toString();
+        router.replace(`/library?${next}`, { scroll: false });
+      } else {
+        router.replace(qs ? `/library?${qs}` : base, { scroll: false });
+      }
     }
 
     return () => {
       if (openNewTimer !== undefined) window.clearTimeout(openNewTimer);
     };
-  }, [router, searchParams]);
+  }, [isCountersLibrary, router, searchParams]);
 
   useEffect(() => {
     if (!showCreatedBy) return;
@@ -185,7 +204,14 @@ export function DrawLibraryView() {
         return false;
       }
       if (filter === "favorites" && !item.favorite) return false;
-      if (filter === "counters" && !item.defenseCounter?.enabled) return false;
+      const isCounter = isCounterLibraryItem(item);
+      // Counter-tagged plays live only in the Counters tab.
+      if (isCountersLibrary) {
+        if (!isCounter) return false;
+        if (item.type === "drill") return false;
+      } else if (isCounter) {
+        return false;
+      }
       if (
         filter !== "all" &&
         filter !== "favorites" &&
@@ -239,6 +265,7 @@ export function DrawLibraryView() {
     cleanFilter,
     assignedPlayIds,
     sortId,
+    isCountersLibrary,
   ]);
 
   async function sharePlayLink(play: NonNullable<typeof previewPlay>) {
@@ -544,9 +571,21 @@ export function DrawLibraryView() {
 
   return (
     <>
+      {isCountersLibrary ? (
+        <div className="fc-counters-library-banner" role="note">
+          <div>
+            <strong>Counter Library</strong>
+            <p>
+              Defensive coverage plays for Game Plan timeout calls. Tag coverage
+              + vs pattern in Details, then add them to a game plan. Starter pack
+              loads automatically (ICE, Drop, Blitz, Horns, Spain, DHO, BLOB…).
+            </p>
+          </div>
+        </div>
+      ) : null}
       <LibraryFilterFields
         season={seasonFilter}
-        type={typeFilter}
+        type={isCountersLibrary ? "" : typeFilter}
         team={teamFilter}
         series={seriesFilter}
         tags={tagsFilter}
@@ -576,19 +615,27 @@ export function DrawLibraryView() {
           setPage(0);
         }}
         onCreate={handleCreate}
-        onImport={() => importPanelRef.current?.openPicker()}
+        onImport={
+          isCountersLibrary
+            ? undefined
+            : () => importPanelRef.current?.openPicker()
+        }
+        showImport={!isCountersLibrary}
         sortSlot={
           <LibrarySortControl sortId={sortId} onSortChange={setSortId} />
         }
         cleanSlot={
-          <LibraryCleanToggle
-            open={cleanOpen}
-            onToggle={() => setCleanOpen((v) => !v)}
-          />
+          isCountersLibrary ? undefined : (
+            <LibraryCleanToggle
+              open={cleanOpen}
+              onToggle={() => setCleanOpen((v) => !v)}
+            />
+          )
         }
         creating={creating}
       />
-      <FdImportPanel ref={importPanelRef} />
+      {isCountersLibrary ? null : <FdImportPanel ref={importPanelRef} />}
+      {isCountersLibrary ? null : (
       <LibraryCleanPanel
         open={cleanOpen}
         filter={cleanFilter}
@@ -618,13 +665,45 @@ export function DrawLibraryView() {
           setCleanFilter("off");
         }}
       />
-      <LibraryTypeBar
-        active={filter}
-        onChange={(value) => {
-          setFilter(value);
-          setPage(0);
-        }}
-      />
+      )}
+      {isCountersLibrary ? (
+        <div className="fd-filter-type-bar org-filter-type-bar fc-counters-library-type-bar">
+          <div className="org-filter-bar-type">
+            <button
+              type="button"
+              className={`org-filter-chip org-filter-type org-filter-counters${
+                filter === "counters" ? " active" : ""
+              }`}
+              onClick={() => {
+                setFilter("counters");
+                setPage(0);
+              }}
+            >
+              All counters
+            </button>
+            <button
+              type="button"
+              className={`org-filter-chip org-filter-type org-filter-favorites${
+                filter === "favorites" ? " active" : ""
+              }`}
+              onClick={() => {
+                setFilter("favorites");
+                setPage(0);
+              }}
+            >
+              ★ Favorites
+            </button>
+          </div>
+        </div>
+      ) : (
+        <LibraryTypeBar
+          active={filter}
+          onChange={(value) => {
+            setFilter(value);
+            setPage(0);
+          }}
+        />
+      )}
       <div className="org-library-split fd-library-split" id="org-library-split">
         <LibraryTable
           items={filtered}
@@ -726,6 +805,19 @@ export function DrawLibraryView() {
       <PlayDetailsModal
         open={createModalOpen}
         mode="create"
+        initial={
+          isCountersLibrary
+            ? {
+                type: "play",
+                defenseCounter: {
+                  enabled: true,
+                  coverages: ["ice"],
+                  vsPatterns: ["PNR"],
+                  notes: "",
+                },
+              }
+            : undefined
+        }
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateSubmit}
       />

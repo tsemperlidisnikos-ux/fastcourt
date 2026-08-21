@@ -207,8 +207,16 @@ export function applyAppearanceToDocument(settings: AppearanceSettings) {
     setVar(fdUi, "--fd-lib-table-font-size", `${lc.tableFont}px`);
   }
 
-  setVar(root, "--fc-lib-frames-grid-cols", settings.libraryFramesGrid.columns);
-  setVar(root, "--fc-lib-frames-grid-gap", `${settings.libraryFramesGrid.gap}px`);
+  setVar(
+    root,
+    "--fc-lib-frames-grid-cols",
+    Math.min(6, Math.max(1, Math.round(settings.libraryFramesGrid.columns) || 3)),
+  );
+  setVar(
+    root,
+    "--fc-lib-frames-grid-gap",
+    `${Math.min(32, Math.max(4, Math.round(settings.libraryFramesGrid.gap) || 20))}px`,
+  );
 
   const dc = settings.designerColumns;
   applyDesignerLayoutVars(root, dc);

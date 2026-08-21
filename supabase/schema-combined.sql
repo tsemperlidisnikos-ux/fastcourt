@@ -831,3 +831,120 @@ GRANT EXECUTE ON FUNCTION public.admin_link_team_library(text, text, text[]) TO 
 
 
 
+
+
+-- ---------------------------------------------------------------------------
+-- 014_library_admin_and_team_read.sql
+-- ---------------------------------------------------------------------------
+-- Allow platform admins to read all libraries, and team admins to read
+-- linked coaches' personal library rows (so they can merge into the shared row).
+
+CREATE OR REPLACE FUNCTION public.can_access_org_library(library_owner_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    library_owner_id = auth.uid()
+    OR public.is_profile_admin()
+    OR EXISTS (
+      SELECT 1
+      FROM public.profiles member
+      WHERE member.id = auth.uid()
+        AND member.team_library_owner_id IS NOT NULL
+        AND member.team_library_owner_id = library_owner_id
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM public.profiles member
+      INNER JOIN public.profiles owner ON owner.id = library_owner_id
+      WHERE member.id = auth.uid()
+        AND member.id <> library_owner_id
+        AND owner.role = 'team_admin'
+        AND member.organization IS NOT NULL
+        AND owner.organization IS NOT NULL
+        AND lower(trim(member.organization)) = lower(trim(owner.organization))
+    )
+    OR EXISTS (
+      -- Team admin reading a coach's personal library row
+      SELECT 1
+      FROM public.profiles admin
+      INNER JOIN public.profiles coach ON coach.id = library_owner_id
+      WHERE admin.id = auth.uid()
+        AND admin.role = 'team_admin'
+        AND (
+          coach.team_library_owner_id = admin.id
+          OR (
+            coach.organization IS NOT NULL
+            AND admin.organization IS NOT NULL
+            AND lower(trim(coach.organization)) = lower(trim(admin.organization))
+          )
+        )
+    );
+$$;
+
+REVOKE ALL ON FUNCTION public.can_access_org_library(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.can_access_org_library(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_org_library(uuid) TO service_role;
+
+
+
+-- 017_platform_settings.sql
+
+-- Platform-wide layout settings (library frames grid, table columns, designer layout).
+-- Readable by all signed-in users; writable by admins only.
+
+CREATE TABLE IF NOT EXISTS public.platform_settings (
+  id text PRIMARY KEY,
+  layout jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.platform_settings (id, layout)
+VALUES ('default', '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS platform_settings_select_authenticated ON public.platform_settings;
+CREATE POLICY platform_settings_select_authenticated ON public.platform_settings
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS platform_settings_upsert_admin ON public.platform_settings;
+CREATE POLICY platform_settings_insert_admin ON public.platform_settings
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_profile_admin());
+
+DROP POLICY IF EXISTS platform_settings_update_admin ON public.platform_settings;
+CREATE POLICY platform_settings_update_admin ON public.platform_settings
+  FOR UPDATE
+  TO authenticated
+  USING (public.is_profile_admin())
+  WITH CHECK (public.is_profile_admin());
+
+GRANT SELECT ON public.platform_settings TO authenticated;
+GRANT INSERT, UPDATE ON public.platform_settings TO authenticated;
+GRANT ALL ON public.platform_settings TO service_role;
+
+
+-- 018_profiles_admin_insert.sql
+
+-- Allow admins to insert/update any profile (needed for upsert & Apply trial).
+
+DROP POLICY IF EXISTS profiles_insert_admin ON public.profiles;
+CREATE POLICY profiles_insert_admin ON public.profiles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_profile_admin());
+
+DROP POLICY IF EXISTS profiles_update_admin ON public.profiles;
+CREATE POLICY profiles_update_admin ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING (public.is_profile_admin())
+  WITH CHECK (public.is_profile_admin());

@@ -120,6 +120,8 @@ export function toPlaybookPrintSettings(
     orientation: config.orientation,
     format: config.format,
     overwriteClassicLayout: config.overwriteClassicLayout,
+    sortBySeries: config.format.sortBySeries,
+    sortByTags: config.format.sortByTags,
   };
 }
 

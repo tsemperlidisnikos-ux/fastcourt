@@ -600,15 +600,19 @@ html[data-device-class="desktop-wide"] #screen-organizer .fc-preview-header-prin
   display: none !important;
 }
 
-/* 3-column frames grid on laptop */
+/* Configurable frames grid (Settings → Appearance → Preview frames grid) */
 html[data-device-class="laptop"] #screen-organizer .org-preview-frames:not(:has(.org-preview-empty-state)),
 html[data-device-class="desktop-wide"] #screen-organizer .org-preview-frames:not(:has(.org-preview-empty-state)),
 html[data-device-class="laptop"] #screen-organizer .fc-lib-preview-frames-grid,
 html[data-device-class="desktop-wide"] #screen-organizer .fc-lib-preview-frames-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(
+    var(--fc-lib-frames-grid-cols, 3),
+    minmax(0, 1fr)
+  ) !important;
   grid-auto-rows: min-content;
   grid-auto-flow: row;
+  gap: var(--fc-lib-frames-grid-gap, 20px) !important;
   align-content: start !important;
   align-items: start !important;
   overflow-x: hidden !important;

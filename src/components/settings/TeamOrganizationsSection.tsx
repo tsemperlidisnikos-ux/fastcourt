@@ -162,12 +162,28 @@ export function TeamOrganizationsSection({
         ...prev,
         coaches: prev.coaches.map((c) =>
           c.id === coachId
-            ? { ...c, inviteToken: token, status: "invited" as const }
+            ? {
+                ...c,
+                inviteToken: token,
+                // Keep active coaches active when regenerating a shareable link.
+                status: c.status === "active" ? ("active" as const) : ("invited" as const),
+              }
             : c,
         ),
       }));
     }
-    const url = buildTeamInviteUrl(token);
+    const url = buildTeamInviteUrl({
+      token,
+      email: coach.email,
+      memberRole: coach.role,
+      organizationName: org.name,
+      organizationId: org.id,
+      memberId: coach.id,
+      status: coach.status === "active" ? "active" : "invited",
+      teamAdminEmail: org.teamAdminEmail,
+      coachSeats: org.coachSeats,
+      expiresAt: org.expiresAt,
+    });
     try {
       await navigator.clipboard.writeText(url);
       setFormSuccess(`Invite link copied for ${coach.email}.`);
@@ -424,15 +440,13 @@ export function TeamOrganizationsSection({
                               >
                                 {coach.status === "active" ? "Disable" : "Enable"}
                               </button>
-                              {coach.status === "invited" ? (
-                                <button
-                                  type="button"
-                                  className="admin-expiry-btn"
-                                  onClick={() => void copyCoachInvite(org, coach.id)}
-                                >
-                                  Copy invite
-                                </button>
-                              ) : null}
+                              <button
+                                type="button"
+                                className="admin-expiry-btn"
+                                onClick={() => void copyCoachInvite(org, coach.id)}
+                              >
+                                Copy invite
+                              </button>
                             </td>
                             <td>
                               <button

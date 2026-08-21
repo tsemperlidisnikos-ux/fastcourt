@@ -307,11 +307,21 @@ export function CourtFrameThumbnail({
       }
 
       if (inLibraryPreview && previewGrid) {
+        const styles = getComputedStyle(document.documentElement);
+        const cols =
+          Number.parseInt(
+            styles.getPropertyValue("--fc-lib-frames-grid-cols").trim(),
+            10,
+          ) || undefined;
+        const gapRaw = styles.getPropertyValue("--fc-lib-frames-grid-gap").trim();
+        const gap =
+          Number.parseFloat(gapRaw.replace(/px$/i, "")) || undefined;
         const sized = getLibraryPreviewThumbSize(
           previewGrid.clientWidth,
           courtType,
-          undefined,
+          cols,
           mergedCourtView.template,
+          gap,
         );
         applyContainerSize({
           width: sized.thumbWidth,

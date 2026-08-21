@@ -121,10 +121,36 @@
   cursor: not-allowed;
 }
 
+#screen-film-room .fc-film-upload-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+#screen-film-room .fc-film-upload-block.is-dragover {
+  border-color: #111827;
+  background: #eef2ff;
+}
+
+#screen-film-room .fc-film-drop-hint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+}
+
 #screen-film-room .fc-film-upload-note {
   margin: 0;
   font-size: 11px;
   color: #64748b;
+  text-align: center;
 }
 
 #screen-film-room .fc-film-error {
@@ -653,8 +679,10 @@
 #screen-film-room .fc-film-video-controls-autoclear,
 #screen-organizer .fc-film-video-controls-autoclear {
   flex-shrink: 0;
-  width: 32px;
+  min-width: 44px;
+  width: auto;
   height: 32px;
+  padding: 0 8px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.35);
@@ -876,18 +904,28 @@
   top: 50%;
   height: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 #screen-film-room .fc-film-video-controls-marker,
 #screen-organizer .fc-film-video-controls-marker {
   position: absolute;
-  top: -4px;
-  width: 6px;
-  height: 6px;
-  margin-left: -3px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
   background: #60a5fa;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#screen-film-room .fc-film-video-controls-marker:hover,
+#screen-organizer .fc-film-video-controls-marker:hover {
+  transform: scale(1.2);
 }
 
 #screen-film-room .fc-film-video-controls-marker.is-event,

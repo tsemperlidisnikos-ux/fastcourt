@@ -26,9 +26,15 @@ export interface AdminLibrarySummary {
 }
 
 export function playMatchesCoach(play: StoredPlay, user: AdminUserRecord) {
+  const email = user.email.trim().toLowerCase();
+  if (play.ownerUserId && play.ownerUserId === user.id) return true;
+  if (play.ownerEmail && play.ownerEmail.trim().toLowerCase() === email) {
+    return true;
+  }
+
   const org = (user.organization || "").trim().toLowerCase();
   const team = (play.team || "").trim().toLowerCase();
-  if (!org) return true;
+  if (!org) return !play.ownerUserId && !play.ownerEmail;
   if (!team) return false;
   return team === org || team.includes(org) || org.includes(team);
 }

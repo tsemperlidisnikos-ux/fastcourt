@@ -43,17 +43,41 @@ export function FilmRoomVideoControlDock({
 }: Props) {
   const scrubDisabled = duration <= 0;
 
+  function renderMarker(
+    marker: { id: string; time: number; kind?: string },
+    className: string,
+    label: string,
+  ) {
+    const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
+    return (
+      <button
+        key={marker.id}
+        type="button"
+        className={`fc-film-video-controls-marker ${className}`}
+        style={{ left: `${pct}%` }}
+        title={`${label} · ${formatClock(marker.time)}`}
+        aria-label={`Seek to ${label} at ${formatClock(marker.time)}`}
+        disabled={scrubDisabled}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onSeek(marker.time);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="fc-film-video-controls-dim" aria-label="Video playback controls">
       <button
         type="button"
         className={`fc-film-video-controls-autoclear${autoClearOnScrub ? " is-active" : ""}`}
         onClick={onToggleAutoClear}
-        title="Auto clear drawings when scrubbing"
-        aria-label="Auto clear on scrub"
+        title="Auto-clear drawings when scrubbing"
+        aria-label="Auto-clear drawings when scrubbing"
         aria-pressed={autoClearOnScrub}
       >
-        AC
+        Clear
       </button>
       <button
         type="button"
@@ -77,48 +101,23 @@ export function FilmRoomVideoControlDock({
           onChange={(e) => onSeek(Number(e.target.value))}
           aria-label="Scrub video"
         />
-        <div className="fc-film-video-controls-markers" aria-hidden="true">
-          {bookmarkMarkerTimes.map((marker) => {
-            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
-            const isDisruption = marker.kind === "disruption";
-            return (
-              <span
-                key={marker.id}
-                className={`fc-film-video-controls-marker${isDisruption ? " is-disruption-break" : " is-bookmark"}`}
-                style={{ left: `${pct}%` }}
-              />
-            );
-          })}
-          {disruptionMarkerTimes.map((marker) => {
-            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
-            return (
-              <span
-                key={marker.id}
-                className="fc-film-video-controls-marker is-disruption"
-                style={{ left: `${pct}%` }}
-              />
-            );
-          })}
-          {eventMarkerTimes.map((marker) => {
-            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
-            return (
-              <span
-                key={marker.id}
-                className="fc-film-video-controls-marker is-event"
-                style={{ left: `${pct}%` }}
-              />
-            );
-          })}
-          {markerTimes.map((marker) => {
-            const pct = duration > 0 ? (marker.time / duration) * 100 : 0;
-            return (
-              <span
-                key={marker.id}
-                className="fc-film-video-controls-marker"
-                style={{ left: `${pct}%` }}
-              />
-            );
-          })}
+        <div className="fc-film-video-controls-markers">
+          {bookmarkMarkerTimes.map((marker) =>
+            renderMarker(
+              marker,
+              marker.kind === "disruption" ? "is-disruption-break" : "is-bookmark",
+              marker.kind === "disruption" ? "Plan break" : "Chapter",
+            ),
+          )}
+          {disruptionMarkerTimes.map((marker) =>
+            renderMarker(marker, "is-disruption", "Disruption"),
+          )}
+          {eventMarkerTimes.map((marker) =>
+            renderMarker(marker, "is-event", "Event"),
+          )}
+          {markerTimes.map((marker) =>
+            renderMarker(marker, "", "Drawing"),
+          )}
         </div>
       </div>
       <span className="fc-film-video-controls-time">{formatClock(duration)}</span>

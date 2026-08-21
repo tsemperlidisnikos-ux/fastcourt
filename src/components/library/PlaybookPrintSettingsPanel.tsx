@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEFAULT_PLAYBOOK_PRINT_CONFIG } from "@/lib/library/playbook-print-config";
 import {
   PLAYBOOK_GRID_COUNT_OPTIONS,
@@ -26,6 +26,8 @@ interface Props {
   className?: string;
   /** When false, Save keeps the panel open (e.g. print overlay side pane). */
   closeOnSave?: boolean;
+  /** Called whenever draft settings change — used for live print preview. */
+  onDraftChange?: (draft: PlaybookPrintConfig) => void;
 }
 
 function patchConfig(
@@ -134,6 +136,7 @@ export function PlaybookPrintSettingsPanel({
   onClose,
   className,
   closeOnSave = true,
+  onDraftChange,
 }: Props) {
   const stored = usePlaybookPrintConfigStore((s) => s.config);
   const setStored = usePlaybookPrintConfigStore((s) => s.setConfig);
@@ -148,6 +151,10 @@ export function PlaybookPrintSettingsPanel({
     setPrevStored(stored);
     setDraft(stored);
   }
+
+  useEffect(() => {
+    onDraftChange?.(draft);
+  }, [draft, onDraftChange]);
 
   function handleSave() {
     setStored(draft, true);
@@ -353,9 +360,7 @@ export function PlaybookPrintSettingsPanel({
                 <SelectField<PlaybookPrintFieldSource>
                   label="Title"
                   value={draft.format.playTitle}
-                  options={PLAYBOOK_PRINT_FIELD_OPTIONS.filter(
-                    (opt) => opt.value !== "none",
-                  )}
+                  options={PLAYBOOK_PRINT_FIELD_OPTIONS}
                   onChange={(v) =>
                     setDraft((p) => patchFormat(p, { playTitle: v }))
                   }
@@ -363,9 +368,7 @@ export function PlaybookPrintSettingsPanel({
                 <SelectField<PlaybookPrintFieldSource>
                   label="Subtitle"
                   value={draft.format.playSubtitle}
-                  options={PLAYBOOK_PRINT_FIELD_OPTIONS.filter(
-                    (opt) => opt.value !== "none",
-                  )}
+                  options={PLAYBOOK_PRINT_FIELD_OPTIONS}
                   onChange={(v) =>
                     setDraft((p) => patchFormat(p, { playSubtitle: v }))
                   }
@@ -399,6 +402,42 @@ export function PlaybookPrintSettingsPanel({
                 />
                 Start each play on a new page
               </label>
+              <label className="fc-pb-print-check">
+                <input
+                  type="checkbox"
+                  checked={draft.format.showPlayTitles !== false}
+                  onChange={(e) =>
+                    setDraft((p) =>
+                      patchFormat(p, { showPlayTitles: e.target.checked }),
+                    )
+                  }
+                />
+                Show play titles in grid
+              </label>
+              <label className="fc-pb-print-check">
+                <input
+                  type="checkbox"
+                  checked={draft.format.sortBySeries}
+                  onChange={(e) =>
+                    setDraft((p) =>
+                      patchFormat(p, { sortBySeries: e.target.checked }),
+                    )
+                  }
+                />
+                Sort by series
+              </label>
+              <label className="fc-pb-print-check">
+                <input
+                  type="checkbox"
+                  checked={draft.format.sortByTags}
+                  onChange={(e) =>
+                    setDraft((p) =>
+                      patchFormat(p, { sortByTags: e.target.checked }),
+                    )
+                  }
+                />
+                Sort by tags
+              </label>
             </div>
 
             <div className="fc-pb-print-section">
@@ -422,48 +461,6 @@ export function PlaybookPrintSettingsPanel({
                   }
                 />
                 Frame notes
-              </label>
-              <label className="fc-pb-print-check">
-                <input
-                  type="checkbox"
-                  checked={draft.showVideoPlaceholders}
-                  onChange={(e) =>
-                    setDraft((p) =>
-                      patchConfig(p, { showVideoPlaceholders: e.target.checked }),
-                    )
-                  }
-                />
-                Show Video Clip Placeholders
-              </label>
-              <label className="fc-pb-print-check">
-                <input
-                  type="checkbox"
-                  checked={draft.showAudioPlaceholders}
-                  onChange={(e) =>
-                    setDraft((p) =>
-                      patchConfig(p, { showAudioPlaceholders: e.target.checked }),
-                    )
-                  }
-                />
-                Show Audio Clip Placeholders
-              </label>
-            </div>
-
-            <div className="fc-pb-print-section">
-              <label className="fc-pb-print-check fc-pb-print-check-inline">
-                <input
-                  type="checkbox"
-                  checked={draft.overwriteClassicLayout}
-                  onChange={(e) =>
-                    setDraft((p) =>
-                      patchConfig(p, { overwriteClassicLayout: e.target.checked }),
-                    )
-                  }
-                />
-                Overwrite layout of classic plays?
-                <span className="fc-pb-print-help" title="Use FastDraw-style grid layout for all plays">
-                  ?
-                </span>
               </label>
             </div>
 
@@ -739,7 +736,7 @@ export function PlaybookPrintSettingsPanel({
                 className="fc-pb-print-save-btn"
                 onClick={handleSave}
               >
-                <span aria-hidden>💾</span> Save Changes
+                <span aria-hidden>💾</span> Save for next time
               </button>
             </div>
           </div>
@@ -747,12 +744,13 @@ export function PlaybookPrintSettingsPanel({
 
         {tab === "print" ? (
           <div className="fc-pb-print-footer sticky">
+            <p className="fc-pb-print-live-hint">Preview updates live</p>
             <button
               type="button"
               className="fc-pb-print-save-btn"
               onClick={handleSave}
             >
-              <span aria-hidden>💾</span> Save Changes
+              <span aria-hidden>💾</span> Save for next time
             </button>
           </div>
         ) : null}

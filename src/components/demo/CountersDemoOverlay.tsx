@@ -22,7 +22,13 @@ import {
   type CountersDemoSlideId,
 } from "@/lib/demo/counters-demo-data";
 import { coachingCueKey } from "@/lib/film-room/film-coaching-format";
+import {
+  countersLiveDemoHref,
+  installCountersLiveDemo,
+} from "@/lib/demo/install-counters-live-demo";
 import type { TimeoutViewSlide } from "@/lib/game-plan/timeout-mode";
+import { appNotice } from "@/stores/dialog-store";
+import { useRouter } from "next/navigation";
 import "@/styles/fc-counters-demo.css";
 
 interface Props {
@@ -244,7 +250,12 @@ function DemoRequirementsSlide() {
   );
 }
 
-function slideContent(id: CountersDemoSlideId, onOpenTimeout: () => void) {
+function slideContent(
+  id: CountersDemoSlideId,
+  onOpenTimeout: () => void,
+  onInstallLiveDemo?: () => void | Promise<void>,
+  installing?: boolean,
+) {
   switch (id) {
     case "intro":
       return (
@@ -256,6 +267,24 @@ function slideContent(id: CountersDemoSlideId, onOpenTimeout: () => void) {
             <strong>{COUNTERS_DEMO_META.ourTeam}</strong>.
           </p>
           <DemoFlowDiagram />
+          {onInstallLiveDemo ? (
+            <div className="fc-counters-demo-install-block">
+              <button
+                type="button"
+                className="fc-counters-demo-nav-action is-primary"
+                disabled={installing}
+                onClick={() => void onInstallLiveDemo()}
+              >
+                {installing
+                  ? "Installing live demo…"
+                  : "Install complete live demo in Game Plan"}
+              </button>
+              <p className="fc-counters-demo-install-hint">
+                Writes a real plan with 5 timeout counters + Counter Library plays, then opens
+                Game Plan so you can try Timeout / Game Day.
+              </p>
+            </div>
+          ) : null}
         </>
       );
     case "scouting":
@@ -300,8 +329,10 @@ function slideContent(id: CountersDemoSlideId, onOpenTimeout: () => void) {
 
 export function CountersDemoOverlay({ onClose }: Props) {
   const mounted = useClientMounted();
+  const router = useRouter();
   const [slideIndex, setSlideIndex] = useState(0);
   const [timeoutOpen, setTimeoutOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   const slideId = COUNTERS_DEMO_SLIDE_IDS[slideIndex] ?? "intro";
   const slideTitle = COUNTERS_DEMO_SLIDE_TITLES[slideId];
@@ -314,6 +345,27 @@ export function CountersDemoOverlay({ onClose }: Props) {
   );
 
   const openTimeout = useCallback(() => setTimeoutOpen(true), []);
+
+  const installLiveDemo = useCallback(async () => {
+    if (installing) return;
+    setInstalling(true);
+    try {
+      const result = await installCountersLiveDemo();
+      onClose();
+      router.push(countersLiveDemoHref(result.planId));
+      appNotice(
+        "Counters demo ready",
+        `Installed with ${result.timeoutCueCount} timeout counters. Open Timeout or Game Day.`,
+      );
+    } catch (err) {
+      appNotice(
+        "Demo failed",
+        err instanceof Error ? err.message : "Could not install the live demo.",
+      );
+    } finally {
+      setInstalling(false);
+    }
+  }, [installing, onClose, router]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -387,7 +439,7 @@ export function CountersDemoOverlay({ onClose }: Props) {
 
           <div className="fc-counters-demo-body">
             <h3 className="fc-counters-demo-slide-title">{slideTitle}</h3>
-            {slideContent(slideId, openTimeout)}
+            {slideContent(slideId, openTimeout, installLiveDemo, installing)}
           </div>
 
           <footer className="fc-counters-demo-footer">

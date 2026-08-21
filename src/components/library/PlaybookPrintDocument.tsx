@@ -25,6 +25,9 @@ import {
   DEFAULT_PLAYBOOK_PRINT_SETTINGS,
   FASTDRAW_TOC_ENTRIES_PER_PAGE,
   getPlaybookChunkGrid,
+  getPlaybookGridLayout,
+  playbookItemsSlotCount,
+  sortPlaysForPlaybookPrint,
   stripNotesForPrint,
   type PlaybookFrameItem,
   type PlaybookPrintSettings,
@@ -155,7 +158,7 @@ function FrameCell({
       : `Frame ${item.frameNum || 1}`;
 
   return (
-    <div className="fd-cell">
+    <div className={`fd-cell${includeNotes ? "" : " fd-cell-no-notes"}`}>
       <div className="fd-cell-stack">
         <div className="fd-cell-frame-title">{frameTitle}</div>
         <div className="fd-cell-court">
@@ -164,7 +167,7 @@ function FrameCell({
             frame={item.frame}
             size="print"
             alt={item.frameName}
-            courtView={courtView}
+            courtView={item.courtView ?? courtView}
           />
         </div>
         {includeNotes && notesText ? (
@@ -177,7 +180,7 @@ function FrameCell({
 
 function EmptyCell({ includeNotes }: { includeNotes: boolean }) {
   return (
-    <div className="fd-cell fd-cell-empty" aria-hidden>
+    <div className={`fd-cell fd-cell-empty${includeNotes ? "" : " fd-cell-no-notes"}`} aria-hidden>
       <div className="fd-cell-stack">
         <div className="fd-cell-frame-title fd-cell-title-spacer" aria-hidden />
         <div className="fd-cell-court" />
@@ -185,6 +188,24 @@ function EmptyCell({ includeNotes }: { includeNotes: boolean }) {
           <div className="fd-cell-notes fd-cell-notes-empty" aria-hidden />
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function InlinePlayTitle({
+  title,
+  playId,
+}: {
+  title: string;
+  playId: string;
+}) {
+  return (
+    <div
+      id={`fc-play-${playId}`}
+      data-fc-play-id={playId}
+      className="fd-inline-play-title"
+    >
+      <h2 className="fd-inline-play-title-text">{title}</h2>
     </div>
   );
 }
@@ -213,9 +234,18 @@ export function PlaybookPrintDocument({
     [printConfig, settingsProp],
   );
 
+  const orderedPlays = useMemo(
+    () =>
+      sortPlaysForPlaybookPrint(plays, {
+        sortBySeries: settings.sortBySeries ?? settings.format?.sortBySeries,
+        sortByTags: settings.sortByTags ?? settings.format?.sortByTags,
+      }),
+    [plays, settings],
+  );
+
   useEffect(() => {
     const textureIds = new Set<string>();
-    for (const play of plays) {
+    for (const play of orderedPlays) {
       const courtAppearance = resolvePlayCourtAppearance(
         play.courtView,
         appearance,
@@ -229,7 +259,7 @@ export function PlaybookPrintDocument({
         /* CourtFrameThumbnail falls back to procedural planks */
       });
     }
-  }, [plays, appearance]);
+  }, [orderedPlays, appearance]);
 
   const cover = printConfig?.cover;
   const safeTitle = (playbookName || "Playbook").toUpperCase();
@@ -292,13 +322,13 @@ export function PlaybookPrintDocument({
   }, [pageDims, printConfig, cover]);
 
   const pagination = useMemo(
-    () => computePlaybookPagination(plays, settings),
-    [plays, settings],
+    () => computePlaybookPagination(orderedPlays, settings),
+    [orderedPlays, settings],
   );
 
   const pageList = useMemo(
-    () => buildPlaybookPageList(plays, settings).pages,
-    [plays, settings],
+    () => buildPlaybookPageList(orderedPlays, settings).pages,
+    [orderedPlays, settings],
   );
 
   const activePage =
@@ -311,7 +341,7 @@ export function PlaybookPrintDocument({
 
   const shouldShowToc = (tocIndex: number) =>
     settings.includeToc !== false &&
-    plays.length > 0 &&
+    orderedPlays.length > 0 &&
     (!isSinglePageMode ||
       (activePage?.kind === "toc" && activePage.tocPageIndex === tocIndex));
 
@@ -319,8 +349,15 @@ export function PlaybookPrintDocument({
     !isSinglePageMode || activePage?.contentSheetIndex === sheetIndex;
 
   const tocEntries = useMemo(
-    () => buildPlaybookTocEntries(plays, pagination, playbookName),
-    [plays, pagination, playbookName],
+    () =>
+      buildPlaybookTocEntries(
+        orderedPlays,
+        pagination,
+        playbookName,
+        "",
+        settings,
+      ),
+    [orderedPlays, pagination, playbookName, settings],
   );
 
   useEffect(() => {
@@ -333,7 +370,7 @@ export function PlaybookPrintDocument({
         `[data-fc-play-id="${CSS.escape(scrollToPlayId)}"]`,
       );
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [scrollToPlayId, plays]);
+  }, [scrollToPlayId, orderedPlays]);
 
   const { totalPages, coverPages, tocPages } = pagination;
   const format = printConfig?.format;
@@ -423,7 +460,7 @@ export function PlaybookPrintDocument({
         />
       ) : null}
       <div
-        className={`fc-playbook-print-root${thumbnail ? " is-thumbnail" : ""}${isSinglePageMode ? " is-single-page" : ""}`}
+        className={`fc-playbook-print-root${thumbnail ? " is-thumbnail" : ""}${isSinglePageMode ? " is-single-page" : ""}${settings.includeNotes === false ? " fd-print-no-notes" : ""}`}
         ref={rootRef}
         style={rootStyle}
         data-print-orientation={pageDims?.orientation ?? "portrait"}
@@ -482,7 +519,7 @@ export function PlaybookPrintDocument({
         </div>
       ) : null}
 
-      {settings.includeToc !== false && plays.length > 0
+      {settings.includeToc !== false && orderedPlays.length > 0
         ? Array.from({ length: tocPages }, (_, p) => {
             if (!shouldShowToc(p)) return null;
             const slice = tocEntries.slice(
@@ -575,27 +612,35 @@ export function PlaybookPrintDocument({
         }
 
         const chunk = sheet.items;
-        const chunkGrid = getPlaybookChunkGrid(chunk.length, format);
+        const layoutCols = getPlaybookGridLayout(format).cols;
+        const slotCount = playbookItemsSlotCount(chunk, layoutCols);
+        const chunkGrid = getPlaybookChunkGrid(slotCount, format);
         const pad = chunkGrid.padCount;
         const playHeaders = resolvePageHeader(sheet.play);
-        const headerLeft = playHeaders.playHeaderLeft || playHeaders.left;
+        const headerLeft =
+          sheet.groupLabel ||
+          playHeaders.playHeaderLeft ||
+          playHeaders.left;
         const headerRightBase = playHeaders.playHeaderRight || playHeaders.right;
         const headerRight = sheet.playContinued
           ? `${headerLeft || sheet.play.title || ""} (cont.)`.trim()
           : headerRightBase;
 
         const separatePlay = playSheetSeparateFlags[i] ?? false;
+        const includeNotes = settings.includeNotes !== false;
         const gridStyle =
           chunkGrid.gridClass === "fd-grid-custom"
             ? ({
                 "--fd-grid-cols": chunkGrid.cols,
                 "--fd-grid-rows": chunkGrid.rows,
               } as CSSProperties)
-            : undefined;
+            : {
+                "--fd-grid-rows": chunkGrid.rows,
+              } as CSSProperties;
 
         return (
           <div
-            key={`grid-${sheet.play.id}-${i}`}
+            key={`grid-${sheet.groupLabel || sheet.play.id}-${i}`}
             className={`fd-sheet fd-content-sheet page-break${separatePlay ? " fd-play-separate-page" : ""}`}
             data-fc-page-index={pageIndexByContentSheet.get(i)}
           >
@@ -608,7 +653,7 @@ export function PlaybookPrintDocument({
               pageNumberPosition={pageNumberPosition}
               showPageNumbers={showHeaderPageNumbers}
             />
-            {sheet.playHeader ? (
+            {sheet.playHeader && !chunk.some((item) => item.isPlayTitle) ? (
               <div
                 id={`fc-play-${sheet.play.id}`}
                 data-fc-play-id={sheet.play.id}
@@ -617,22 +662,35 @@ export function PlaybookPrintDocument({
               />
             ) : null}
             <div
-              className={`fd-grid ${chunkGrid.gridClass} fd-grid-with-header`}
+              className={`fd-grid ${chunkGrid.gridClass} fd-grid-with-header${includeNotes ? "" : " fd-grid-compact"}`}
               style={gridStyle}
             >
-              {chunk.map((item) => (
-                <FrameCell
-                  key={`${item.playId}-${item.frameId}`}
-                  item={item}
-                  courtView={sheet.play.courtView}
-                  includeNotes={settings.includeNotes !== false}
-                />
-              ))}
+              {chunk.map((item) =>
+                item.isPlayTitle ? (
+                  <InlinePlayTitle
+                    key={item.frameId}
+                    title={item.playTitle}
+                    playId={item.playId}
+                  />
+                ) : item.isPad ? (
+                  <EmptyCell
+                    key={item.frameId}
+                    includeNotes={includeNotes}
+                  />
+                ) : (
+                  <FrameCell
+                    key={`${item.playId}-${item.frameId}`}
+                    item={item}
+                    courtView={item.courtView ?? sheet.play.courtView}
+                    includeNotes={includeNotes}
+                  />
+                ),
+              )}
               {pad > 0
                 ? Array.from({ length: pad }, (_, j) => (
                     <EmptyCell
                       key={`empty-${i}-${j}`}
-                      includeNotes={settings.includeNotes !== false}
+                      includeNotes={includeNotes}
                     />
                   ))
                 : null}

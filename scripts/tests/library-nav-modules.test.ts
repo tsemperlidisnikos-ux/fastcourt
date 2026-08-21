@@ -10,8 +10,22 @@ import {
 } from "../../src/lib/settings/library-nav-modules.ts";
 
 describe("library nav modules", () => {
-  it("defaults all sections visible", () => {
+  it("defaults to production-visible sections only", () => {
     assert.deepEqual(normalizeLibraryNavModules(undefined), DEFAULT_LIBRARY_NAV_MODULES);
+    const tabs = orderedLibraryNavTabs(DEFAULT_LIBRARY_NAV_MODULES);
+    assert.deepEqual(
+      tabs.map((tab) => tab.id),
+      [
+        "draw",
+        "counters",
+        "playbooks",
+        "fields",
+        "practice",
+        "players",
+        "film-room",
+        "opponent-scout",
+      ],
+    );
   });
 
   it("migrates legacy flat boolean config", () => {
@@ -60,6 +74,7 @@ describe("library nav modules", () => {
       enabled: {
         ...DEFAULT_LIBRARY_NAV_MODULES.enabled,
         draw: false,
+        counters: false,
         playbooks: true,
       },
       order: DEFAULT_LIBRARY_NAV_MODULES.order,
@@ -70,13 +85,39 @@ describe("library nav modules", () => {
 
   it("orders visible header tabs from config.order", () => {
     const config = normalizeLibraryNavModules({
-      enabled: DEFAULT_LIBRARY_NAV_MODULES.enabled,
-      order: ["film-room", "coach", "practice", "draw", "playbooks", "gameplan", "fields", "players"],
+      enabled: {
+        ...DEFAULT_LIBRARY_NAV_MODULES.enabled,
+        coach: true,
+        scouting: true,
+        gameplan: true,
+      },
+      order: [
+        "film-room",
+        "coach",
+        "practice",
+        "draw",
+        "playbooks",
+        "gameplan",
+        "fields",
+        "players",
+      ],
     });
     const tabs = orderedLibraryNavTabs(config);
     assert.deepEqual(
       tabs.map((tab) => tab.id),
-      ["film-room", "scouting", "coach", "practice", "draw", "playbooks", "gameplan", "fields", "players"],
+      [
+        "film-room",
+        "scouting",
+        "opponent-scout",
+        "coach",
+        "practice",
+        "draw",
+        "counters",
+        "playbooks",
+        "gameplan",
+        "fields",
+        "players",
+      ],
     );
   });
 
@@ -87,22 +128,43 @@ describe("library nav modules", () => {
     });
     assert.deepEqual(
       config.order,
-      ["draw", "playbooks", "gameplan", "fields", "practice", "coach", "players", "film-room", "scouting"],
+      [
+        "draw",
+        "counters",
+        "playbooks",
+        "gameplan",
+        "fields",
+        "practice",
+        "coach",
+        "players",
+        "film-room",
+        "scouting",
+        "opponent-scout",
+      ],
     );
   });
 
-  it("includes scouting tab after film room by default", () => {
+  it("keeps opponent scout visible after film room by default", () => {
     const tabs = orderedLibraryNavTabs(DEFAULT_LIBRARY_NAV_MODULES);
     const filmIndex = tabs.findIndex((tab) => tab.id === "film-room");
-    const scoutIndex = tabs.findIndex((tab) => tab.id === "scouting");
+    const opponentIndex = tabs.findIndex((tab) => tab.id === "opponent-scout");
     assert.ok(filmIndex >= 0);
-    assert.ok(scoutIndex === filmIndex + 1);
-    assert.equal(tabs.find((tab) => tab.id === "scouting")?.label, "SCOUTING");
+    assert.ok(opponentIndex === filmIndex + 1);
+    assert.equal(
+      tabs.find((tab) => tab.id === "opponent-scout")?.label,
+      "OPPONENT SCOUT",
+    );
+    assert.equal(
+      tabs.find((tab) => tab.id === "scouting"),
+      undefined,
+    );
   });
 
   it("reorders module ids", () => {
     const next = reorderLibraryNavModules(DEFAULT_LIBRARY_NAV_MODULES, 0, 2);
-    assert.equal(next.order[0], "playbooks");
+    // draw, counters, playbooks → counters, playbooks, draw
+    assert.equal(next.order[0], "counters");
+    assert.equal(next.order[1], "playbooks");
     assert.equal(next.order[2], "draw");
   });
 });

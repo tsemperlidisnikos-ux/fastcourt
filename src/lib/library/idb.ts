@@ -94,6 +94,24 @@ export async function listStoredPlays(): Promise<StoredPlay[]> {
   );
 }
 
+/** Read plays from a scope without changing the active library connection. */
+export async function listStoredPlaysForScope(
+  scopeId: string,
+): Promise<StoredPlay[]> {
+  if (!isBrowser()) return [];
+  const trimmed = scopeId.trim();
+  if (!trimmed) return [];
+  const db = await openLibraryDatabase(libraryDbNameForScope(trimmed));
+  try {
+    const items = await db.getAll("plays");
+    return items.sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
+  } finally {
+    db.close();
+  }
+}
+
 export async function getStoredPlay(id: string): Promise<StoredPlay | undefined> {
   const db = await getLibraryDb();
   return db.get("plays", id);

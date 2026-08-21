@@ -1,5 +1,6 @@
 export const LIBRARY_NAV_MODULE_IDS = [
   "draw",
+  "counters",
   "playbooks",
   "gameplan",
   "fields",
@@ -8,6 +9,7 @@ export const LIBRARY_NAV_MODULE_IDS = [
   "players",
   "film-room",
   "scouting",
+  "opponent-scout",
 ] as const;
 
 export type LibraryNavModuleId = (typeof LIBRARY_NAV_MODULE_IDS)[number];

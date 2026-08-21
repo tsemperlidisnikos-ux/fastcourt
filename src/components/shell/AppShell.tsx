@@ -73,6 +73,7 @@ function AppGate({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/designer") ||
     pathname.startsWith("/film-room") ||
     pathname.startsWith("/scouting") ||
+    pathname.startsWith("/opponent-scout") ||
     pathname.startsWith("/settings");
 
   if (!authBooted || (!cloud && !hydrated)) {

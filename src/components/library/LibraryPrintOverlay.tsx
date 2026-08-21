@@ -1,6 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
+import { useEffect, useState, type CSSProperties } from "react";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { stripNotesForPrint } from "@/lib/library/playbook-print";
 import {
@@ -17,6 +18,33 @@ interface Props {
   onClose: () => void;
 }
 
+/** Columns × rows presets for single-play print preview. */
+const GRID_PRESETS = [
+  { id: "1x1", label: "1×1", cols: 1, rows: 1 },
+  { id: "2x2", label: "2×2", cols: 2, rows: 2 },
+  { id: "3x2", label: "3×2", cols: 3, rows: 2 },
+  { id: "3x3", label: "3×3", cols: 3, rows: 3 },
+] as const;
+
+type GridPresetId = (typeof GRID_PRESETS)[number]["id"];
+
+const GRID_STORAGE_KEY = "fc-library-print-grid";
+
+function loadGridPreset(frameCount: number): GridPresetId {
+  if (frameCount <= 1) return "1x1";
+  try {
+    const raw = localStorage.getItem(GRID_STORAGE_KEY);
+    if (raw && GRID_PRESETS.some((p) => p.id === raw)) {
+      return raw as GridPresetId;
+    }
+  } catch {
+    /* ignore */
+  }
+  if (frameCount <= 4) return "2x2";
+  if (frameCount <= 6) return "3x2";
+  return "3x3";
+}
+
 export function LibraryPrintOverlay({ play, onClose }: Props) {
   const pdfBrand = useSettingsStore((s) => s.pdfBrand);
   const coverTeam = resolvePdfCoverTeam(pdfBrand, play.team);
@@ -27,6 +55,22 @@ export function LibraryPrintOverlay({ play, onClose }: Props) {
     contentRootId: "fc-print-preview-content",
     onClose,
   });
+
+  const [gridId, setGridId] = useState<GridPresetId>(() =>
+    loadGridPreset(play.frames.length),
+  );
+  const grid =
+    GRID_PRESETS.find((p) => p.id === gridId) ?? GRID_PRESETS[3];
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(GRID_STORAGE_KEY, gridId);
+    } catch {
+      /* ignore */
+    }
+  }, [gridId]);
+
+  const showGridPicker = play.frames.length > 1;
 
   return createPortal(
     <div className="fc-print-overlay" id="print-preview-overlay" role="dialog">
@@ -42,6 +86,27 @@ export function LibraryPrintOverlay({ play, onClose }: Props) {
         <div className="fc-print-overlay-toolbar no-print">
           <h2 className="fc-print-overlay-title">{play.title}</h2>
           <div className="fc-print-overlay-actions">
+            {showGridPicker ? (
+              <div
+                className="fc-print-grid-picker"
+                role="group"
+                aria-label="Frame grid layout"
+              >
+                {GRID_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={`fc-print-grid-btn${
+                      gridId === preset.id ? " is-active" : ""
+                    }`}
+                    title={`${preset.cols} columns × ${preset.rows} rows`}
+                    onClick={() => setGridId(preset.id)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <button type="button" className="fc-print-btn" onClick={handlePrint}>
               Print
             </button>
@@ -61,7 +126,17 @@ export function LibraryPrintOverlay({ play, onClose }: Props) {
             </p>
             {tagline ? <p className="fc-print-doc-tagline">{tagline}</p> : null}
           </header>
-          <div className="fc-print-frames-grid">
+          <div
+            className="fc-print-frames-grid"
+            style={
+              {
+                "--fc-print-cols": grid.cols,
+                "--fc-print-rows": grid.rows,
+              } as CSSProperties
+            }
+            data-print-cols={grid.cols}
+            data-print-rows={grid.rows}
+          >
             {play.frames.map((frame, index) => {
               const frameLabel = frame.name || `Frame ${index + 1}`;
               const frameNotes = stripNotesForPrint(frame.notes ?? "");

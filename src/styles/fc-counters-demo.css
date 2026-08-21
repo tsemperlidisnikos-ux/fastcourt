@@ -620,6 +620,34 @@
   color: #15803d;
 }
 
+.fc-counters-demo-open-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fc-counters-demo-open-btn-secondary {
+  border-style: dashed;
+  color: #64748b;
+}
+
+.fc-counters-demo-install-block {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.fc-counters-demo-install-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+  max-width: 52ch;
+}
+
 .fc-film-counters-demo-btn {
   border: 1px dashed #94a3b8;
   background: #f8fafc;

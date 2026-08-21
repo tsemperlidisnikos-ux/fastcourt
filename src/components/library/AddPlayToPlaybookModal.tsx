@@ -6,6 +6,7 @@ import { useClientMounted } from "@/hooks/useClientMounted";
 import { LibraryFilterFields } from "@/components/library/LibraryFilterFields";
 import { LibraryTable } from "@/components/library/LibraryTable";
 import { LibrarySortControl, useLibrarySortId } from "@/components/library/LibrarySortControl";
+import { canAddItemToPlaybook } from "@/lib/library/counter-library-badge";
 import { compareLibraryItems } from "@/lib/library/library-sort";
 import { useLibraryStore } from "@/stores/library-store";
 
@@ -52,7 +53,7 @@ function AddPlayToPlaybookModalBody({
     const tagsQ = tagsFilter.trim().toLowerCase();
 
     const list = items.filter((item) => {
-      if (item.type === "playbook") return false;
+      if (!canAddItemToPlaybook(item)) return false;
       if (excludedPlayIds.has(item.id)) return false;
       if (seasonQ && !(item.season || "").toLowerCase().includes(seasonQ)) {
         return false;

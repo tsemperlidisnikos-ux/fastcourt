@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DrawLibraryView } from "@/components/library/DrawLibraryView";
+import { CountersLibraryView } from "@/components/library/CountersLibraryView";
 import { FdAppFooter, FdAppHeader } from "@/components/library/FdAppHeader";
 import { FieldsView } from "@/components/library/FieldsView";
 import {
@@ -10,6 +11,7 @@ import {
   LibraryLoadingState,
 } from "@/components/library/LibraryLoadError";
 import { OnboardingModal } from "@/components/library/OnboardingModal";
+import { CoachDashboardView } from "@/components/library/CoachDashboardView";
 import { GamePlanView } from "@/components/library/GamePlanView";
 import { PlaybooksView } from "@/components/library/PlaybooksView";
 import { PracticePlannerView } from "@/components/library/PracticePlannerView";
@@ -23,10 +25,7 @@ import {
   stripWelcomeFromPath,
 } from "@/lib/auth/onboarding";
 import { waitForActiveLibrarySync } from "@/lib/cloud/library-sync";
-import {
-  activateLibraryScope,
-  isLibraryScopeReady,
-} from "@/lib/library/library-scope";
+import { isLibraryScopeReady } from "@/lib/library/library-scope";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryStore } from "@/stores/library-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
@@ -89,11 +88,16 @@ export function LibraryScreen() {
       if (session?.cloud) {
         await waitForActiveLibrarySync();
       }
-      if (session?.user && !isLibraryScopeReady()) {
+      if (session?.user) {
         if (session.cloud) {
-          await waitForActiveLibrarySync();
+          if (!isLibraryScopeReady()) {
+            await waitForActiveLibrarySync();
+          }
         } else {
-          activateLibraryScope(session.user.id, session.user.id, session.user);
+          const { prepareLibrarySessionForUser } = await import(
+            "@/lib/cloud/library-sync"
+          );
+          await prepareLibrarySessionForUser(session.user, null);
         }
       }
       await refresh();
@@ -124,15 +128,19 @@ export function LibraryScreen() {
   const modeClass =
     tab === "draw"
       ? "library-draw-mode"
-      : tab === "fields"
-        ? "library-fields-mode"
-        : tab === "playbooks"
-          ? "library-playbooks-mode"
-          : tab === "gameplan"
-            ? "library-gameplan-mode"
-          : tab === "players"
-            ? "library-players-mode"
-            : "library-practice-mode";
+      : tab === "counters"
+        ? "library-counters-mode"
+        : tab === "fields"
+          ? "library-fields-mode"
+          : tab === "playbooks"
+            ? "library-playbooks-mode"
+            : tab === "gameplan"
+              ? "library-gameplan-mode"
+              : tab === "coach"
+                ? "library-coach-mode"
+                : tab === "players"
+                  ? "library-players-mode"
+                  : "library-practice-mode";
 
   return (
     <div
@@ -157,9 +165,14 @@ export function LibraryScreen() {
           <div className="org-players-shell-wrap" id="org-players-shell-wrap">
             <PlayersView />
           </div>
+        ) : tab === "coach" ? (
+          <div className="org-coach-shell-wrap" id="org-coach-shell-wrap">
+            <CoachDashboardView />
+          </div>
         ) : (
           <div className="org-library-shell" id="org-library-shell">
             {tab === "draw" ? <DrawLibraryView /> : null}
+            {tab === "counters" ? <CountersLibraryView /> : null}
             {tab === "fields" ? <FieldsView /> : null}
             {tab === "playbooks" ? <PlaybooksView /> : null}
             {tab === "gameplan" ? <GamePlanView /> : null}

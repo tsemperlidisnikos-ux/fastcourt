@@ -58,7 +58,7 @@ export function buildViewportProfile(
 }
 
 export function shouldEnableLaptopLock(pathname: string): boolean {
-  if (pathname === "/" || pathname === "/privacy" || pathname === "/terms") {
+  if (pathname === "/privacy" || pathname === "/terms") {
     return false;
   }
   return true;

@@ -202,8 +202,8 @@ export function AppearanceSettingsSection({
         <div className="org-settings-appearance-pane org-settings-appearance-pane-library org-settings-library-columns">
           <div className="org-settings-appearance-pane-title">Library table</div>
           <p className="org-settings-brand-help org-settings-appearance-pane-help">
-            Set column widths in pixels for all coaches. Leave blank for auto
-            width based on content. Saved with Apply.
+            Set column widths in pixels for all coaches (synced). Leave blank for
+            auto width based on content. Saved with Apply.
           </p>
           <div className="org-settings-col-width-grid">
             <label className="org-settings-col-width-field">
@@ -343,6 +343,10 @@ export function AppearanceSettingsSection({
           <div className="org-settings-sublabel org-settings-library-frames-grid-label">
             Preview frames grid
           </div>
+          <p className="org-settings-brand-help">
+            Columns = frames side-by-side in Library preview for all coaches
+            (synced). Not total frames shown. Click Apply to save.
+          </p>
           <div className="org-settings-col-width-grid org-settings-col-width-grid-compact">
             <label className="org-settings-col-width-field">
               <span>Columns</span>
@@ -356,7 +360,10 @@ export function AppearanceSettingsSection({
                     ...settings,
                     libraryFramesGrid: {
                       ...settings.libraryFramesGrid,
-                      columns: Number(e.target.value) || 3,
+                      columns: Math.min(
+                        6,
+                        Math.max(1, Number(e.target.value) || 3),
+                      ),
                     },
                   })
                 }

@@ -1,0 +1,403 @@
+/**
+ * Opponent Scout editor screen.
+ */
+
+.fc-opponent-scout-screen {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  background: #f4f6f8;
+  color: #0f172a;
+}
+
+.fc-os-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid #d7dee8;
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.fc-os-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid #1f2937;
+}
+
+.fc-os-sidebar-head h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fc-os-report-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  flex: 1;
+}
+
+.fc-os-empty {
+  padding: 16px 10px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.fc-os-report-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  padding: 10px 12px;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.fc-os-report-item:hover,
+.fc-os-report-item.active {
+  background: #1f2937;
+}
+
+.fc-os-report-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fc-os-report-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.fc-os-editor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fc-os-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #d7dee8;
+}
+
+.fc-os-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.fc-os-dirty {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 999px;
+  padding: 2px 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fc-os-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fc-os-btn {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-os-btn:hover {
+  background: #f8fafc;
+}
+
+.fc-os-btn.primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #fff;
+}
+
+.fc-os-btn.accent {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.fc-os-btn.danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff1f2;
+}
+
+.fc-os-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.fc-os-header-card,
+.fc-os-players-panel,
+.fc-os-player-editor {
+  background: #fff;
+  border: 1px solid #d7dee8;
+  border-radius: 10px;
+}
+
+.fc-os-header-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.fc-os-logo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.fc-os-logo-preview,
+.fc-os-photo-preview {
+  width: 96px;
+  height: 96px;
+  border: 0;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fc-os-logo-preview img,
+.fc-os-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+.fc-os-header-fields,
+.fc-os-player-fields,
+.fc-os-stats-grid,
+.fc-os-sw-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.fc-os-header-fields {
+  grid-template-columns: 1.4fr 1fr;
+  align-content: start;
+}
+
+.fc-os-header-fields label,
+.fc-os-player-fields label,
+.fc-os-stats-grid label,
+.fc-os-sw-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.fc-os-header-fields input,
+.fc-os-player-fields input,
+.fc-os-stats-grid input,
+.fc-os-sw-grid textarea {
+  height: 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #fff;
+}
+
+.fc-os-sw-grid textarea {
+  height: auto;
+  padding: 10px;
+  resize: vertical;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.fc-os-players-panel {
+  padding: 14px;
+}
+
+.fc-os-players-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.fc-os-players-toolbar h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fc-os-players-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 420px;
+}
+
+.fc-os-player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: auto;
+  background: #f8fafc;
+}
+
+.fc-os-player-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  background: transparent;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.fc-os-player-item:hover,
+.fc-os-player-item.active {
+  background: #fff;
+}
+
+.fc-os-player-item strong {
+  display: block;
+  font-size: 13px;
+}
+
+.fc-os-player-item span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.fc-os-player-editor {
+  padding: 14px;
+}
+
+.fc-os-player-top {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.fc-os-photo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fc-os-photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fc-os-player-fields {
+  grid-template-columns: 80px 1fr 1fr;
+}
+
+.fc-os-span-2 {
+  grid-column: span 2;
+}
+
+.fc-os-stats-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.fc-os-sw-grid {
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 14px;
+}
+
+.fc-os-player-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .fc-opponent-scout-screen {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .fc-os-sidebar {
+    max-height: 220px;
+  }
+
+  .fc-os-players-layout,
+  .fc-os-header-card,
+  .fc-os-player-top,
+  .fc-os-sw-grid,
+  .fc-os-header-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .fc-os-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fc-os-player-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fc-os-span-2 {
+    grid-column: span 2;
+  }
+}

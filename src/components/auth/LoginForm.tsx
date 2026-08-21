@@ -266,11 +266,16 @@ export function LoginForm({
     setSession(finalized.session);
 
     if (!finalized.session.cloud) {
-      activateLibraryScope(
-        finalized.session.user.id,
-        finalized.session.user.id,
-        finalized.session.user,
-      );
+      try {
+        await prepareLibrarySessionForUser(finalized.session.user, null);
+      } catch (err) {
+        console.error("FastCourt local library prepare failed:", err);
+        activateLibraryScope(
+          finalized.session.user.id,
+          finalized.session.user.id,
+          finalized.session.user,
+        );
+      }
     }
 
     const destination = redirectTo ?? next;

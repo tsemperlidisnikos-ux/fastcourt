@@ -15,6 +15,8 @@ export interface TeamOrganization {
   id: string;
   name: string;
   teamAdminEmail: string;
+  /** Cloud profile id of the team admin — used for shared library on localhost. */
+  teamAdminUserId?: string;
   teamAdminInviteToken?: string;
   coachSeats: number;
   expiresAt: string | null;

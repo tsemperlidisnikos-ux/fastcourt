@@ -7,3 +7,7 @@ Settings & Admin,Coach Settings,SET-05,P1,Devices list vs limit,,Accurate device
 Settings & Admin,Admin,SET-10,P2,Library nav module toggle,Disable Film Room,"Tab hidden, /film-room redirects",,,,,
 Settings & Admin,Admin,SET-11,P2,User role management,,Role change applies,,,,,
 Settings & Admin,Admin,SET-12,P2,Org seats and invites,,Coach can join org,,,,,
+Settings & Admin,Admin,SET-13,P0,Apply trial on user (All users),Set trial days → Apply trial → Apply,No RLS Cloud sync error; expiresAt updates,,,,,
+Settings & Admin,Admin,SET-14,P0,Appearance frames Columns Apply for all coaches,Columns=2 → Apply → login as coach,Coach preview uses 2 columns,,,,,
+Settings & Admin,Admin,SET-15,P1,App logo upload / clear to default,,Custom logo shows; Clear restores default orange logo,,,,,
+Settings & Admin,Admin,SET-16,P1,Billing prices display,,€99 / €10 / club seats match config,,,,,

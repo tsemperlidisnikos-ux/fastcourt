@@ -112,7 +112,7 @@
 
   <div class="cover">
     <h1>FastCourt — QA Checklists</h1>
-    <p><strong>Version:</strong> ea047b7 · <strong>Generated:</strong> 5 Ιουλ 2026, 7:03 μ.μ.</p>
+    <p><strong>Version:</strong> 2026-08-06 · <strong>Generated:</strong> 7 Αυγ 2026, 3:54 μ.μ.</p>
     <p><strong>Production:</strong> https://fastcourt.eu</p>
     <p>Pass: Y / N / N/A — fill in Excel or print HTML to PDF</p>
     <div class="legend">
@@ -120,7 +120,7 @@
       <span><strong>P1</strong> = Important regression</span>
       <span><strong>P2</strong> = Secondary</span>
     </div>
-    <p style="margin-top:20px"><strong>Total checks:</strong> 197</p>
+    <p style="margin-top:20px"><strong>Total checks:</strong> 231</p>
   </div>
 
   
@@ -145,8 +145,17 @@
             <td class="id">AUTH-01</td>
             <td class="pri p0">P0</td>
             <td>Email/password login succeeds</td>
-            <td class="steps">Go to /login, enter valid credentials</td>
+            <td class="steps">Go to /login (or / → redirect), enter valid credentials</td>
             <td class="expected">Redirect to /library, session active</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-01b</td>
+            <td class="pri p0">P0</td>
+            <td>Root URL has no marketing landing</td>
+            <td class="steps">Open / logged out and logged in</td>
+            <td class="expected">Redirects to /library (then /login if needed); no pricing landing page</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
@@ -210,6 +219,15 @@
             <td>Trial expired gate blocks app</td>
             <td class="steps">—</td>
             <td class="expected">Overlay until subscribe or license key</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">AUTH-09</td>
+            <td class="pri p1">P1</td>
+            <td>Default FastCourt logo on login</td>
+            <td class="steps">Clear custom app logo if set; hard refresh</td>
+            <td class="expected">Orange mark + FASTCOURT wordmark (not old blue F)</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>
@@ -398,11 +416,29 @@
             <td class="notes"></td>
           </tr>
           <tr>
+            <td class="id">DRW-15b</td>
+            <td class="pri p0">P0</td>
+            <td>Preview frames grid columns (admin setting)</td>
+            <td class="steps">Admin Appearance → Columns=2 → Apply → open Library preview with 4+ frames</td>
+            <td class="expected">2 frames side-by-side (not locked to 3)</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DRW-15c</td>
+            <td class="pri p0">P0</td>
+            <td>Frames grid syncs to coach account</td>
+            <td class="steps">Admin sets Columns=2 → Apply → login as coach</td>
+            <td class="expected">Coach also sees 2 columns (not default 3)</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
             <td class="id">DRW-16</td>
             <td class="pri p2">P2</td>
-            <td>Split resizer between list and preview</td>
+            <td>List/preview split width from settings</td>
             <td class="steps">—</td>
-            <td class="expected">Drag divider, layout persists</td>
+            <td class="expected">Layout matches Appearance list split %</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
@@ -677,9 +713,36 @@
           <tr>
             <td class="id">PB-11</td>
             <td class="pri p1">P1</td>
-            <td>Print settings panel options</td>
+            <td>Print settings — live preview without Save</td>
             <td class="steps">—</td>
-            <td class="expected">Cover, layout, scale apply</td>
+            <td class="expected">Changing options updates preview immediately</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-11b</td>
+            <td class="pri p1">P1</td>
+            <td>Print TOC grouped by series/tags</td>
+            <td class="steps">—</td>
+            <td class="expected">Table of contents groups correctly</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-11c</td>
+            <td class="pri p1">P1</td>
+            <td>showPlayTitles toggle</td>
+            <td class="steps">—</td>
+            <td class="expected">Titles appear/hide; do not consume frame slots</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PB-11d</td>
+            <td class="pri p2">P2</td>
+            <td>eachPlayNewLine packing</td>
+            <td class="steps">—</td>
+            <td class="expected">Plays pack / pad as configured</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
@@ -698,6 +761,130 @@
             <td>Save to cloud (cloud user)</td>
             <td class="steps">—</td>
             <td class="expected">Sync completes without error</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+    </section>
+    <section class="module">
+      <h2>Opponent Scout</h2>
+      
+        <h3>Reports &amp; Players</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">OS-01</td>
+            <td class="pri p0">P0</td>
+            <td>Create new scout report</td>
+            <td class="steps">Opponent Scout → New → team name → Save</td>
+            <td class="expected">Report in sidebar list</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-02</td>
+            <td class="pri p0">P0</td>
+            <td>Add players + stats + strengths/weaknesses</td>
+            <td class="steps">—</td>
+            <td class="expected">Fields save; Ctrl+S works</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-03</td>
+            <td class="pri p1">P1</td>
+            <td>Upload team logo + player photo</td>
+            <td class="steps">—</td>
+            <td class="expected">Images compress; appear in editor</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-04</td>
+            <td class="pri p1">P1</td>
+            <td>Duplicate report</td>
+            <td class="steps">—</td>
+            <td class="expected">Copy with “(copy)” name, new ids</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-05</td>
+            <td class="pri p1">P1</td>
+            <td>Delete report with confirm</td>
+            <td class="steps">—</td>
+            <td class="expected">Removed from list</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-06</td>
+            <td class="pri p1">P1</td>
+            <td>Unsaved guard</td>
+            <td class="steps">Edit → switch report / New / close tab</td>
+            <td class="expected">Confirm discard or beforeunload</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-07</td>
+            <td class="pri p2">P2</td>
+            <td>Quota error on huge photos</td>
+            <td class="steps">—</td>
+            <td class="expected">Friendly storage message, no crash</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr></tbody>
+        </table>
+        <h3>Print</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pri</th>
+              <th>Check</th>
+              <th>Steps</th>
+              <th>Expected</th>
+              <th>Pass</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="id">OS-10</td>
+            <td class="pri p0">P0</td>
+            <td>Print / Export scout PDF</td>
+            <td class="steps">—</td>
+            <td class="expected">Players, logo, strengths/weaknesses</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-11</td>
+            <td class="pri p1">P1</td>
+            <td>Empty stats hidden (no — clutter)</td>
+            <td class="steps">—</td>
+            <td class="expected">Only filled stat columns print</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">OS-12</td>
+            <td class="pri p2">P2</td>
+            <td>Page footer only if multi-page</td>
+            <td class="steps">—</td>
+            <td class="expected">No fake “1 of 1” alone</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>
@@ -891,6 +1078,33 @@
             <td>Timeout mode slides</td>
             <td class="steps">—</td>
             <td class="expected">Counter cues from AI scout</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-22b</td>
+            <td class="pri p0">P0</td>
+            <td>Timeout counters panel — list / edit / delete</td>
+            <td class="steps">Game Plan → Timeout counters</td>
+            <td class="expected">Cues listed; edit fields; remove; priority changes Game Day order</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-22c</td>
+            <td class="pri p0">P0</td>
+            <td>Add counter from Counter Library</td>
+            <td class="steps">From library → pick tagged defense play</td>
+            <td class="expected">Cue created with defensePlayId; optional add to Defense category</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">GP-22d</td>
+            <td class="pri p1">P1</td>
+            <td>Add counter manually</td>
+            <td class="steps">Add manual → fill title/detail/coverage</td>
+            <td class="expected">Cue on plan; appears in Timeout / Game Day top 3 by priority</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
@@ -1496,9 +1710,36 @@
           <tr>
             <td class="id">DSG-06</td>
             <td class="pri p0">P0</td>
-            <td>Undo/redo (Ctrl+Z / Ctrl+Shift+Z)</td>
+            <td>Undo/redo (Ctrl+Z / Ctrl+Y)</td>
             <td class="steps">—</td>
             <td class="expected">5+ steps reversible</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-07</td>
+            <td class="pri p1">P1</td>
+            <td>Save stays in editor (Ctrl+S)</td>
+            <td class="steps">—</td>
+            <td class="expected">Saved notice; remain on /designer</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-08</td>
+            <td class="pri p1">P1</td>
+            <td>Line mode P = Pass</td>
+            <td class="steps">—</td>
+            <td class="expected">Pass action drawn</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">DSG-09</td>
+            <td class="pri p1">P1</td>
+            <td>Frame nav [ ] and Ctrl+D duplicate</td>
+            <td class="steps">—</td>
+            <td class="expected">Prev/next frame; duplicate frame</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>
@@ -1731,27 +1972,27 @@
           <tr>
             <td class="id">FIL-01</td>
             <td class="pri p0">P0</td>
-            <td>Upload MP4 session</td>
+            <td>Upload MP4 session (button)</td>
             <td class="steps">—</td>
             <td class="expected">Session in sidebar, video plays</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
           <tr>
-            <td class="id">FIL-02</td>
+            <td class="id">FIL-01b</td>
             <td class="pri p1">P1</td>
-            <td>YouTube URL session</td>
+            <td>Drag-drop MP4 upload</td>
             <td class="steps">—</td>
-            <td class="expected">Embeds and scrubs</td>
+            <td class="expected">Same as button upload; quota errors friendly</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
           <tr>
-            <td class="id">FIL-03</td>
-            <td class="pri p1">P1</td>
-            <td>Direct MP4 URL session</td>
+            <td class="id">FIL-02</td>
+            <td class="pri p2">P2</td>
+            <td>YouTube URL session (if still enabled)</td>
             <td class="steps">—</td>
-            <td class="expected">Video loads</td>
+            <td class="expected">Embeds and scrubs — or feature removed</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
@@ -1808,8 +2049,26 @@
           </tr>
           <tr>
             <td class="id">FIL-12</td>
+            <td class="pri p0">P0</td>
+            <td>Space always play/pause</td>
+            <td class="steps">—</td>
+            <td class="expected">Works even when focus not on video</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-12b</td>
             <td class="pri p1">P1</td>
-            <td>Fullscreen F + Space play/pause</td>
+            <td>Jog ←/→ or J/L</td>
+            <td class="steps">—</td>
+            <td class="expected">Frame/time jog</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">FIL-12c</td>
+            <td class="pri p1">P1</td>
+            <td>Fullscreen F</td>
             <td class="steps">—</td>
             <td class="expected">Works in fullscreen</td>
             <td class="pass"></td>
@@ -1818,14 +2077,14 @@
           <tr>
             <td class="id">FIL-13</td>
             <td class="pri p2">P2</td>
-            <td>Auto-clear on scrub toggle</td>
+            <td>Clear drawing vs AC</td>
             <td class="steps">—</td>
-            <td class="expected">Drawings clear when scrubbing if enabled</td>
+            <td class="expected">Clear removes strokes; AC behaves as designed</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>
         </table>
-        <h3>Coach Tags &amp; Chapters</h3>
+        <h3>Coach Tags &amp; Bookmarks</h3>
         <table>
           <thead>
             <tr>
@@ -1862,25 +2121,25 @@
             <td class="pri p0">P0</td>
             <td>Add chapter bookmark (B key)</td>
             <td class="steps">—</td>
-            <td class="expected">Green marker, list entry</td>
+            <td class="expected">Bookmark created; no Chapter UI panel required</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
           <tr>
             <td class="id">FIL-23</td>
-            <td class="pri p1">P1</td>
-            <td>Quick chapter labels (ATO, Horns…)</td>
+            <td class="pri p2">P2</td>
+            <td>Chapter panel removed from UI</td>
             <td class="steps">—</td>
-            <td class="expected">Chapter at current time</td>
+            <td class="expected">No “Chapter at… / Add chapter” card in sidebar</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
           <tr>
             <td class="id">FIL-24</td>
             <td class="pri p1">P1</td>
-            <td>Chapter list seek + edit + delete</td>
+            <td>Possession playlist seeks bookmarks</td>
             <td class="steps">—</td>
-            <td class="expected">Jump to timestamp</td>
+            <td class="expected">Jump to timestamp from list</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr>
@@ -1895,10 +2154,10 @@
           </tr>
           <tr>
             <td class="id">FIL-26</td>
-            <td class="pri p0">P0</td>
-            <td>Plan broke here bookmark (Shift+B)</td>
+            <td class="pri p1">P1</td>
+            <td>Plan broke here via Shift+B (if scout tools on)</td>
             <td class="steps">—</td>
-            <td class="expected">Disruption bookmark on timeline</td>
+            <td class="expected">Disruption bookmark; no Plan broke button in chapter bar</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>
@@ -2323,6 +2582,42 @@
             <td class="expected">Coach can join org</td>
             <td class="pass"></td>
             <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-13</td>
+            <td class="pri p0">P0</td>
+            <td>Apply trial on user (All users)</td>
+            <td class="steps">Set trial days → Apply trial → Apply</td>
+            <td class="expected">No RLS Cloud sync error; expiresAt updates</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-14</td>
+            <td class="pri p0">P0</td>
+            <td>Appearance frames Columns Apply for all coaches</td>
+            <td class="steps">Columns=2 → Apply → login as coach</td>
+            <td class="expected">Coach preview uses 2 columns</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-15</td>
+            <td class="pri p1">P1</td>
+            <td>App logo upload / clear to default</td>
+            <td class="steps">—</td>
+            <td class="expected">Custom logo shows; Clear restores default orange logo</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SET-16</td>
+            <td class="pri p1">P1</td>
+            <td>Billing prices display</td>
+            <td class="steps">—</td>
+            <td class="expected">€99 / €10 / club seats match config</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
           </tr></tbody>
         </table>
     </section>
@@ -2369,6 +2664,24 @@
             <td class="expected">PDF brand matches</td>
             <td class="pass"></td>
             <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">CLD-04</td>
+            <td class="pri p0">P0</td>
+            <td>Team library shared for org coaches</td>
+            <td class="steps">2 coaches same org</td>
+            <td class="expected">Same plays visible</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">CLD-05</td>
+            <td class="pri p1">P1</td>
+            <td>Empty library protect (no wipe)</td>
+            <td class="steps">—</td>
+            <td class="expected">Cloud not overwritten by empty local</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
           </tr></tbody>
         </table>
         <h3>PWA &amp; Offline</h3>
@@ -2411,11 +2724,20 @@
             <td class="expected">New version notification</td>
             <td class="pass"></td>
             <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">PWA-04</td>
+            <td class="pri p1">P1</td>
+            <td>iPad logo after cache clear</td>
+            <td class="steps">Safari clear website data → reopen</td>
+            <td class="expected">New default logo (not stale cache)</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
           </tr></tbody>
         </table>
     </section>
     <section class="module">
-      <h2>Production Smoke (fastcourt.eu)</h2>
+      <h2>Production Smoke (fastcourt.eu / vercel.app)</h2>
       
         <h3>15-minute smoke</h3>
         <table>
@@ -2473,6 +2795,24 @@
             <td>Game Plan Game Day on production</td>
             <td class="steps">—</td>
             <td class="expected">Board opens</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SMK-06</td>
+            <td class="pri p0">P0</td>
+            <td>Opponent Scout save + print</td>
+            <td class="steps">—</td>
+            <td class="expected">Report persists and prints</td>
+            <td class="pass"></td>
+            <td class="notes"></td>
+          </tr>
+          <tr>
+            <td class="id">SMK-07</td>
+            <td class="pri p1">P1</td>
+            <td>Admin Apply trial without Cloud sync error</td>
+            <td class="steps">—</td>
+            <td class="expected">No RLS profiles error</td>
             <td class="pass"></td>
             <td class="notes"></td>
           </tr></tbody>

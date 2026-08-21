@@ -21,6 +21,7 @@ import { framesForDesignerThumbnails } from "@/lib/designer/thumbnail-objects";
 import { blockNativeContextMenu } from "@/lib/ui/context-menu-policy";
 import { ActionTimeline } from "@/components/designer/ActionTimeline";
 import { DesignerCoachPanel } from "@/components/designer/DesignerCoachPanel";
+import { usePlatformFeatures } from "@/hooks/usePlatformFeatures";
 import { CourtFrameThumbnail } from "@/components/designer/CourtFrameThumbnail";
 import { CourtWhiteboardToolbar } from "@/components/designer/CourtWhiteboardToolbar";
 import { NotesFormatToolbar } from "@/components/designer/NotesFormatToolbar";
@@ -159,6 +160,8 @@ export function DesignerScreen() {
   const setFrameName = useDesignerStore((s) => s.setFrameName);
   const addFrame = useDesignerStore((s) => s.addFrame);
   const duplicateFrame = useDesignerStore((s) => s.duplicateFrame);
+  const prevFrame = useDesignerStore((s) => s.prevFrame);
+  const nextFrame = useDesignerStore((s) => s.nextFrame);
   const clearFrame = useDesignerStore((s) => s.clearFrame);
   const deleteFrame = useDesignerStore((s) => s.deleteFrame);
   const setTitle = useDesignerStore((s) => s.setTitle);
@@ -219,6 +222,7 @@ export function DesignerScreen() {
   const designerRootRef = useRef<HTMLDivElement>(null);
   const exportAnimAbortRef = useRef<AbortController | null>(null);
   const savedSnapshotRef = useRef<string | null>(null);
+  const savePlayRef = useRef<() => Promise<unknown>>(async () => undefined);
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const loadedDocumentKeyRef = useRef<string | null>(null);
@@ -229,6 +233,15 @@ export function DesignerScreen() {
   const [sidebarTab, setSidebarTab] = useState<"frames" | "coach">("frames");
   const [coachAnalyzeRequestId, setCoachAnalyzeRequestId] = useState(0);
   const [coachSuggestionCount, setCoachSuggestionCount] = useState(0);
+  const platformFeatures = usePlatformFeatures();
+  const designerCoachEnabled = platformFeatures.designerCoach !== false;
+
+  useEffect(() => {
+    if (!designerCoachEnabled && sidebarTab === "coach") {
+      setSidebarTab("frames");
+      setCoachSuggestionCount(0);
+    }
+  }, [designerCoachEnabled, sidebarTab]);
 
   useEffect(() => {
     if (storedMeta?.type) {
@@ -332,30 +345,75 @@ export function DesignerScreen() {
         return;
       }
       const key = e.key.toLowerCase();
-      if (key === "v" || key === "escape") setTool("select");
-      if (key === "o" || key === "p") setTool("offense");
-      if (key === "x") setTool("defense");
-      if (key === "b") {
-        const mode = useDesignerStore.getState().libraryItemType;
-        if (mode === "drill") setTool("ball");
+      const mod = e.ctrlKey || e.metaKey;
+
+      if (mod && key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) useDesignerStore.getState().redo();
+        else useDesignerStore.getState().undo();
+        return;
       }
-      if (key === "l" || key === "f" || key === "d") setTool("line");
-      if (key === "s") {
-        setTool("line");
-        setLineActionType("shoot");
+      if (mod && key === "y") {
+        e.preventDefault();
+        useDesignerStore.getState().redo();
+        return;
       }
-      if (key === "?" && !e.ctrlKey && !e.metaKey) setShortcutsOpen(true);
-      if (e.ctrlKey && e.shiftKey && key === "m") {
+      if (mod && key === "s") {
+        e.preventDefault();
+        void savePlayRef.current();
+        return;
+      }
+
+      if (key === "?" && !mod) {
+        setShortcutsOpen(true);
+        return;
+      }
+      if (mod && e.shiftKey && key === "m") {
         e.preventDefault();
         mirrorCurrentFrame();
+        return;
       }
 
       const tool = useDesignerStore.getState().tool;
+      // Line-mode action shortcuts take priority (Pass = P, not Offense).
       if (tool === "line") {
         const choice = LINE_ACTION_CHOICES.find(
           (item) => item.shortcut?.toLowerCase() === key,
         );
-        if (choice) setLineActionType(choice.value);
+        if (choice) {
+          e.preventDefault();
+          setLineActionType(choice.value);
+          return;
+        }
+      }
+
+      if (key === "[" || (e.altKey && e.key === "ArrowLeft")) {
+        e.preventDefault();
+        useDesignerStore.getState().prevFrame();
+        return;
+      }
+      if (key === "]" || (e.altKey && e.key === "ArrowRight")) {
+        e.preventDefault();
+        useDesignerStore.getState().nextFrame();
+        return;
+      }
+      if (mod && key === "d") {
+        e.preventDefault();
+        useDesignerStore.getState().duplicateFrame();
+        return;
+      }
+
+      if (key === "v" || key === "escape") setTool("select");
+      if (key === "o" || (key === "p" && tool !== "line")) setTool("offense");
+      if (key === "x") setTool("defense");
+      if (key === "b" && tool !== "line") {
+        const mode = useDesignerStore.getState().libraryItemType;
+        if (mode === "drill") setTool("ball");
+      }
+      if (key === "l" || key === "f" || (key === "d" && !mod)) setTool("line");
+      if (key === "s" && !mod) {
+        setTool("line");
+        setLineActionType("shoot");
       }
 
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -537,6 +595,7 @@ export function DesignerScreen() {
       setSaving(false);
     }
   }
+  savePlayRef.current = () => handleSave();
 
   async function handleDone() {
     if (notesRef.current) {
@@ -879,11 +938,13 @@ export function DesignerScreen() {
                   onEmbedCode: () => void handleCreateEmbedCode(),
                   onDownload: () => void handleDownloadPlay(),
                   onPrint: handlePrint,
-                  onAnalyze: () => {
-                    setMenuOpen(false);
-                    setSidebarTab("coach");
-                    setCoachAnalyzeRequestId((n) => n + 1);
-                  },
+                  onAnalyze: designerCoachEnabled
+                    ? () => {
+                        setMenuOpen(false);
+                        setSidebarTab("coach");
+                        setCoachAnalyzeRequestId((n) => n + 1);
+                      }
+                    : undefined,
                 }}
               />
             </div>
@@ -892,6 +953,16 @@ export function DesignerScreen() {
                 Unsaved changes
               </span>
             ) : null}
+            <button
+              type="button"
+              className="ds-fd-save-btn"
+              id="btn-save-play"
+              title="Save (Ctrl+S)"
+              disabled={saving || !isDirty}
+              onClick={() => void handleSave()}
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
             <button
               type="button"
               className="ds-fd-done-btn fd-ds-back"
@@ -1051,6 +1122,31 @@ export function DesignerScreen() {
                 >
                   <span className="ds-fd-tb-label">FastBuild</span>
                 </button>
+                <div className="ds-fd-frame-nav" aria-label="Frame navigation">
+                  <button
+                    type="button"
+                    className="ds-fd-tb-btn ds-fd-frame-nav-btn"
+                    id="btn-prev-frame"
+                    title="Previous frame ([)"
+                    disabled={currentFrameIndex <= 0}
+                    onClick={prevFrame}
+                  >
+                    ‹
+                  </button>
+                  <span className="ds-fd-frame-nav-label">
+                    {currentFrameIndex + 1}/{play.frames.length}
+                  </span>
+                  <button
+                    type="button"
+                    className="ds-fd-tb-btn ds-fd-frame-nav-btn"
+                    id="btn-next-frame"
+                    title="Next frame (])"
+                    disabled={currentFrameIndex >= play.frames.length - 1}
+                    onClick={nextFrame}
+                  >
+                    ›
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="ds-fd-tb-btn"
@@ -1100,6 +1196,7 @@ export function DesignerScreen() {
                   type="button"
                   className="ds-fd-tb-btn"
                   id="btn-duplicate-frame-toolbar"
+                  title="Duplicate frame (Ctrl+D)"
                   onClick={duplicateFrame}
                 >
                   <span className="ds-fd-tb-label">Duplicate</span>
@@ -1113,7 +1210,7 @@ export function DesignerScreen() {
                   type="button"
                   className="ds-fd-tb-btn"
                   id="btn-undo"
-                  title="Undo"
+                  title="Undo (Ctrl+Z)"
                   disabled={undoStack.length === 0}
                   onClick={undo}
                 >
@@ -1125,7 +1222,7 @@ export function DesignerScreen() {
                   type="button"
                   className="ds-fd-tb-btn"
                   id="btn-redo"
-                  title="Redo"
+                  title="Redo (Ctrl+Y)"
                   disabled={redoStack.length === 0}
                   onClick={redo}
                 >
@@ -1170,19 +1267,21 @@ export function DesignerScreen() {
               ✎
             </button>
           </div>
-          <FrameReadBranchControl
-            readBranch={currentFrame?.readBranch}
-            isPrimaryFrame={!currentFrame?.readBranch?.parentFrameId}
-            parentFrameName={
-              currentFrame?.readBranch?.parentFrameId
-                ? play.frames.find(
-                    (frame) => frame.id === currentFrame.readBranch?.parentFrameId,
-                  )?.name
-                : undefined
-            }
-            onSetReadBranch={(branch) => setFrameReadBranch(branch)}
-            onAddReadFrame={(coverage, label) => addReadFrame(coverage, label)}
-          />
+          {designerCoachEnabled ? (
+            <FrameReadBranchControl
+              readBranch={currentFrame?.readBranch}
+              isPrimaryFrame={!currentFrame?.readBranch?.parentFrameId}
+              parentFrameName={
+                currentFrame?.readBranch?.parentFrameId
+                  ? play.frames.find(
+                      (frame) => frame.id === currentFrame.readBranch?.parentFrameId,
+                    )?.name
+                  : undefined
+              }
+              onSetReadBranch={(branch) => setFrameReadBranch(branch)}
+              onAddReadFrame={(coverage, label) => addReadFrame(coverage, label)}
+            />
+          ) : null}
           <div className="ds-editor-stack ds-notes-collapsible" id="ds-notes-collapsible">
             <div className="ds-notes-collapse-body" id="ds-notes-collapse-body">
               <div
@@ -1249,41 +1348,46 @@ export function DesignerScreen() {
           </div>
         </aside>
 
-        <aside className="ds-sidebar-panel" aria-label="Frames and coach">
-          <div className="ds-sidebar-tabs" role="tablist" aria-label="Right sidebar">
-            <button
-              type="button"
-              role="tab"
-              id="sidebar-tab-btn-frames"
-              className={`ds-sidebar-tab${sidebarTab === "frames" ? " active" : ""}`}
-              aria-selected={sidebarTab === "frames"}
-              aria-controls="sidebar-tab-frames"
-              onClick={() => setSidebarTab("frames")}
-            >
-              Frames
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id="sidebar-tab-btn-coach"
-              className={`ds-sidebar-tab${sidebarTab === "coach" ? " active" : ""}`}
-              aria-selected={sidebarTab === "coach"}
-              aria-controls="sidebar-tab-coach"
-              onClick={() => setSidebarTab("coach")}
-            >
-              Coach
-              {coachSuggestionCount > 0 ? (
-                <span className="ds-sidebar-tab-badge" aria-label={`${coachSuggestionCount} suggestions`}>
-                  {coachSuggestionCount}
-                </span>
-              ) : null}
-            </button>
-          </div>
+        <aside
+          className="ds-sidebar-panel"
+          aria-label={designerCoachEnabled ? "Frames and coach" : "Frames"}
+        >
+          {designerCoachEnabled ? (
+            <div className="ds-sidebar-tabs" role="tablist" aria-label="Right sidebar">
+              <button
+                type="button"
+                role="tab"
+                id="sidebar-tab-btn-frames"
+                className={`ds-sidebar-tab${sidebarTab === "frames" ? " active" : ""}`}
+                aria-selected={sidebarTab === "frames"}
+                aria-controls="sidebar-tab-frames"
+                onClick={() => setSidebarTab("frames")}
+              >
+                Frames
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="sidebar-tab-btn-coach"
+                className={`ds-sidebar-tab${sidebarTab === "coach" ? " active" : ""}`}
+                aria-selected={sidebarTab === "coach"}
+                aria-controls="sidebar-tab-coach"
+                onClick={() => setSidebarTab("coach")}
+              >
+                Coach
+                {coachSuggestionCount > 0 ? (
+                  <span className="ds-sidebar-tab-badge" aria-label={`${coachSuggestionCount} suggestions`}>
+                    {coachSuggestionCount}
+                  </span>
+                ) : null}
+              </button>
+            </div>
+          ) : null}
           <div
-            className={`ds-sidebar-tab-pane${sidebarTab === "frames" ? " is-active" : ""}`}
+            className={`ds-sidebar-tab-pane${sidebarTab === "frames" || !designerCoachEnabled ? " is-active" : ""}`}
             id="sidebar-tab-frames"
             role="tabpanel"
-            aria-labelledby="sidebar-tab-btn-frames"
+            aria-labelledby={designerCoachEnabled ? "sidebar-tab-btn-frames" : undefined}
           >
             <div className="ds-thumb-list-vertical" id="frames-container">
               {thumbnailFrames.map((frame, index) => {
@@ -1324,28 +1428,30 @@ export function DesignerScreen() {
               })}
             </div>
           </div>
-          <div
-            className={`ds-sidebar-tab-pane${sidebarTab === "coach" ? " is-active" : ""}`}
-            id="sidebar-tab-coach"
-            role="tabpanel"
-            aria-labelledby="sidebar-tab-btn-coach"
-          >
-            <DesignerCoachPanel
-              play={{
-                ...play,
-                type: storedMeta?.type,
-                season: storedMeta?.season,
-                team: storedMeta?.team,
-                series: storedMeta?.series,
-                tags: storedMeta?.tags,
-                playNotes: storedMeta?.playNotes,
-              }}
-              libraryPlays={libraryPlays}
-              analyzeRequestId={coachAnalyzeRequestId}
-              panelActive={sidebarTab === "coach"}
-              onSuggestionCountChange={setCoachSuggestionCount}
-            />
-          </div>
+          {designerCoachEnabled ? (
+            <div
+              className={`ds-sidebar-tab-pane${sidebarTab === "coach" ? " is-active" : ""}`}
+              id="sidebar-tab-coach"
+              role="tabpanel"
+              aria-labelledby="sidebar-tab-btn-coach"
+            >
+              <DesignerCoachPanel
+                play={{
+                  ...play,
+                  type: storedMeta?.type,
+                  season: storedMeta?.season,
+                  team: storedMeta?.team,
+                  series: storedMeta?.series,
+                  tags: storedMeta?.tags,
+                  playNotes: storedMeta?.playNotes,
+                }}
+                libraryPlays={libraryPlays}
+                analyzeRequestId={coachAnalyzeRequestId}
+                panelActive={sidebarTab === "coach"}
+                onSuggestionCountChange={setCoachSuggestionCount}
+              />
+            </div>
+          ) : null}
         </aside>
       </div>
       <PlayDetailsModal

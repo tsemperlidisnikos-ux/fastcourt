@@ -42,6 +42,9 @@ export const DEFAULT_PLAYBOOK_FORMAT_OPTIONS: PlaybookFormatOptions = {
   playTitle: "playName",
   playSubtitle: "team",
   eachPlayNewLine: true,
+  showPlayTitles: true,
+  sortBySeries: false,
+  sortByTags: false,
 };
 
 export interface PlaybookPrintFieldContext {

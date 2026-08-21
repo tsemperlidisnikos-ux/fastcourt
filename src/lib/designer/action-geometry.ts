@@ -771,10 +771,14 @@ function clampPointToRect(
   };
 }
 
-function screenBarHalfLength(court?: CourtRect) {
+function screenBarHalfLength(court?: CourtRect, courtType: CourtType = "half") {
   if (!court) return 12;
-  const scale = court.width / COURT_ELEMENT_REF_WIDTH_HALF;
-  return Math.max(5, Math.min(14, 26 * scale * 0.42));
+  const ref =
+    courtType === "full"
+      ? COURT_ELEMENT_REF_WIDTH_FULL
+      : COURT_ELEMENT_REF_WIDTH_HALF;
+  const scale = court.width / ref;
+  return Math.max(4, Math.min(14, 26 * scale * 0.42));
 }
 
 function polylineMidpointFlatIndex(points: number[]) {
@@ -821,9 +825,11 @@ function chordPerpendicularUnitFromPoints(
 export function screenBarPointsFromPolyline(
   points: number[],
   court?: CourtRect,
-  half = screenBarHalfLength(court),
+  courtType: CourtType = "half",
+  half?: number,
 ) {
   if (points.length < 4) return [0, 0, 0, 0];
+  const barHalf = half ?? screenBarHalfLength(court, courtType);
 
   const sx = points[0];
   const sy = points[1];
@@ -855,10 +861,10 @@ export function screenBarPointsFromPolyline(
     ny = chord.ny;
   }
 
-  let bx1 = ex - nx * half;
-  let by1 = ey - ny * half;
-  let bx2 = ex + nx * half;
-  let by2 = ey + ny * half;
+  let bx1 = ex - nx * barHalf;
+  let by1 = ey - ny * barHalf;
+  let bx2 = ex + nx * barHalf;
+  let by2 = ey + ny * barHalf;
 
   if (court) {
     const c1 = clampPointToRect(bx1, by1, court);
@@ -904,7 +910,7 @@ export function getDribbleWaveScale(court: CourtRect, courtType: CourtType) {
       ? COURT_ELEMENT_REF_WIDTH_FULL
       : COURT_ELEMENT_REF_WIDTH_HALF;
   if (court.width <= 0 || ref <= 0) return 1;
-  return Math.max(0.18, court.width / ref);
+  return Math.max(0.12, court.width / ref);
 }
 
 function getReferenceCourtRect(courtType: CourtType): CourtRect {

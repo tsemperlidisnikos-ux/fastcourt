@@ -1,7 +1,8 @@
 export const APP_NAME = "FastCourt";
-export const APP_LOGO_PATH = "/icons/fastcourt-logo.png";
+/** Header / login brand logo (cache-bust when default asset changes). */
+export const APP_LOGO_PATH = "/icons/fastcourt-logo.png?v=20260802";
 /** Square mark — favicon / PWA icon. */
-export const APP_ICON_PATH = "/assets/landing/fastcourt-intro-mark.png";
+export const APP_ICON_PATH = "/assets/landing/fastcourt-intro-mark.png?v=20260802";
 /** PWA / iOS Add to Home Screen */
 export const PWA_THEME_COLOR = "#000000";
 export const PWA_BACKGROUND_COLOR = "#0f172a";
@@ -33,7 +34,7 @@ export const LEGACY_APP_FONT_STACK =
   '"Arial Rounded MT", "Arial Rounded MT Regular", "Helvetica Rounded", Arial, sans-serif';
 
 export const APP_BUILD =
-  process.env.NEXT_PUBLIC_APP_BUILD ?? "next-v7";
+  process.env.NEXT_PUBLIC_APP_BUILD ?? "next-v8";
 
 /** Default coach trial length (signup, landing copy, admin defaults). */
 export const DEFAULT_TRIAL_DAYS = 7;

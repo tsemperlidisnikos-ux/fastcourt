@@ -14,11 +14,13 @@ import {
   findSimilarPlays,
   formatSimilarityScore,
 } from "@/lib/library/play-dna";
+import { usePlatformFeatures } from "@/hooks/usePlatformFeatures";
 import {
   formatCounterLibraryBadgeLabel,
   formatCounterLibraryBadgeTitle,
   isCounterLibraryItem,
 } from "@/lib/library/counter-library-badge";
+import { useSettingsStore } from "@/stores/settings-store";
 
 const CourtFrameThumbnail = dynamic(
   () =>
@@ -74,11 +76,14 @@ export function LibraryPreviewPanel({
   onTogglePin,
 }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
+  const platformFeatures = usePlatformFeatures();
+  const framesGrid = useSettingsStore((s) => s.appearance.libraryFramesGrid);
 
   const similarPlays = useMemo(() => {
+    if (!platformFeatures.similarPlays) return [];
     if (!play || libraryPlays.length < 2) return [];
     return findSimilarPlays(play, libraryPlays, { limit: 3 });
-  }, [libraryPlays, play]);
+  }, [libraryPlays, platformFeatures.similarPlays, play]);
 
   useEffect(() => {
     const split = document.getElementById("org-library-split");
@@ -98,8 +103,9 @@ export function LibraryPreviewPanel({
       const size = getLibraryPreviewThumbSize(
         grid.clientWidth,
         play.courtType,
-        undefined,
+        framesGrid.columns,
         courtTemplate,
+        framesGrid.gap,
       );
       grid.style.setProperty("--fc-lib-preview-col-w", `${size.columnWidth}px`);
       grid.style.setProperty("--fc-lib-preview-thumb-w", `${size.thumbWidth}px`);
@@ -110,7 +116,7 @@ export function LibraryPreviewPanel({
     const ro = new ResizeObserver(applyThumbSize);
     ro.observe(grid);
     return () => ro.disconnect();
-  }, [play]);
+  }, [play, framesGrid.columns, framesGrid.gap]);
 
   if (!play) {
     return (

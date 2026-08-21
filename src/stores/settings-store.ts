@@ -12,6 +12,10 @@ import {
   saveAppearanceSettings,
 } from "@/lib/settings/appearance-settings";
 import {
+  applyPlatformLayoutToAppearance,
+  loadPlatformLayout,
+} from "@/lib/settings/platform-layout";
+import {
   DEFAULT_BILLING_CONFIG,
   loadBillingConfig,
   normalizeBillingConfig,
@@ -132,7 +136,10 @@ function baseHydrate(): Pick<
   const appearanceRaw = migrated ?? loadAppearanceSettings();
   const pdfBrandRaw = loadPdfBrandSettings();
   const headerColor = pdfBrandRaw.headerColor || appearanceRaw.headerColor;
-  const appearance = applyLegacyThemeOverrides({ ...appearanceRaw, headerColor });
+  const appearance = applyPlatformLayoutToAppearance(
+    applyLegacyThemeOverrides({ ...appearanceRaw, headerColor }),
+    loadPlatformLayout(),
+  );
   const pdfBrand = { ...pdfBrandRaw, headerColor };
   return {
     appearance,

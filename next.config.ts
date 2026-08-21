@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
+const isNetlify = process.env.NETLIFY === "true";
+
 const nextConfig: NextConfig = {
+  // Portable USB / Electron needs standalone, but Netlify Next plugin expects default output.
+  output: isNetlify ? undefined : "standalone",
   async headers() {
     return [
       {

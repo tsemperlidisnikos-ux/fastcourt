@@ -228,6 +228,10 @@ export function mergeGamePlanCounters(
       coverage: scoutCoverage,
       targetsPattern: patterns[0],
       priority: "high",
+      trigger: `They initiate ${patterns[0]}`,
+      ballHandlerRule: "Force preferred side from scout notes",
+      screenerRule: "Communicate early; protect rim and corner",
+      weakPoint: "Second action if first coverage is late",
     });
   }
 

@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "dev:turbo": "next dev --turbopack",
-    "build": "node scripts/generate-sw.mjs && next build",
+    "build": "node scripts/generate-sw.mjs && next build --webpack",
     "postinstall": "node scripts/copy-pdf-worker.mjs && node scripts/generate-sw.mjs",
     "start": "next start",
     "start:plesk": "node server.js",
@@ -30,8 +30,11 @@
     "setup:supabase": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-supabase-production.ps1",
     "supabase:schema": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-supabase-schema.ps1",
     "electron:dev": "electron electron/main.js",
-    "electron:pack": "electron-builder --win portable",
-    "electron:dist": "electron-builder --win nsis"
+    "electron:pack": "node scripts/pack-usb.mjs && electron-builder --win portable",
+    "electron:dist": "node scripts/pack-usb.mjs && electron-builder --win nsis",
+    "portable:usb": "node scripts/pack-usb.mjs",
+    "portable:electron": "npm run electron:pack",
+    "portable:all": "npm run build && npm run portable:usb && npx electron-builder --win portable"
   },
   "build": {
     "appId": "eu.fastcourt.desktop",
@@ -44,6 +47,12 @@
       "package.json",
       "public/icons/fastcourt-logo.png",
       "public/assets/landing/fastcourt-intro-mark.png"
+    ],
+    "extraResources": [
+      {
+        "from": "dist-usb/app",
+        "to": "app"
+      }
     ],
     "asar": true,
     "win": {

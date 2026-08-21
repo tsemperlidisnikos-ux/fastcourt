@@ -8,6 +8,17 @@ export function kickAuthRehydrate() {
   });
 }
 
+/** Wait for persisted session before cloud bootstrap (avoids false sign-out after login). */
+export async function awaitAuthRehydrate() {
+  const persist = useAuthStore.persist;
+  if (!persist || persist.hasHydrated()) return;
+  try {
+    await persist.rehydrate();
+  } catch (err) {
+    console.error("FastCourt auth rehydrate failed:", err);
+  }
+}
+
 export function subscribeAuthHydration(onChange: () => void) {
   const persist = useAuthStore.persist;
   if (!persist) {

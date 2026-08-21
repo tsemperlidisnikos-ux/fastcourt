@@ -1,5 +1,33 @@
 /* FastCourt library layout supplements (pairs with fd-ui.css) */
 
+#screen-organizer .fc-counters-library-banner {
+  margin: 10px 16px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+#screen-organizer .fc-counters-library-banner strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #065f46;
+  margin-bottom: 4px;
+}
+
+#screen-organizer .fc-counters-library-banner p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #047857;
+  max-width: 62ch;
+}
+
+#screen-organizer.library-counters-mode .fc-counters-library-type-bar {
+  margin-top: 4px;
+}
+
 /* Unified primary create buttons — Fields / Practice / Players */
 #screen-organizer .fc-organizer-create-btn {
   display: inline-flex;
@@ -501,10 +529,13 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   overflow-y: auto;
   padding: 14px 16px 20px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(
+    var(--fc-lib-frames-grid-cols, 3),
+    minmax(0, 1fr)
+  );
   grid-auto-rows: min-content;
   grid-auto-flow: row;
-  gap: 12px;
+  gap: var(--fc-lib-frames-grid-gap, 20px);
   align-content: start !important;
   align-items: start !important;
   width: 100%;
@@ -786,9 +817,13 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 #screen-organizer .org-preview-frames:not(:has(.org-preview-empty-state)),
 #screen-organizer .fc-lib-preview-frames-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(
+    var(--fc-lib-frames-grid-cols, 3),
+    minmax(0, 1fr)
+  ) !important;
   grid-auto-rows: min-content !important;
   grid-auto-flow: row;
+  gap: var(--fc-lib-frames-grid-gap, 20px) !important;
   align-content: start !important;
   align-items: start !important;
   overflow-x: hidden !important;
@@ -1181,9 +1216,41 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
   text-align: center;
 }
 
+.fc-print-grid-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  padding: 2px;
+  border-radius: 8px;
+  background: #e8eaed;
+}
+
+.fc-print-grid-btn {
+  min-width: 40px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fc-print-grid-btn:hover {
+  background: #fff;
+}
+
+.fc-print-grid-btn.is-active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
 .fc-print-frames-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--fc-print-cols, 3), minmax(0, 1fr));
   gap: 16px;
   align-content: start;
 }
@@ -1346,7 +1413,7 @@ html[data-device-class="desktop-wide"] #screen-organizer .fd-main-tab {
 
   html.fc-library-print-active .fc-print-frames-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--fc-print-cols, 3), minmax(0, 1fr)) !important;
     gap: 12px;
     width: 100% !important;
   }

@@ -14,19 +14,19 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/assets/landing/fastcourt-intro-mark.png",
+      "src": "/assets/landing/fastcourt-intro-mark.png?v=20260802",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/landing/fastcourt-intro-mark.png",
+      "src": "/assets/landing/fastcourt-intro-mark.png?v=20260802",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/landing/fastcourt-intro-mark.png",
+      "src": "/assets/landing/fastcourt-intro-mark.png?v=20260802",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -39,7 +39,7 @@
       "url": "/library?source=pwa-shortcut",
       "icons": [
         {
-          "src": "/assets/landing/fastcourt-intro-mark.png",
+          "src": "/assets/landing/fastcourt-intro-mark.png?v=20260802",
           "sizes": "192x192",
           "type": "image/png"
         }
@@ -51,7 +51,7 @@
       "url": "/designer?source=pwa-shortcut",
       "icons": [
         {
-          "src": "/assets/landing/fastcourt-intro-mark.png",
+          "src": "/assets/landing/fastcourt-intro-mark.png?v=20260802",
           "sizes": "192x192",
           "type": "image/png"
         }

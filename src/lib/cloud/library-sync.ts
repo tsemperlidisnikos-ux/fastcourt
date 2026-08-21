@@ -3,10 +3,19 @@ import {
   gatherLocalOrganizerMeta,
 } from "@/lib/cloud/library-meta-local";
 import {
+  fetchAllCloudUserLibraries,
+  fetchCloudUserLibraries,
   fetchCloudUserLibrary,
   saveCloudUserLibrary,
 } from "@/lib/cloud/library-cloud";
-import { resolveLibraryCloudUserId, syncTeamLibraryLink } from "@/lib/cloud/library-owner";
+import {
+  isPlatformAdminLibraryViewer,
+  linkOrgCoachesToTeamLibrary,
+  localTeamLibraryOwnerId,
+  resolveLibraryCloudUserId,
+  resolveOrgCoachProfileIds,
+  syncTeamLibraryLink,
+} from "@/lib/cloud/library-owner";
 import { EMPTY_ORGANIZER_META } from "@/lib/cloud/library-meta-types";
 import { mergeOrganizerMeta } from "@/lib/cloud/merge-meta";
 import { mergePlaysByUpdatedAt, playsSyncable } from "@/lib/cloud/merge-plays";
@@ -14,6 +23,11 @@ import {
   filterByTombstones,
   mergeLibraryTombstones,
 } from "@/lib/cloud/merge-tombstones";
+import {
+  findOrganizationMembership,
+  organizationGrantsAppAccess,
+} from "@/lib/auth/org-access";
+import { loadAdminUsers } from "@/lib/auth/admin-users";
 import {
   clearLocalLibraryCache,
   prepareLibraryCacheForUser,
@@ -27,11 +41,14 @@ import {
 import {
   deleteLegacySharedLibraryDb,
   listStoredPlays,
+  listStoredPlaysForScope,
   replaceAllStoredPlays,
 } from "@/lib/library/idb";
+import { mergePrivateLocalPlaysIntoSharedLibrary } from "@/lib/library/local-team-library-merge";
 import { activateLibraryScope, deactivateLibraryScope, getActiveLibraryOwnerUserId, getActiveSessionUserId } from "@/lib/library/library-scope";
 import {
   filterPlaysForLibraryScope,
+  filterPlaysForOrganization,
   playOwnedBySessionUser,
   usesPersonalPlayOwnership,
 } from "@/lib/library/play-ownership";
@@ -39,6 +56,7 @@ import {
   getLibraryTombstones,
   setLibraryTombstones,
 } from "@/lib/library/tombstones";
+import { ROLES } from "@/lib/config";
 import { createClient, isCloudEnabled } from "@/lib/supabase/client";
 import type { SessionUser } from "@/types/auth";
 import type { StoredPlay } from "@/types/library";
@@ -48,9 +66,67 @@ const LIBRARY_SYNC_AT_KEY = "fastcourt_library_cloud_synced_at";
 const LEGACY_LIBRARY_PURGED_KEY = "fastcourt_legacy_library_purged_v1";
 
 let activeLibrarySync: Promise<void> | null = null;
+/** Serializes all library syncs (login, debounce, manual) so they cannot overlap. */
+let librarySyncTail: Promise<void> = Promise.resolve();
 
 export function waitForActiveLibrarySync(): Promise<void> {
-  return activeLibrarySync ?? Promise.resolve();
+  return librarySyncTail;
+}
+
+async function withLibrarySyncLock<T>(fn: () => Promise<T>): Promise<T> {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const previous = librarySyncTail;
+  librarySyncTail = previous.then(
+    () => gate,
+    () => gate,
+  );
+  activeLibrarySync = librarySyncTail;
+  await previous.catch(() => undefined);
+  try {
+    return await fn();
+  } finally {
+    release();
+    if (activeLibrarySync === librarySyncTail) {
+      activeLibrarySync = null;
+    }
+  }
+}
+
+/**
+ * Never upsert a cloud row that would wipe or silently drop remote plays
+ * that are still alive (not tombstoned). Re-unions missing remote plays.
+ */
+function protectCloudPlaysBeforeSave(
+  playsToSave: StoredPlay[],
+  remotePlays: StoredPlay[],
+  tombstones: Awaited<ReturnType<typeof mergeLibraryTombstones>>,
+  label: string,
+): StoredPlay[] {
+  const remoteAlive = filterByTombstones(
+    remotePlays.filter(playsSyncable),
+    "play",
+    tombstones,
+  );
+  if (!remoteAlive.length) return playsToSave;
+
+  if (!playsToSave.length) {
+    console.warn(
+      `FastCourt: refused empty ${label} cloud save; kept ${remoteAlive.length} remote play(s)`,
+    );
+    return remoteAlive;
+  }
+
+  const saveIds = new Set(playsToSave.map((play) => play.id));
+  const missingRemote = remoteAlive.filter((play) => !saveIds.has(play.id));
+  if (!missingRemote.length) return playsToSave;
+
+  console.warn(
+    `FastCourt: re-merged ${missingRemote.length} remote play(s) dropped before ${label} cloud save`,
+  );
+  return mergePlaysByUpdatedAt(playsToSave, missingRemote);
 }
 
 function isCloudUser(user: SessionUser): boolean {
@@ -129,6 +205,62 @@ function scopePlaysForUser(
   return filterPlaysForLibraryScope(plays, user, libraryOwnerUserId);
 }
 
+function mergeSnapshotPlays(
+  base: StoredPlay[],
+  snapshots: Map<string, { plays: StoredPlay[] }>,
+): StoredPlay[] {
+  let merged = base;
+  for (const snapshot of snapshots.values()) {
+    const plays = snapshot.plays.filter(playsSyncable);
+    if (plays.length) {
+      merged = mergePlaysByUpdatedAt(merged, plays);
+    }
+  }
+  return merged;
+}
+
+async function mergeLocalScopesIntoActive(
+  scopeIds: string[],
+): Promise<StoredPlay[]> {
+  let merged = await listStoredPlays();
+  for (const scopeId of scopeIds) {
+    if (!scopeId) continue;
+    try {
+      const plays = await listStoredPlaysForScope(scopeId);
+      if (plays.length) {
+        merged = mergePlaysByUpdatedAt(merged, plays.filter(playsSyncable));
+      }
+    } catch {
+      // scope may not exist yet
+    }
+  }
+  return merged;
+}
+
+async function collectPlatformAdminLocalScopeIds(
+  adminUserId: string,
+): Promise<string[]> {
+  const ids = new Set<string>();
+  for (const row of loadAdminUsers()) {
+    if (row.id && row.id !== adminUserId) ids.add(row.id);
+    if (row.email) ids.add(localTeamLibraryOwnerId(row.email));
+  }
+  return [...ids];
+}
+
+async function collectTeamAdminLocalCoachScopeIds(
+  user: SessionUser,
+): Promise<string[]> {
+  const membership = findOrganizationMembership(user.email);
+  if (!membership || membership.memberRole !== "team_admin") return [];
+  const ids: string[] = [];
+  for (const coach of membership.org.coaches) {
+    if (coach.status === "disabled") continue;
+    ids.push(localTeamLibraryOwnerId(coach.email));
+  }
+  return ids;
+}
+
 async function ensureProfileOrganization(
   supabase: SupabaseClient,
   user: SessionUser,
@@ -200,17 +332,63 @@ export async function prepareLibrarySessionForUser(
   const prevOwnerUserId = getActiveLibraryOwnerUserId();
 
   if (!isCloudUser(user)) {
-    const scopeChanged = activateLibraryScope(user.id, user.id, user);
+    const libraryOwnerUserId = await resolveLibraryCloudUserId(user, {
+      supabase: null,
+    });
+    const scopeChanged = activateLibraryScope(
+      user.id,
+      libraryOwnerUserId,
+      user,
+    );
     const sessionChanged = shouldResetLibraryCache(
       prevSessionUserId,
       prevOwnerUserId,
       user.id,
-      user.id,
+      libraryOwnerUserId,
     );
     if (scopeChanged || sessionChanged) {
       await resetLibraryStoreState();
     }
-    return { libraryOwnerUserId: user.id, scopeChanged: scopeChanged || sessionChanged };
+
+    // Local org coaches share the team admin IndexedDB — migrate private plays once.
+    if (libraryOwnerUserId !== user.id) {
+      try {
+        await mergePrivateLocalPlaysIntoSharedLibrary(
+          user.id,
+          libraryOwnerUserId,
+          user,
+        );
+      } catch (err) {
+        console.warn("FastCourt: local team library merge failed", err);
+      }
+    }
+
+    // Team admin / platform admin: pull teammate private scopes into the shared view.
+    try {
+      if (isPlatformAdminLibraryViewer(user)) {
+        const scopes = await collectPlatformAdminLocalScopeIds(user.id);
+        const merged = await mergeLocalScopesIntoActive(scopes);
+        await replaceAllStoredPlays(merged);
+      } else {
+        const membership = findOrganizationMembership(user.email);
+        if (
+          membership &&
+          organizationGrantsAppAccess(membership) &&
+          membership.memberRole === "team_admin"
+        ) {
+          const scopes = await collectTeamAdminLocalCoachScopeIds(user);
+          const merged = await mergeLocalScopesIntoActive(scopes);
+          await replaceAllStoredPlays(merged);
+        }
+      }
+    } catch (err) {
+      console.warn("FastCourt: local library aggregation failed", err);
+    }
+
+    return {
+      libraryOwnerUserId,
+      scopeChanged: scopeChanged || sessionChanged,
+    };
   }
 
   await purgeLegacySharedLibraryOnce();
@@ -234,7 +412,9 @@ export async function prepareLibrarySessionForUser(
 
   try {
     const localAll = await listStoredPlays();
+    // Never wipe an org shared library when switching between team members.
     if (
+      libraryOwnerUserId === user.id &&
       shouldClearUntrustedLocalLibrary(prevSessionUserId, user.id, localAll.length)
     ) {
       await clearLocalLibraryCache();
@@ -243,10 +423,29 @@ export async function prepareLibrarySessionForUser(
     /* scope not ready yet */
   }
 
+  // Org coaches: copy private IndexedDB plays into the shared team scope.
+  if (libraryOwnerUserId !== user.id) {
+    try {
+      await mergePrivateLocalPlaysIntoSharedLibrary(
+        user.id,
+        libraryOwnerUserId,
+        user,
+      );
+    } catch (err) {
+      console.warn("FastCourt: team library merge failed", err);
+    }
+  }
+
   return { libraryOwnerUserId, scopeChanged: scopeChanged || sessionChanged };
 }
 
 export async function syncLibraryForUser(
+  user: SessionUser,
+): Promise<{ ok: true; result: LibrarySyncResult } | { ok: false; error: string }> {
+  return withLibrarySyncLock(() => syncLibraryForUserUnlocked(user));
+}
+
+async function syncLibraryForUserUnlocked(
   user: SessionUser,
 ): Promise<{ ok: true; result: LibrarySyncResult } | { ok: false; error: string }> {
   if (!isCloudEnabled() || !isCloudUser(user)) {
@@ -277,6 +476,8 @@ export async function syncLibraryForUser(
 
   const { snapshot } = remoteResult;
   let remotePlays = snapshot.plays.filter(playsSyncable);
+  let remoteMeta = snapshot.organizerMeta;
+  let remoteTombstones = snapshot.tombstones;
 
   if (libraryOwnerUserId !== user.id) {
     const personalRemote = await fetchCloudUserLibrary(supabase, user.id);
@@ -285,11 +486,97 @@ export async function syncLibraryForUser(
         remotePlays,
         personalRemote.snapshot.plays.filter(playsSyncable),
       );
+      remoteMeta = mergeOrganizerMeta(
+        remoteMeta,
+        personalRemote.snapshot.organizerMeta,
+      );
+      remoteTombstones = mergeLibraryTombstones(
+        remoteTombstones,
+        personalRemote.snapshot.tombstones,
+      );
+    }
+  }
+
+  // Team admin: fold every invited/active coach personal library into the shared row.
+  const membership = findOrganizationMembership(user.email);
+  const isTeamAdminViewer =
+    (membership &&
+      organizationGrantsAppAccess(membership) &&
+      membership.memberRole === "team_admin") ||
+    user.orgMemberRole === "team_admin" ||
+    user.role === ROLES.teamAdmin;
+
+  if (isTeamAdminViewer) {
+    let coachIds: string[] = [];
+
+    if (membership && organizationGrantsAppAccess(membership)) {
+      // Link coach profiles → this admin so RLS can read their personal libraries.
+      await linkOrgCoachesToTeamLibrary(supabase, membership.org);
+
+      coachIds = await resolveOrgCoachProfileIds(
+        membership.org,
+        supabase,
+        user.id,
+      );
+    } else {
+      // Org roster missing in this browser — still merge already-linked coaches.
+      const { data: linkedIds } = await supabase.rpc("list_team_linked_member_ids");
+      if (Array.isArray(linkedIds)) {
+        coachIds = linkedIds.filter(
+          (id): id is string => typeof id === "string" && id !== user.id,
+        );
+      }
+    }
+
+    // Always include local private scopes for roster coaches (same browser).
+    try {
+      const localScopes = [
+        ...(await collectTeamAdminLocalCoachScopeIds(user)),
+        ...coachIds,
+      ];
+      const localMerged = await mergeLocalScopesIntoActive(localScopes);
+      if (localMerged.length) {
+        remotePlays = mergePlaysByUpdatedAt(
+          remotePlays,
+          localMerged.filter(playsSyncable),
+        );
+      }
+    } catch (err) {
+      console.warn("FastCourt: team admin local coach merge failed", err);
+    }
+
+    if (coachIds.length) {
+      const coachLibs = await fetchCloudUserLibraries(supabase, coachIds);
+      if (coachLibs.ok) {
+        remotePlays = mergeSnapshotPlays(remotePlays, coachLibs.snapshots);
+        for (const snap of coachLibs.snapshots.values()) {
+          remoteMeta = mergeOrganizerMeta(remoteMeta, snap.organizerMeta);
+          remoteTombstones = mergeLibraryTombstones(
+            remoteTombstones,
+            snap.tombstones,
+          );
+        }
+      }
+    }
+  }
+
+  // Platform admin: aggregate every accessible cloud library.
+  if (isPlatformAdminLibraryViewer(user)) {
+    const allLibs = await fetchAllCloudUserLibraries(supabase);
+    if (allLibs.ok) {
+      remotePlays = mergeSnapshotPlays(remotePlays, allLibs.snapshots);
+      for (const snap of allLibs.snapshots.values()) {
+        remoteMeta = mergeOrganizerMeta(remoteMeta, snap.organizerMeta);
+        remoteTombstones = mergeLibraryTombstones(
+          remoteTombstones,
+          snap.tombstones,
+        );
+      }
     }
   }
 
   remotePlays = scopePlaysForUser(remotePlays, user, libraryOwnerUserId);
-  const mergedTombstones = mergeLibraryTombstones(localTombstones, snapshot.tombstones);
+  let mergedTombstones = mergeLibraryTombstones(localTombstones, remoteTombstones);
 
   let mergedPlays = mergePlaysForUser(
     user,
@@ -301,10 +588,18 @@ export async function syncLibraryForUser(
 
   if (usesPersonalPlayOwnership(user, libraryOwnerUserId)) {
     mergedPlays = mergedPlays.filter((play) => playOwnedBySessionUser(play, user));
+  } else if (
+    membership &&
+    organizationGrantsAppAccess(membership) &&
+    (membership.memberRole === "team_admin" ||
+      membership.memberRole === "coach")
+  ) {
+    // Never keep platform-admin / outsider plays in the team shared library.
+    mergedPlays = filterPlaysForOrganization(mergedPlays, membership.org);
   }
 
-  const mergedMetaRaw = mergeOrganizerMeta(localMeta, snapshot.organizerMeta);
-  const mergedMeta = {
+  const mergedMetaRaw = mergeOrganizerMeta(localMeta, remoteMeta);
+  let mergedMeta = {
     ...mergedMetaRaw,
     playbooks: filterByTombstones(mergedMetaRaw.playbooks, "playbook", mergedTombstones),
     practice: {
@@ -326,22 +621,89 @@ export async function syncLibraryForUser(
   const playbookSides = countMergedFromSides(
     mergedMeta.playbooks,
     localMeta.playbooks,
-    snapshot.organizerMeta.playbooks,
+    remoteMeta.playbooks,
   );
   const practiceSides = countMergedFromSides(
     mergedMeta.practice.sessions,
     localMeta.practice.sessions,
-    snapshot.organizerMeta.practice.sessions,
+    remoteMeta.practice.sessions,
   );
 
   await replaceAllStoredPlays(mergedPlays);
   await applyLocalOrganizerMeta(mergedMeta);
   await setLibraryTombstones(mergedTombstones);
 
+  // Platform admin keeps a full local view but must not write other users'
+  // plays into the admin cloud row (and never unstamped foreign plays).
+  let playsToSave = isPlatformAdminLibraryViewer(user)
+    ? mergedPlays.filter((play) => playOwnedBySessionUser(play, user))
+    : mergedPlays;
+
+  // Never wipe the admin cloud row if a bad merge produced zero owned plays
+  // while the remote row still has admin-owned content.
+  if (
+    isPlatformAdminLibraryViewer(user) &&
+    playsToSave.length === 0 &&
+    remotePlays.some((play) => playOwnedBySessionUser(play, user))
+  ) {
+    playsToSave = remotePlays.filter((play) =>
+      playOwnedBySessionUser(play, user),
+    );
+    console.warn(
+      "FastCourt: refused empty platform-admin cloud save; kept remote owned plays",
+    );
+  }
+
+  // Shared / coach libraries: refuse empty or filter-shrunk upserts.
+  if (!isPlatformAdminLibraryViewer(user)) {
+    playsToSave = protectCloudPlaysBeforeSave(
+      playsToSave,
+      remotePlays,
+      mergedTombstones,
+      libraryOwnerUserId === user.id ? "personal" : "team",
+    );
+  }
+
+  // If another client wrote while we merged, fold their newer row in before upsert.
+  const latestRemote = await fetchCloudUserLibrary(supabase, libraryOwnerUserId);
+  if (
+    latestRemote.ok &&
+    latestRemote.snapshot.updatedAt &&
+    snapshot.updatedAt &&
+    latestRemote.snapshot.updatedAt !== snapshot.updatedAt
+  ) {
+    const latestPlays = latestRemote.snapshot.plays.filter(playsSyncable);
+    mergedTombstones = mergeLibraryTombstones(
+      mergedTombstones,
+      latestRemote.snapshot.tombstones,
+    );
+    playsToSave = mergePlaysByUpdatedAt(playsToSave, latestPlays);
+    playsToSave = filterByTombstones(playsToSave, "play", mergedTombstones);
+    if (!isPlatformAdminLibraryViewer(user)) {
+      playsToSave = protectCloudPlaysBeforeSave(
+        playsToSave,
+        latestPlays,
+        mergedTombstones,
+        "concurrent",
+      );
+    } else {
+      playsToSave = playsToSave.filter((play) =>
+        playOwnedBySessionUser(play, user),
+      );
+    }
+    mergedMeta = mergeOrganizerMeta(
+      mergedMeta,
+      latestRemote.snapshot.organizerMeta,
+    );
+    console.warn(
+      "FastCourt: cloud library changed during sync; re-merged before save",
+    );
+  }
+
   const saveResult = await saveCloudUserLibrary(
     supabase,
     libraryOwnerUserId,
-    mergedPlays,
+    playsToSave,
     mergedMeta,
     mergedTombstones,
   );
@@ -369,22 +731,13 @@ export async function syncLibraryForUser(
 
 /** Silent background sync — logs errors, never throws. */
 export async function syncLibraryOnLogin(user: SessionUser): Promise<void> {
-  const run = (async () => {
-    try {
-      const result = await syncLibraryForUser(user);
-      if (!result.ok) {
-        console.warn("FastCourt library auto-sync:", result.error);
-      }
-    } catch (err) {
-      console.error("FastCourt library auto-sync failed:", err);
-    }
-  })();
-
-  activeLibrarySync = run;
   try {
-    await run;
-  } finally {
-    if (activeLibrarySync === run) activeLibrarySync = null;
+    const result = await syncLibraryForUser(user);
+    if (!result.ok) {
+      console.warn("FastCourt library auto-sync:", result.error);
+    }
+  } catch (err) {
+    console.error("FastCourt library auto-sync failed:", err);
   }
 }
 

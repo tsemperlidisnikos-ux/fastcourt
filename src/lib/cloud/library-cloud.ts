@@ -110,6 +110,71 @@ export async function fetchCloudUserLibrary(
   };
 }
 
+function rowToSnapshot(row: UserLibraryRow): CloudUserLibrarySnapshot {
+  return {
+    plays: Array.isArray(row.plays) ? row.plays : [],
+    organizerMeta: normalizeOrganizerMeta(row.organizer_meta),
+    tombstones: normalizeTombstones(row.library_tombstones),
+    updatedAt: row.updated_at ?? null,
+  };
+}
+
+/** Fetch several user_library rows (team admin → coaches). */
+export async function fetchCloudUserLibraries(
+  supabase: SupabaseClient,
+  userIds: string[],
+): Promise<
+  | { ok: true; snapshots: Map<string, CloudUserLibrarySnapshot> }
+  | { ok: false; error: string }
+> {
+  const unique = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
+  const snapshots = new Map<string, CloudUserLibrarySnapshot>();
+  if (!unique.length) return { ok: true, snapshots };
+
+  const { data, error } = await supabase
+    .from("user_library")
+    .select("user_id, plays, organizer_meta, library_tombstones, updated_at")
+    .in("user_id", unique);
+
+  if (error) {
+    if (/user_library/i.test(error.message) && /does not exist/i.test(error.message)) {
+      return { ok: true, snapshots };
+    }
+    for (const id of unique) {
+      const one = await fetchCloudUserLibrary(supabase, id);
+      if (one.ok) snapshots.set(id, one.snapshot);
+    }
+    return { ok: true, snapshots };
+  }
+
+  for (const row of (data ?? []) as UserLibraryRow[]) {
+    snapshots.set(row.user_id, rowToSnapshot(row));
+  }
+  return { ok: true, snapshots };
+}
+
+/** Platform admin: every library row visible under RLS. */
+export async function fetchAllCloudUserLibraries(
+  supabase: SupabaseClient,
+): Promise<
+  | { ok: true; snapshots: Map<string, CloudUserLibrarySnapshot> }
+  | { ok: false; error: string }
+> {
+  const { data, error } = await supabase
+    .from("user_library")
+    .select("user_id, plays, organizer_meta, library_tombstones, updated_at");
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const snapshots = new Map<string, CloudUserLibrarySnapshot>();
+  for (const row of (data ?? []) as UserLibraryRow[]) {
+    snapshots.set(row.user_id, rowToSnapshot(row));
+  }
+  return { ok: true, snapshots };
+}
+
 export async function saveCloudUserLibrary(
   supabase: SupabaseClient,
   userId: string,

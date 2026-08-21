@@ -1,6 +1,8 @@
 ﻿Module,Section,Check ID,Priority,Check Item,Steps,Expected Result,Pass (Y/N/NA),Notes,Tester,Date,Environment
-Production Smoke (fastcourt.eu),15-minute smoke,SMK-01,P0,Login on production,,Library loads,,,,,
-Production Smoke (fastcourt.eu),15-minute smoke,SMK-02,P0,Create play → designer → save,,End-to-end OK,,,,,
-Production Smoke (fastcourt.eu),15-minute smoke,SMK-03,P0,Film Room analyze on production,,AI returns (if key set),,,,,
-Production Smoke (fastcourt.eu),15-minute smoke,SMK-04,P1,Share link on production domain,,Hash decode works,,,,,
-Production Smoke (fastcourt.eu),15-minute smoke,SMK-05,P1,Game Plan Game Day on production,,Board opens,,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-01,P0,Login on production,,Library loads,,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-02,P0,Create play → designer → save,,End-to-end OK,,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-03,P0,Film Room analyze on production,,AI returns (if key set),,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-04,P1,Share link on production domain,,Hash decode works,,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-05,P1,Game Plan Game Day on production,,Board opens,,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-06,P0,Opponent Scout save + print,,Report persists and prints,,,,,
+Production Smoke (fastcourt.eu / vercel.app),15-minute smoke,SMK-07,P1,Admin Apply trial without Cloud sync error,,No RLS profiles error,,,,,

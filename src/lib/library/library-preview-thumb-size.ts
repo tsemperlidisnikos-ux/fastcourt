@@ -2,7 +2,7 @@ import { getCourtAspect } from "@/lib/designer/court-hg-templates";
 import type { CourtTemplate, CourtType } from "@/types/designer";
 
 export const LIBRARY_PREVIEW_GRID_COLS = 3;
-export const LIBRARY_PREVIEW_GRID_GAP_PX = 12;
+export const LIBRARY_PREVIEW_GRID_GAP_PX = 20;
 export const LIBRARY_PREVIEW_GRID_PAD_X_PX = 32; /* 16px left + 16px right */
 export const LIBRARY_PREVIEW_COURT_PAD_X_PX = 12; /* 6px left + 6px right */
 export const LIBRARY_PREVIEW_THUMB_BORDER_X_PX = 4; /* 2px left + 2px right */
@@ -33,11 +33,13 @@ export function getLibraryPreviewThumbSize(
   courtType: CourtType,
   columns = LIBRARY_PREVIEW_GRID_COLS,
   courtTemplate: CourtTemplate = "NCAA",
+  gapPx = LIBRARY_PREVIEW_GRID_GAP_PX,
 ) {
+  const cols = Math.min(6, Math.max(1, Math.round(columns) || LIBRARY_PREVIEW_GRID_COLS));
+  const gap = Math.min(32, Math.max(4, Math.round(gapPx) || LIBRARY_PREVIEW_GRID_GAP_PX));
   const gridInnerW = Math.max(0, gridClientWidth - LIBRARY_PREVIEW_GRID_PAD_X_PX);
-  const gap = LIBRARY_PREVIEW_GRID_GAP_PX;
   const colW = Math.floor(
-    (gridInnerW - gap * Math.max(0, columns - 1)) / columns,
+    (gridInnerW - gap * Math.max(0, cols - 1)) / cols,
   );
   const thumbWidth = Math.max(
     1,

@@ -9,6 +9,7 @@ import { OpponentBoardPanel } from "@/components/library/OpponentBoardPanel";
 import { GamePlanReadRollupPanel } from "@/components/library/GamePlanReadRollupPanel";
 import { GamePlanReadRecommendationsPanel } from "@/components/library/GamePlanReadRecommendationsPanel";
 import { GamePlanFilmEvidencePanel } from "@/components/library/GamePlanFilmEvidencePanel";
+import { GamePlanCountersPanel } from "@/components/library/GamePlanCountersPanel";
 import { GameDayOverlay } from "@/components/library/GameDayOverlay";
 import { GamePlanBenchPrintOverlay } from "@/components/library/GamePlanBenchPrintOverlay";
 import { GamePlanSuggestModal } from "@/components/library/GamePlanSuggestModal";
@@ -59,6 +60,10 @@ import { buildTimeoutViewSlides } from "@/lib/game-plan/timeout-mode";
 import { opponentScopedSessionsForReadLookup } from "@/lib/game-plan/opponent-read-rollup";
 import { buildReadSuccessLookup } from "@/lib/practice/read-success-by-call";
 import { useCountersDemo } from "@/hooks/useCountersDemo";
+import {
+  countersLiveDemoHref,
+  installCountersLiveDemo,
+} from "@/lib/demo/install-counters-live-demo";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import {
   appConfirm,
@@ -101,6 +106,7 @@ export function GamePlanView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { openDemo: openCountersDemo } = useCountersDemo();
+  const [installingDemo, setInstallingDemo] = useState(false);
   const planParam = searchParams.get("plan")?.trim() || null;
   const gamePlans = useOrganizerStore((s) => s.gamePlans);
   const playerHomework = useOrganizerStore((s) => s.playerHomework);
@@ -241,6 +247,28 @@ export function GamePlanView() {
     const plan = await createGamePlan(opponent.trim(), teams[0] || "No Team");
     setSelectedId(plan.id);
     setShowArchived(false);
+  }
+
+  async function handleInstallCountersDemo() {
+    if (installingDemo) return;
+    setInstallingDemo(true);
+    try {
+      const result = await installCountersLiveDemo();
+      setShowArchived(false);
+      setSelectedId(result.planId);
+      router.replace(countersLiveDemoHref(result.planId), { scroll: false });
+      appNotice(
+        "Counters demo ready",
+        `Plan installed with ${result.timeoutCueCount} timeout counters and ${result.defenseEntryCount} defense plays. Open Timeout or Game Day to try them.`,
+      );
+    } catch (err) {
+      appNotice(
+        "Demo failed",
+        err instanceof Error ? err.message : "Could not install the counters demo.",
+      );
+    } finally {
+      setInstallingDemo(false);
+    }
   }
 
   async function handleEditOpponent() {
@@ -563,6 +591,15 @@ export function GamePlanView() {
             </button>
             <button
               type="button"
+              className="fc-game-plan-create-btn fc-game-plan-demo-install-btn"
+              disabled={installingDemo}
+              onClick={() => void handleInstallCountersDemo()}
+              title="Install a complete demo plan with Counter Library + timeout cues"
+            >
+              {installingDemo ? "INSTALLING…" : "INSTALL DEMO"}
+            </button>
+            <button
+              type="button"
               className={`fc-game-plan-filter-btn${showArchived ? " active" : ""}`}
               onClick={() => setShowArchived((value) => !value)}
             >
@@ -636,6 +673,20 @@ export function GamePlanView() {
           {!selected ? (
             <div className="fc-game-plan-main-empty">
               <p>Select a game plan or create one for your next opponent.</p>
+              <button
+                type="button"
+                className="fc-game-plan-create-btn fc-game-plan-demo-install-btn"
+                disabled={installingDemo}
+                onClick={() => void handleInstallCountersDemo()}
+              >
+                {installingDemo
+                  ? "Installing complete demo…"
+                  : "Install complete Counters demo"}
+              </button>
+              <p className="fc-game-plan-demo-install-hint">
+                Creates vs Panathinaikos with 5 timeout counters, defense plays,
+                opponent board, and scouting keys — ready for Timeout / Game Day.
+              </p>
             </div>
           ) : (
             <>
@@ -656,10 +707,19 @@ export function GamePlanView() {
                   <button
                     type="button"
                     className="fc-counters-demo-open-btn"
-                    onClick={openCountersDemo}
-                    title="Walkthrough with fictional Panathinaikos scout data"
+                    disabled={installingDemo}
+                    onClick={() => void handleInstallCountersDemo()}
+                    title="Install / refresh the complete live Counters demo plan"
                   >
-                    Counters demo
+                    {installingDemo ? "Installing…" : "Install demo"}
+                  </button>
+                  <button
+                    type="button"
+                    className="fc-counters-demo-open-btn fc-counters-demo-open-btn-secondary"
+                    onClick={openCountersDemo}
+                    title="Walkthrough slides (does not change your data)"
+                  >
+                    Walkthrough
                   </button>
                   <button
                     type="button"
@@ -805,6 +865,19 @@ export function GamePlanView() {
               ) : null}
 
               <GamePlanFilmEvidencePanel plan={selected} />
+
+              <GamePlanCountersPanel
+                plan={selected}
+                plays={plays}
+                onUpdateCues={(timeoutCues) =>
+                  void updateGamePlan(selected.id, { timeoutCues })
+                }
+                onAddDefensePlay={(playId) =>
+                  void addPlaysToGamePlanCategory(selected.id, "defense", [
+                    playId,
+                  ])
+                }
+              />
 
               <GamePlanReadRollupPanel plan={selected} />
 

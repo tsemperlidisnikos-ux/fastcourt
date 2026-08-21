@@ -1,7 +1,30 @@
 import type { CounterCoverageId } from "@/lib/film-room/film-counter-playbook";
-import { COUNTER_COVERAGE_LABELS } from "@/lib/film-room/film-counter-playbook";
+import {
+  COUNTER_COVERAGE_LABELS,
+  normalizeCounterCoverage,
+} from "@/lib/film-room/film-counter-playbook";
 import type { FilmClipCounterSuggestion } from "@/lib/film-room/film-clip-analyze-types";
+import { isCounterLibraryItem } from "@/lib/library/counter-library-badge";
 import type { GamePlanTimeoutCue } from "@/types/library-meta";
+import type { StoredPlay } from "@/types/library";
+
+/** Soft cap stored on a game plan (Game Day still shows top 3). */
+export const TIMEOUT_CUES_MAX = 12;
+
+export type ManualTimeoutCueInput = {
+  title: string;
+  detail: string;
+  coverage: string;
+  targetsPattern?: string;
+  trigger?: string;
+  ballHandlerRule?: string;
+  screenerRule?: string;
+  weakPoint?: string;
+  priority?: "high" | "medium" | "low";
+  defensePlayId?: string;
+  sourceFilmSessionId?: string;
+  sourceFilmTimestamp?: number;
+};
 
 export function newGamePlanTimeoutCueId() {
   return `gtc_${crypto.randomUUID()}`;
@@ -114,7 +137,7 @@ export function normalizeTimeoutCues(
 export function mergeTimeoutCues(
   existing: GamePlanTimeoutCue[] | undefined,
   incoming: GamePlanTimeoutCue[],
-  maxTotal = 12,
+  maxTotal = TIMEOUT_CUES_MAX,
 ): GamePlanTimeoutCue[] {
   const merged = [...normalizeTimeoutCues(existing)];
   const seen = new Set(merged.map(timeoutCueSignature));
@@ -125,6 +148,105 @@ export function mergeTimeoutCues(
     merged.push(cue);
   }
   return sortTimeoutCues(merged).slice(0, maxTotal);
+}
+
+/** Build a timeout cue from a manual / form input (trimmed via normalize). */
+export function createManualTimeoutCue(
+  input: ManualTimeoutCueInput,
+): GamePlanTimeoutCue | null {
+  const [cue] = normalizeTimeoutCues([
+    {
+      id: newGamePlanTimeoutCueId(),
+      title: input.title,
+      detail: input.detail,
+      coverage: input.coverage,
+      targetsPattern: input.targetsPattern,
+      trigger: input.trigger,
+      ballHandlerRule: input.ballHandlerRule,
+      screenerRule: input.screenerRule,
+      weakPoint: input.weakPoint,
+      priority: input.priority,
+      defensePlayId: input.defensePlayId,
+      sourceFilmSessionId: input.sourceFilmSessionId,
+      sourceFilmTimestamp: input.sourceFilmTimestamp,
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  return cue ?? null;
+}
+
+/** Counter Library plays tagged as defensive counters. */
+export function listCounterLibraryPlays(plays: StoredPlay[]): StoredPlay[] {
+  return plays
+    .filter(
+      (play) =>
+        play.type !== "drill" &&
+        play.type !== "playbook" &&
+        isCounterLibraryItem(play),
+    )
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
+/** Turn a Counter Library play into a game-plan timeout cue. */
+export function timeoutCueFromCounterLibraryPlay(
+  play: StoredPlay,
+): GamePlanTimeoutCue | null {
+  const meta = play.defenseCounter;
+  if (!meta?.enabled) return null;
+  const coverage = normalizeCounterCoverage(meta.coverages[0] ?? "other");
+  const pattern = meta.vsPatterns.find((row) => row.trim())?.trim();
+  const coverageLabel = COUNTER_COVERAGE_LABELS[coverage];
+  const detail =
+    meta.notes?.trim() ||
+    play.playNotes?.trim() ||
+    `Run ${coverageLabel}${pattern ? ` vs ${pattern}` : ""} from Counter Library.`;
+  return createManualTimeoutCue({
+    title: play.title.trim() || coverageLabel,
+    detail,
+    coverage,
+    targetsPattern: pattern,
+    priority: "high",
+    defensePlayId: play.id,
+  });
+}
+
+export function addTimeoutCue(
+  existing: GamePlanTimeoutCue[] | undefined,
+  cue: GamePlanTimeoutCue,
+  maxTotal = TIMEOUT_CUES_MAX,
+): GamePlanTimeoutCue[] {
+  return mergeTimeoutCues(existing, [cue], maxTotal);
+}
+
+export function removeTimeoutCue(
+  existing: GamePlanTimeoutCue[] | undefined,
+  cueId: string,
+): GamePlanTimeoutCue[] {
+  return sortTimeoutCues(
+    normalizeTimeoutCues(existing).filter((cue) => cue.id !== cueId),
+  );
+}
+
+export function patchTimeoutCue(
+  existing: GamePlanTimeoutCue[] | undefined,
+  cueId: string,
+  patch: Partial<Omit<GamePlanTimeoutCue, "id" | "createdAt">>,
+): GamePlanTimeoutCue[] {
+  const cues = normalizeTimeoutCues(existing);
+  const edited = cues.find((cue) => cue.id === cueId);
+  if (!edited) return sortTimeoutCues(cues);
+
+  const nextEdited: GamePlanTimeoutCue = {
+    ...edited,
+    ...patch,
+    id: edited.id,
+    createdAt: edited.createdAt,
+  };
+  const others = cues.filter((cue) => cue.id !== cueId);
+  // Edited cue wins on signature collision with another row.
+  return sortTimeoutCues(
+    normalizeTimeoutCues([nextEdited, ...others]),
+  ).slice(0, TIMEOUT_CUES_MAX);
 }
 
 export function sortTimeoutCues(cues: GamePlanTimeoutCue[]): GamePlanTimeoutCue[] {
